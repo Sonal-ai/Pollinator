@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model WhatsAppUser {
+  id        String   @id @default(cuid())
+  wa_id     String   @unique
+  language  String   @default("en")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Beekeeper {
+  id         String   @id @default(cuid())
+  phone      String   @unique
+  name       String?
+  region     String?
+  hivesCount Int?
+  practices  String?
+  kvicId     String?
+  wallet     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model HoneyBatch {
+  id               String   @id @default(cuid())
+  batch_id_hash    String   @unique
+  beekeeperId      String?
+  quantity_grams   Int
+  honey_type       String
+  hives_harvested  Int
+  status           String   @default("PENDING")
+  current_custodian String?
+  lab_verified     Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
