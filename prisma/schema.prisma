@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================
+// User / Identity Layer
+// ============================================================
+
 model WhatsAppUser {
   id        String   @id @default(cuid())
   wa_id     String   @unique
@@ -16,28 +20,179 @@ model WhatsAppUser {
 }
 
 model Beekeeper {
-  id         String   @id @default(cuid())
-  phone      String   @unique
+  id         String       @id @default(cuid())
+  phone      String       @unique
   name       String?
   region     String?
   hivesCount Int?
   practices  String?
   kvicId     String?
-  wallet     String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  wallet     String?      // Polygon wallet address
+  hives      Hive[]
+  batches    HoneyBatch[]
+  inferences AIInference[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
 
+// ============================================================
+// IoT / Hive Layer
+// ============================================================
+
+model Hive {
+  id           String          @id @default(cuid())
+  beekeeperId  String
+  beekeeper    Beekeeper       @relation(fields: [beekeeperId], references: [id])
+  deviceId     String          @unique
+  region       String?
+  latitude     Float?          // Encrypted at app layer before storage
+  longitude    Float?          // Encrypted at app layer before storage
+  readings     SensorReading[]
+  inferences   AIInference[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model SensorReading {
+  id           String   @id @default(cuid())
+  hiveId       String
+  hive         Hive     @relation(fields: [hiveId], references: [id])
+  tempC        Float?
+  humidityPct  Float?
+  weightKg     Float?
+  pressureHPa  Float?
+  batteryPct   Float?
+  timestamp    DateTime @default(now())
+
+  @@index([hiveId, timestamp])
+}
+
+// ============================================================
+// AI / Inference Layer
+// ============================================================
+
+model AIInference {
+  id             String    @id @default(cuid())
+  hiveId         String?
+  hive           Hive?     @relation(fields: [hiveId], references: [id])
+  beekeeperId    String?
+  beekeeper      Beekeeper? @relation(fields: [beekeeperId], references: [id])
+  modelVersion   String    // e.g. "pollinator-efficientnet-b0-v1.0"
+  inputImageHash String?   // SHA-256 of input image for audit
+  prediction     String    // "healthy" | "varroa_parasite_suspected" | "pollen_carrier" | "uncertain"
+  confidence     Float     // 0.0 - 1.0
+  rawOutput      Json?     // Full model output for audit
+  inferredAt     DateTime  @default(now())
+
+  @@index([hiveId, inferredAt])
+}
+
+// ============================================================
+// Supply Chain Core
+// ============================================================
+
 model HoneyBatch {
-  id               String   @id @default(cuid())
-  batch_id_hash    String   @unique
-  beekeeperId      String?
-  quantity_grams   Int
-  honey_type       String
-  hives_harvested  Int
-  status           String   @default("PENDING")
-  current_custodian String?
-  lab_verified     Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                String         @id @default(cuid())
+  batch_id_hash     String         @unique  // SHA-256 of batchCode (used on-chain)
+  batchCode         String         @unique  // Human-readable: "HC-2026-MH01-000123"
+  beekeeperId       String?
+  beekeeper         Beekeeper?     @relation(fields: [beekeeperId], references: [id])
+  quantity_grams    Int
+  honey_type        String
+  hives_harvested   Int
+  harvest_timestamp DateTime?
+  region            String?
+  status            String         @default("HARVESTED")
+  // Status enum values (mirrors Solidity BatchStatus):
+  // HARVESTED | PROCESSED | LAB_VERIFIED | PACKAGED | IN_DISTRIBUTION | AT_RETAIL | SOLD | RECALLED
+  current_custodian String?        // Wallet address of current custodian
+  lab_verified      Boolean        @default(false)
+  recalled          Boolean        @default(false)
+  metadataCID       String?        // IPFS CID for batch metadata JSON
+  metadataHash      String?        // SHA-256 of metadata JSON (for tamper detection)
+  txHash            String?        // Blockchain tx hash of createBatch()
+  certificates      Certificate[]
+  custodyEvents     CustodyEvent[]
+  qrTokens          QRToken[]
+  scanAlerts        ScanAlert[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status])
+  @@index([beekeeperId])
+}
+
+model Certificate {
+  id              String     @id @default(cuid())
+  batchId         String
+  batch           HoneyBatch @relation(fields: [batchId], references: [id])
+  labActorId      String     // Wallet address of the lab actor
+  certificateHash String     // SHA-256 of the PDF
+  ipfsCID         String     // IPFS CID where PDF is stored
+  txHash          String?    // Blockchain tx hash of verifyLab()
+  createdAt       DateTime   @default(now())
+
+  @@index([batchId])
+}
+
+model CustodyEvent {
+  id        String     @id @default(cuid())
+  batchId   String
+  batch     HoneyBatch @relation(fields: [batchId], references: [id])
+  from      String     // Wallet address
+  to        String     // Wallet address
+  stage     String     // The BatchStatus after this transfer
+  txHash    String?    // Blockchain tx hash of transferCustody()
+  createdAt DateTime   @default(now())
+
+  @@index([batchId, createdAt])
+}
+
+// ============================================================
+// QR / Anti-Clone Layer
+// ============================================================
+
+model QRToken {
+  id           String     @id @default(cuid())
+  batchId      String
+  batch        HoneyBatch @relation(fields: [batchId], references: [id])
+  nonce        String     @unique  // UUID — uniquely identifies this physical jar's QR
+  signature    String     // HMAC-SHA256(batchCode + ':' + nonce, QR_HMAC_SECRET)
+  jarIndex     Int?       // Which jar number in the batch (1-indexed)
+  jarSizeGrams Int?       // Jar size in grams (e.g. 250, 500, 1000)
+  active       Boolean    @default(true)
+  scans        QRScan[]
+  createdAt    DateTime   @default(now())
+
+  @@index([batchId])
+}
+
+model QRScan {
+  id          String   @id @default(cuid())
+  qrTokenId   String
+  qrToken     QRToken  @relation(fields: [qrTokenId], references: [id])
+  ipAddress   String?  // Raw IP (not logged in production for privacy)
+  ipRegion    String?  // State/Region from geoip-lite
+  ipCity      String?  // City from geoip-lite (approximate)
+  ipCountry   String?  // Country code
+  userAgent   String?
+  timestamp   DateTime @default(now())
+
+  @@index([qrTokenId, timestamp])  // Fast anomaly detection queries
+}
+
+model ScanAlert {
+  id          String     @id @default(cuid())
+  batchId     String?
+  batch       HoneyBatch? @relation(fields: [batchId], references: [id])
+  qrTokenId   String?
+  alertType   String     // "GEOGRAPHIC_ANOMALY" | "HIGH_VOLUME" | "RECALLED_SCAN"
+  details     Json       // Structured alert context (regions, scan counts, etc.)
+  resolved    Boolean    @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?    // Admin wallet or "SYSTEM"
+  createdAt   DateTime   @default(now())
+
+  @@index([resolved, createdAt])
+  @@index([batchId])
 }
