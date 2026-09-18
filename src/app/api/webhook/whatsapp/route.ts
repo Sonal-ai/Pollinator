@@ -1,98 +1,76 @@
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { whatsapp } from '@/lib/whatsapp/client';
-import { fsm, ConversationState } from '@/lib/whatsapp/fsm';
-import { analyzeIncomingText, generateBeekeepingAdvice } from '@/lib/whatsapp/bedrock';
+import { createHmac, timingSafeEqual } from 'crypto';
+import type { NextRequest } from 'next/server';
+import { handleIncomingMessage } from '@/lib/whatsapp/handler';
+import { env } from '@/lib/env';
 
-// Verify Webhook for Meta
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const mode = searchParams.get('hub.mode');
-  const token = searchParams.get('hub.verify_token');
+export const runtime = 'nodejs'; // Must use Node.js runtime — needs crypto module
+
+// ============================================================
+// GET — Meta Webhook Verification Challenge
+// ============================================================
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const mode      = searchParams.get('hub.mode');
+  const token     = searchParams.get('hub.verify_token');
   const challenge = searchParams.get('hub.challenge');
 
-  if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-    return new NextResponse(challenge, { status: 200 });
+  if (mode === 'subscribe' && token === env.WHATSAPP_VERIFY_TOKEN) {
+    console.log('[webhook] Meta verification challenge passed');
+    return new Response(challenge, { status: 200 });
   }
-  return new NextResponse('Verification failed', { status: 403 });
+
+  console.warn('[webhook] Meta verification challenge FAILED — check WHATSAPP_VERIFY_TOKEN');
+  return new Response('Forbidden', { status: 403 });
 }
 
-// Receive Messages
-export async function POST(request: Request) {
-  const body = await request.text();
-  const signature = request.headers.get('x-hub-signature-256') || '';
+// ============================================================
+// POST — Incoming Messages from Meta
+// ============================================================
 
-  // Verify Signature
-  if (process.env.WHATSAPP_APP_SECRET) {
-    const expectedSig = crypto
-      .createHmac('sha256', process.env.WHATSAPP_APP_SECRET)
-      .update(body)
+export async function POST(request: NextRequest) {
+  // Read raw body as text FIRST — HMAC verification requires the raw bytes.
+  // After .text(), cannot call .json() on the same request in Next.js 16.
+  const rawBody = await request.text();
+
+  // Verify HMAC-SHA256 signature from Meta
+  const signature = request.headers.get('x-hub-signature-256') ?? '';
+  const expectedSig =
+    'sha256=' +
+    createHmac('sha256', env.WHATSAPP_APP_SECRET)
+      .update(rawBody)
       .digest('hex');
-    
-    if (`sha256=${expectedSig}` !== signature) {
-      console.error('Invalid signature');
-      return new NextResponse('OK', { status: 200 }); // Meta requires 200 even on fail
-    }
+
+  // Timing-safe comparison prevents timing oracle attacks
+  let signatureValid = false;
+  try {
+    signatureValid = timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSig)
+    );
+  } catch {
+    // Buffers differ in length → invalid signature (not a timing oracle risk here)
+    signatureValid = false;
   }
 
-  const payload = JSON.parse(body);
-
-  if (payload.entry) {
-    for (const entry of payload.entry) {
-      for (const change of entry.changes || []) {
-        const messages = change.value?.messages || [];
-        for (const message of messages) {
-          // Process asynchronously to not block Meta webhook response
-          processMessage(message).catch(console.error);
-        }
-      }
-    }
+  if (!signatureValid) {
+    console.warn('[webhook] HMAC signature mismatch — rejecting request');
+    return new Response('Unauthorized', { status: 401 });
   }
 
-  return new NextResponse('OK', { status: 200 });
-}
-
-async function processMessage(message: any) {
-  const waId = message.from;
-  const msgId = message.id;
-
-  if (await fsm.isDuplicateMessage(msgId)) return;
-  await whatsapp.markAsRead(msgId);
-
-  let text = '';
-  if (message.type === 'text') {
-    text = message.text?.body || '';
+  // Parse body now that signature is verified
+  let body: unknown;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return new Response('Bad Request: Invalid JSON', { status: 400 });
   }
 
-  const llmResult = await analyzeIncomingText(text);
-  const intent = llmResult.intent;
+  // Return 200 immediately — Meta requires response within 5 seconds.
+  // Message processing continues after response is sent.
+  void handleIncomingMessage(body as Parameters<typeof handleIncomingMessage>[0]).catch((err: unknown) => {
+    console.error('[webhook] handleIncomingMessage error:', err);
+  });
 
-  const session = await fsm.getSession(waId);
-  let state = session.state;
-
-  if (intent === 'MAIN_MENU' || text.toLowerCase() === 'menu') {
-    const buttons = [
-      { type: 'reply', reply: { id: 'health', title: 'Bee Health' } },
-      { type: 'reply', reply: { id: 'market', title: 'Harvest & Market' } }
-    ];
-    await whatsapp.sendButtons(waId, 'Welcome to Pollinator! How can I help?', buttons);
-    await fsm.setSession(waId, ConversationState.MAIN_MENU);
-    return;
-  }
-
-  if (intent === 'ASK_DOUBT') {
-    const advice = await generateBeekeepingAdvice(llmResult.translated_english_text);
-    await whatsapp.sendText(waId, advice);
-    return;
-  }
-
-  if (state === ConversationState.MAIN_MENU) {
-    if (message.interactive?.button_reply?.id === 'health') {
-      await whatsapp.sendText(waId, 'Hive 1 is Healthy (35C, 45% Humidity).');
-    } else if (message.interactive?.button_reply?.id === 'market') {
-      await whatsapp.sendText(waId, 'Current Mustard Honey price is ₹150/kg.');
-    }
-  } else {
-    await whatsapp.sendText(waId, "I didn't quite catch that. Type 'menu' to see options.");
-  }
+  return new Response('OK', { status: 200 });
 }
