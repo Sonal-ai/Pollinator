@@ -94,16 +94,16 @@ export function InteractiveHoneycomb() {
           <defs>
             {/* Dark Mode Standard Cell Gradient */}
             <linearGradient id="beehiveCellDark" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ffd21e" stopOpacity="0.25" />
-              <stop offset="50%" stopColor="#ffb800" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="#0c0e14" stopOpacity="0.88" />
+              <stop offset="0%" stopColor="#221c0e" stopOpacity="0.96" />
+              <stop offset="50%" stopColor="#15120a" stopOpacity="0.96" />
+              <stop offset="100%" stopColor="#0c0e14" stopOpacity="0.98" />
             </linearGradient>
 
             {/* Dark Mode Active Highlighted Cell Gradient */}
             <linearGradient id="activeBeehiveCellDark" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#fff176" stopOpacity="0.95" />
-              <stop offset="50%" stopColor="#ffd21e" stopOpacity="0.75" />
-              <stop offset="100%" stopColor="#ff9800" stopOpacity="0.4" />
+              <stop offset="0%" stopColor="#fff176" stopOpacity="0.98" />
+              <stop offset="50%" stopColor="#ffd21e" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="#b45309" stopOpacity="0.85" />
             </linearGradient>
 
             {/* Light Mode Standard Cell Gradient (Creamy Warm Ivory Honey) */}
@@ -156,6 +156,13 @@ export function InteractiveHoneycomb() {
                   transform: isHovered ? 'scale(1.08)' : 'scale(1)',
                 }}
               >
+                {/* Opaque Base Underlay: Guarantees dotted lines stay underneath on the lower layer in both Dark & Light modes */}
+                <polygon
+                  points={getHexPoints(c.x, c.y, hexRadius - 3)}
+                  fill={isDark ? '#0c0e14' : '#ffffff'}
+                  className="transition-all duration-300"
+                />
+
                 {/* Hexagon Outer Cell */}
                 <polygon
                   points={getHexPoints(c.x, c.y, hexRadius - 3)}
