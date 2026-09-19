@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { computeMetadataHash, uploadBatchMetadata, type BatchMetadata } from '@/lib/ipfs';
-import { createBatchOnChain, hashBatchCode } from '@/lib/blockchain';
+import { createBatchOnChain, hashBatchCode, getExplorerTxUrl } from '@/lib/blockchain';
 import crypto from 'crypto';
 
 // ============================================================
@@ -19,6 +19,17 @@ const CreateBatchSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
+  const apiKey = request.headers.get('x-admin-api-key') ??
+    request.headers.get('authorization')?.replace('Bearer ', '');
+  const { env } = await import('@/lib/env');
+  const isAdminKey = Boolean(apiKey && env.ADMIN_API_KEY && apiKey === env.ADMIN_API_KEY);
+
+  if (!isAdminKey && (!session || !['admin', 'beekeeper'].includes(session.role))) {
+    return Response.json({ error: 'Unauthorized. Login or API key required.' }, { status: 401 });
+  }
+
   // Parse and validate input
   let body: unknown;
   try {
@@ -50,14 +61,9 @@ export async function POST(request: NextRequest) {
     .replace(/[^A-Z0-9]/g, '')
     .slice(0, 4);
 
-  // Get next sequence number for this region+year combo
-  const existingCount = await prisma.honeyBatch.count({
-    where: {
-      batchCode: { startsWith: `HC-${year}-${regionCode}-` },
-    },
-  });
-  const sequence = String(existingCount + 1).padStart(6, '0');
-  const batchCode = `HC-${year}-${regionCode}-${sequence}`;
+  // Use a secure random 6-character hex suffix to prevent concurrent DB race conditions (GAP-12 fix)
+  const randomSuffix = crypto.randomBytes(3).toString('hex').toUpperCase();
+  const batchCode = `HC-${year}-${regionCode}-${randomSuffix}`;
 
   // Compute the batch ID hash (used as the blockchain key)
   const batchIdHash = hashBatchCode(batchCode);
@@ -130,9 +136,7 @@ export async function POST(request: NextRequest) {
       status:     batch.status,
       txHash,
       metadataCID,
-      polygonscanUrl: txHash
-        ? `https://amoy.polygonscan.com/tx/${txHash}`
-        : null,
+      polygonscanUrl: getExplorerTxUrl(txHash),
     },
     { status: 201 }
   );
