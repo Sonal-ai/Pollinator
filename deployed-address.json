@@ -1,6 +1,18 @@
 {
-  "address": "0x4B650a3d926A8f777f96422d790B0e36eB29b47a",
-  "deployer": "0x06a7E556dA2e1e7C40d0C3a19DDB6ED7cC7e4607",
-  "network": "polygon-amoy",
-  "deployedAt": "2026-09-19T05:43:02.756Z"
+  "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "network": "localhost",
+  "deployedAt": "2026-09-19T09:18:13.463Z",
+  "networks": {
+    "polygon-amoy": {
+      "address": "0x4B650a3d926A8f777f96422d790B0e36eB29b47a",
+      "deployer": "0x06a7E556dA2e1e7C40d0C3a19DDB6ED7cC7e4607",
+      "deployedAt": "2026-09-19T05:43:02.756Z"
+    },
+    "localhost": {
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "deployedAt": "2026-09-19T09:18:13.463Z"
+    }
+  }
 }
