@@ -150,21 +150,21 @@ const qrUrl = "https://pollinator.app/verify"
   const current = steps[activeStep];
 
   return (
-    <div className="w-full max-w-5xl mx-auto rounded-3xl border border-yellow-400/20 bg-[#0c0e14]/90 backdrop-blur-2xl p-6 sm:p-8 shadow-[0_20px_80px_rgba(0,0,0,0.7)] relative overflow-hidden">
+    <div className="w-full max-w-5xl mx-auto rounded-3xl border border-amber-300/50 dark:border-yellow-400/20 bg-white/95 dark:bg-[#0c0e14]/90 backdrop-blur-2xl p-6 sm:p-8 shadow-[0_20px_80px_rgba(217,119,6,0.08)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.7)] relative overflow-hidden transition-colors duration-300">
       {/* Background Honeycomb Glow */}
-      <div className="absolute top-0 right-0 w-[400px] h-[300px] bg-yellow-500/10 blur-[100px] pointer-events-none -z-10" />
+      <div className="absolute top-0 right-0 w-[400px] h-[300px] bg-yellow-400/15 dark:bg-yellow-500/10 blur-[100px] pointer-events-none -z-10" />
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-amber-200/60 dark:border-white/10">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-400/10 border border-yellow-400/30 text-xs font-extrabold text-yellow-300 mb-2">
-            <Hexagon className="w-3.5 h-3.5 fill-yellow-400/20" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/15 dark:bg-yellow-400/10 border border-amber-400/30 dark:border-yellow-400/30 text-xs font-extrabold text-amber-800 dark:text-yellow-300 mb-2">
+            <Hexagon className="w-3.5 h-3.5 fill-amber-400/20 dark:fill-yellow-400/20" />
             <span>Interactive Blockchain Bee Sandbox</span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+          <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             How Honey Moves From Honeycomb to Consumer Table
           </h3>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
             Explore how IoT sensors, WhatsApp AI, IPFS, and Polygon Amoy seal the purity of every jar.
           </p>
         </div>
@@ -174,7 +174,7 @@ const qrUrl = "https://pollinator.app/verify"
           <button
             type="button"
             onClick={() => setActiveStep((prev) => (prev + 1) % steps.length)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/30 text-xs font-bold text-yellow-300 transition-all hover:scale-105"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 dark:bg-yellow-400/10 hover:bg-amber-200/80 dark:hover:bg-yellow-400/20 border border-amber-300 dark:border-yellow-400/30 text-xs font-bold text-amber-900 dark:text-yellow-300 transition-all hover:scale-105"
           >
             <span>Next Stage</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -193,17 +193,17 @@ const qrUrl = "https://pollinator.app/verify"
               onClick={() => setActiveStep(idx)}
               className={`relative flex flex-col items-start p-3.5 rounded-2xl border text-left transition-all duration-300 ${
                 isActive
-                  ? 'bg-gradient-to-b from-yellow-400/20 to-yellow-500/5 border-yellow-400/60 shadow-lg shadow-yellow-500/15'
-                  : 'bg-white/[0.02] border-white/5 hover:bg-white/5 hover:border-yellow-400/25'
+                  ? 'bg-gradient-to-b from-amber-100/90 to-amber-50/50 dark:from-yellow-400/20 dark:to-yellow-500/5 border-amber-400 dark:border-yellow-400/60 shadow-md shadow-amber-500/15 dark:shadow-yellow-500/15'
+                  : 'bg-amber-50/40 dark:bg-white/[0.02] border-amber-200/50 dark:border-white/5 hover:bg-amber-100/40 dark:hover:bg-white/5 hover:border-amber-300 dark:hover:border-yellow-400/25'
               }`}
             >
               <div className="flex items-center justify-between w-full mb-2">
-                <span className={`text-[10px] font-mono font-bold ${isActive ? 'text-yellow-300' : 'text-slate-500'}`}>
+                <span className={`text-[10px] font-mono font-bold ${isActive ? 'text-amber-800 dark:text-yellow-300' : 'text-slate-500'}`}>
                   {s.stepNum}
                 </span>
-                <Icon className={`w-4 h-4 ${isActive ? 'text-yellow-400' : 'text-slate-500'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-amber-600 dark:text-yellow-400' : 'text-slate-400 dark:text-slate-500'}`} />
               </div>
-              <p className={`text-xs font-bold leading-snug line-clamp-1 ${isActive ? 'text-white' : 'text-slate-400'}`}>
+              <p className={`text-xs font-bold leading-snug line-clamp-1 ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
                 {s.title}
               </p>
               <span className="text-[10px] text-slate-500 truncate w-full mt-0.5 font-medium">
@@ -228,13 +228,13 @@ const qrUrl = "https://pollinator.app/verify"
           <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-yellow-400/20 text-yellow-300 border border-yellow-400/40">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-400/20 dark:bg-yellow-400/20 text-amber-800 dark:text-yellow-300 border border-amber-400/40 dark:border-yellow-400/40">
                   STAGE {current.stepNum}
                 </span>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{current.tag}</span>
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{current.tag}</span>
               </div>
-              <h4 className="text-xl font-bold text-white tracking-tight">{current.title}</h4>
-              <p className="text-sm text-slate-300 leading-relaxed font-normal">{current.desc}</p>
+              <h4 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{current.title}</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">{current.desc}</p>
             </div>
 
             {/* Field Badges */}
@@ -242,28 +242,28 @@ const qrUrl = "https://pollinator.app/verify"
               {Object.entries(current.details).map(([key, val]) => (
                 <div
                   key={key}
-                  className="p-3 rounded-2xl bg-black/50 border border-yellow-400/10 space-y-1"
+                  className="p-3 rounded-2xl bg-amber-50/70 dark:bg-black/50 border border-amber-200/70 dark:border-yellow-400/10 space-y-1"
                 >
                   <p className="text-[10px] uppercase font-mono font-bold text-slate-500">
                     {key.replace(/([A-Z])/g, ' $1')}
                   </p>
-                  <p className="text-xs font-extrabold text-white truncate font-mono">{val}</p>
+                  <p className="text-xs font-extrabold text-slate-900 dark:text-white truncate font-mono">{val}</p>
                 </div>
               ))}
             </div>
 
             {/* Status Bar */}
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-yellow-950/20 border border-yellow-400/20 text-xs text-yellow-300">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-amber-100/70 dark:bg-yellow-950/20 border border-amber-300/60 dark:border-yellow-400/20 text-xs text-amber-900 dark:text-yellow-300">
               <span className="flex items-center gap-2 font-bold">
-                <CheckCircle2 className="w-4 h-4 text-yellow-400" />
+                <CheckCircle2 className="w-4 h-4 text-amber-600 dark:text-yellow-400" />
                 {current.onChainStatus}
               </span>
-              <span className="font-mono text-[10px] text-yellow-400/80 font-bold">HoneyChain Amoy</span>
+              <span className="font-mono text-[10px] text-amber-700 dark:text-yellow-400/80 font-bold">HoneyChain Amoy</span>
             </div>
           </div>
 
           {/* Right Column: Code Payload / Terminal Simulation */}
-          <div className="lg:col-span-5 flex flex-col rounded-2xl bg-black/80 border border-yellow-400/20 p-4 font-mono text-xs overflow-hidden shadow-inner">
+          <div className="lg:col-span-5 flex flex-col rounded-2xl bg-[#0a0c10] border border-amber-300/30 dark:border-yellow-400/20 p-4 font-mono text-xs overflow-hidden shadow-inner">
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-[11px] text-slate-500">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500/70" />

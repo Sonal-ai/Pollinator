@@ -21,8 +21,8 @@ export function GlowCard({
 
   const glowRGB = {
     yellow: '255, 210, 30',
-    gold: '255, 184, 0',
-    amber: '245, 158, 11',
+    gold: '245, 158, 11',
+    amber: '217, 119, 6',
     emerald: '16, 185, 129',
     cyan: '56, 189, 248',
     purple: '168, 85, 247',
@@ -47,14 +47,14 @@ export function GlowCard({
         setMousePos({ x: -1000, y: -1000 });
       }}
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-3xl border border-yellow-400/15 bg-[#0d1017]/85 backdrop-blur-2xl transition-all duration-300 hover:border-yellow-400/40 hover:shadow-[0_15px_50px_-10px_rgba(255,210,30,0.18)] ${className}`}
+      className={`group relative overflow-hidden rounded-3xl border border-amber-200/80 dark:border-yellow-400/15 bg-white/90 dark:bg-[#0d1017]/85 backdrop-blur-2xl transition-all duration-300 hover:border-amber-400 dark:hover:border-yellow-400/40 shadow-xl shadow-amber-500/5 dark:shadow-[0_15px_50px_-10px_rgba(0,0,0,0.6)] ${className}`}
     >
-      {/* Radial Beehive Yellow Spotlight following cursor */}
+      {/* Radial Spotlight following cursor */}
       <div
         className="pointer-events-none absolute -inset-px transition-opacity duration-300"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(450px circle at ${mousePos.x}px ${mousePos.y}px, rgba(${glowRGB}, 0.18), transparent 80%)`,
+          background: `radial-gradient(450px circle at ${mousePos.x}px ${mousePos.y}px, rgba(${glowRGB}, 0.16), transparent 80%)`,
         }}
       />
 
@@ -63,7 +63,7 @@ export function GlowCard({
         className="pointer-events-none absolute -inset-px rounded-3xl transition-opacity duration-300"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(280px circle at ${mousePos.x}px ${mousePos.y}px, rgba(${glowRGB}, 0.6), transparent 70%)`,
+          background: `radial-gradient(280px circle at ${mousePos.x}px ${mousePos.y}px, rgba(${glowRGB}, 0.5), transparent 70%)`,
           mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           maskComposite: 'exclude',

@@ -184,11 +184,11 @@ export function InteractiveHoneycomb() {
         <motion.div
           animate={{ y: [-5, 5, -5] }}
           transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-          className="absolute -bottom-4 bg-[#0c0e14]/90 backdrop-blur-2xl border border-yellow-400/40 px-4 py-2 rounded-full flex items-center gap-2.5 shadow-xl shadow-yellow-500/20"
+          className="absolute -bottom-4 bg-white/95 dark:bg-[#0c0e14]/90 backdrop-blur-2xl border border-amber-300/60 dark:border-yellow-400/40 px-4 py-2 rounded-full flex items-center gap-2.5 shadow-xl shadow-amber-500/10 dark:shadow-yellow-500/20"
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-ping" />
-          <span className="text-xs font-mono text-slate-200">
-            Hive Consensus: <span className="text-yellow-400 font-extrabold">HoneyChain Amoy</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 dark:bg-yellow-400 animate-ping" />
+          <span className="text-xs font-mono text-slate-800 dark:text-slate-200">
+            Hive Consensus: <span className="text-amber-600 dark:text-yellow-400 font-extrabold">HoneyChain Amoy</span>
           </span>
         </motion.div>
       </motion.div>
