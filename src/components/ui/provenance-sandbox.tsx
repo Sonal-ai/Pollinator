@@ -13,6 +13,7 @@ import {
   Hexagon,
   Sparkles
 } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/ui/whatsapp-icon';
 
 export function ProvenanceSandbox() {
   const [activeStep, setActiveStep] = useState(0);
@@ -25,32 +26,32 @@ export function ProvenanceSandbox() {
       tag: 'Edge Sensor Cluster',
       icon: Wifi,
       accent: '#ffd21e',
-      desc: 'ESP32 node mounted directly on the hive brood chamber. Measures internal temperature, relative humidity, and real-time nectar accumulation via load cell.',
+      desc: 'Real-time telemetry streams from apiary edge nodes directly into MQTT channels. Brood frames measure internal colony temperature, humidity, and acoustic frequency.',
       details: {
-        nodeId: 'ESP32-HIVE-NODE-04',
-        broodTemp: '34.2 °C (Optimal Hive Range)',
-        hiveHumidity: '61.8% (Prevents Fermentation)',
-        honeyWeight: '27.35 kg (+8.4 kg Nectar Flow)',
-        powerSupply: 'Solar + LiPo 88%',
+        hiveInternalTemp: '34.2°C (Optimal Brood)',
+        relativeHumidity: '58.4%',
+        colonyAcousticFreq: '240 Hz (Healthy Swarm)',
+        telemetryProtocol: 'MQTT over TLS v1.3',
+        hardwareController: 'ESP32 Dual-Core LoRa',
       },
-      codeSnippet: `// MQTT edge packet published to AWS IoT
+      codeSnippet: `// Edge brood sensor payload
 {
-  "hiveCluster": "KVIC-WARDHA-CL01",
-  "hiveId": "HIVE-04",
-  "temperatureC": 34.2,
-  "humidityPct": 61.8,
-  "weightKg": 27.35,
-  "timestamp": "2026-09-18T08:00:00Z"
+  "apiaryId": "APIARY_MH_094",
+  "hiveId": "HIVE_COMB_12",
+  "tempC": 34.2,
+  "humidity": 58.4,
+  "weightKg": 42.15,
+  "signature": "0x7e8b91a...c842"
 }`,
       onChainStatus: 'Aggregated daily hash committed to IPFS',
     },
     {
       id: 'whatsapp',
       stepNum: '02',
-      title: 'Forager WhatsApp Log',
+      title: 'Forager Bot (WhatsApp)',
       tag: 'Rural Bedrock AI Brain',
-      icon: MessageSquare,
-      accent: '#ffb800',
+      icon: WhatsAppIcon,
+      accent: '#25D366',
       desc: 'Smallholder beekeeper records a voice note in Marathi on WhatsApp. Amazon Bedrock (Claude 3 Haiku) transcribes, extracts quantity & flora type, and registers the batch.',
       details: {
         beekeeper: 'Sunil Patil (KVIC Wardha)',
