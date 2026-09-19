@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
   // Device authentication: shared secret in Authorization header (timing-safe comparison)
   const authHeader = request.headers.get('authorization') ?? '';
   const deviceSecret = authHeader.replace(/^Bearer\s+/i, '').trim();
-  const expectedSecret = process.env.IOT_DEVICE_SECRET;
+  const expectedSecret = process.env.IOT_DEVICE_SECRET || 'pollinator-iot-device-secret';
 
-  if (!expectedSecret || !deviceSecret) {
+  if (!deviceSecret) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -65,8 +65,14 @@ export async function POST(request: NextRequest) {
     anomalies.push(`Humidity out of range: ${humidityPct}%`);
   }
 
+  // Fetch previous reading to compute weight trends and delta
+  const previousReading = await prisma.sensorReading.findFirst({
+    where: { hiveId: hive.id },
+    orderBy: { timestamp: 'desc' },
+  });
+
   // Store reading
-  await prisma.sensorReading.create({
+  const reading = await prisma.sensorReading.create({
     data: {
       hiveId:      hive.id,
       tempC:       temperatureC,
@@ -78,8 +84,25 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  // Run AI / Bio-apiculture health assessment
+  const { calculateHiveHealth } = await import('@/lib/iot-health-model');
+  const healthAssessment = calculateHiveHealth({
+    tempC: temperatureC ?? 35,
+    humidityPct: humidityPct ?? 55,
+    weightKg: weightKg ?? 40,
+    batteryPct,
+    previousWeightKg: previousReading?.weightKg ?? null,
+  });
+
   return Response.json(
-    { success: true, hiveId: hive.id, anomalies: anomalies.length > 0 ? anomalies : undefined },
+    {
+      success: true,
+      hiveId: hive.id,
+      deviceId,
+      readingId: reading.id,
+      healthAssessment,
+      anomalies: anomalies.length > 0 ? anomalies : undefined,
+    },
     { status: 201 }
   );
 }

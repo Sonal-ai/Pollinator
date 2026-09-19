@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { IotChartClient } from './chart-client';
-import { Cpu, Wifi, Thermometer, Droplets, Scale, BatteryCharging } from 'lucide-react';
+import { calculateHiveHealth } from '@/lib/iot-health-model';
+import { Cpu, Wifi, Thermometer, Droplets, Scale, BatteryCharging, Activity, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export default async function IoTPage() {
       beekeeper: { select: { name: true } },
       readings: {
         orderBy: { timestamp: 'desc' },
-        take: 1,
+        take: 2,
         select: { tempC: true, humidityPct: true, weightKg: true, batteryPct: true, timestamp: true },
       },
     },
@@ -64,6 +65,17 @@ export default async function IoTPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {hives.map((hive) => {
             const latest = hive.readings[0];
+            const previous = hive.readings[1];
+            const health = latest && latest.tempC !== null && latest.humidityPct !== null && latest.weightKg !== null
+              ? calculateHiveHealth({
+                  tempC: latest.tempC,
+                  humidityPct: latest.humidityPct,
+                  weightKg: latest.weightKg,
+                  batteryPct: latest.batteryPct,
+                  previousWeightKg: previous?.weightKg,
+                })
+              : null;
+
             return (
               <div
                 key={hive.id}
@@ -83,9 +95,25 @@ export default async function IoTPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2.5 h-2.5 rounded-full ${latest ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
-                    <span className="text-[10px] font-mono text-slate-400">{latest ? 'ONLINE' : 'OFFLINE'}</span>
+                  <div className="flex items-center gap-3">
+                    {health && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-white/5">
+                        <span
+                          className="w-2 h-2 rounded-full animate-pulse"
+                          style={{ backgroundColor: health.statusColor }}
+                        />
+                        <span className="text-xs font-extrabold font-mono" style={{ color: health.statusColor }}>
+                          {health.score}%
+                        </span>
+                        <span className="text-[10px] uppercase font-mono text-slate-300">
+                          {health.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-2.5 h-2.5 rounded-full ${latest ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+                      <span className="text-[10px] font-mono text-slate-400">{latest ? 'ONLINE' : 'OFFLINE'}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -97,13 +125,13 @@ export default async function IoTPage() {
                         icon={<Thermometer className="w-4 h-4 text-amber-400" />}
                         label="Temperature"
                         value={latest.tempC !== null ? `${latest.tempC.toFixed(1)}°C` : '—'}
-                        warn={latest.tempC !== null && latest.tempC > 37}
+                        warn={latest.tempC !== null && (latest.tempC > 37 || latest.tempC < 33)}
                       />
                       <SensorBox
                         icon={<Droplets className="w-4 h-4 text-cyan-400" />}
                         label="Humidity"
                         value={latest.humidityPct !== null ? `${latest.humidityPct.toFixed(0)}%` : '—'}
-                        warn={latest.humidityPct !== null && latest.humidityPct > 75}
+                        warn={latest.humidityPct !== null && (latest.humidityPct > 70 || latest.humidityPct < 45)}
                       />
                       <SensorBox
                         icon={<Scale className="w-4 h-4 text-emerald-400" />}
@@ -117,6 +145,53 @@ export default async function IoTPage() {
                         warn={latest.batteryPct !== null && latest.batteryPct < 20}
                       />
                     </div>
+
+                    {/* AI Bio-Apiculture Health & Diagnostics Card */}
+                    {health && (
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-white/[0.04] to-black/60 border border-white/10 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-amber-400" />
+                            <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                              AI Colony Diagnostics
+                            </span>
+                          </div>
+                          <span
+                            className="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase"
+                            style={{
+                              backgroundColor: `${health.statusColor}20`,
+                              color: health.statusColor,
+                              border: `1px solid ${health.statusColor}40`,
+                            }}
+                          >
+                            Score: {health.score}/100 • {health.metrics.tempStatus}
+                          </span>
+                        </div>
+
+                        {/* Insights & Recommendations */}
+                        {health.insights.length > 0 && (
+                          <div className="space-y-1">
+                            {health.insights.map((insight, idx) => (
+                              <p key={idx} className="text-xs text-slate-300 flex items-start gap-2">
+                                <span className="text-emerald-400 text-sm leading-none">•</span>
+                                <span>{insight}</span>
+                              </p>
+                            ))}
+                          </div>
+                        )}
+
+                        {health.recommendations.length > 0 && (
+                          <div className="pt-1 border-t border-white/5 space-y-1">
+                            {health.recommendations.map((rec, idx) => (
+                              <p key={idx} className="text-[11px] text-amber-300/90 flex items-start gap-2">
+                                <span className="font-bold">⚡ Action:</span>
+                                <span>{rec}</span>
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono py-1 border-t border-white/5">
                       <span>Last Packet: {new Date(latest.timestamp).toLocaleTimeString('en-IN')}</span>
