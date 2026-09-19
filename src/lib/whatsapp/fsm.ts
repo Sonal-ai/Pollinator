@@ -23,6 +23,8 @@ export enum ConversationState {
   MENU_MARKET             = 'MENU_MARKET',
   ASK_QUESTION            = 'ASK_QUESTION',
   TRANSFER_BATCH_ID       = 'TRANSFER_BATCH_ID',
+  TRANSFER_BUYER_ID       = 'TRANSFER_BUYER_ID',
+  BATCH_STATUS_AWAITING_ID = 'BATCH_STATUS_AWAITING_ID',
 }
 
 // ============================================================
@@ -59,18 +61,27 @@ export interface Session {
 // Redis Service
 // ============================================================
 
+// ============================================================
+// Redis Service with In-Memory Fallback
+// ============================================================
+
 let redisClient: Redis | null = null;
+const memorySessions = new Map<string, Session>();
+const seenMessages = new Set<string>();
 
 function getRedis(): Redis {
   if (!redisClient) {
     redisClient = new Redis(env.REDIS_URL, {
-      lazyConnect: true,
-      enableOfflineQueue: false,
+      lazyConnect: false,
+      enableOfflineQueue: true,
       maxRetriesPerRequest: 3,
+      retryStrategy(times) {
+        return Math.min(times * 100, 2000);
+      },
     });
 
     redisClient.on('error', (err: Error) => {
-      console.error('[redis] Connection error:', err.message);
+      console.warn('[redis] Connection warning (using memory fallback):', err.message);
     });
   }
   return redisClient;
@@ -87,13 +98,13 @@ export class RedisService {
   async getSession(waId: string): Promise<Session> {
     try {
       const data = await getRedis().get(`session:${waId}`);
-      if (!data) {
-        return { state: ConversationState.IDLE, data: {} };
+      if (data) {
+        return JSON.parse(data) as Session;
       }
-      return JSON.parse(data) as Session;
-    } catch {
-      return { state: ConversationState.IDLE, data: {} };
+    } catch (err) {
+      console.warn('[fsm] Redis getSession fallback to memory:', err);
     }
+    return memorySessions.get(waId) || { state: ConversationState.IDLE, data: {} };
   }
 
   /**
@@ -105,12 +116,18 @@ export class RedisService {
     data: SessionData = {}
   ): Promise<void> {
     const session: Session = { state, data };
-    await getRedis().set(
-      `session:${waId}`,
-      JSON.stringify(session),
-      'EX',
-      SESSION_TTL_SECONDS
-    );
+    memorySessions.set(waId, session);
+
+    try {
+      await getRedis().set(
+        `session:${waId}`,
+        JSON.stringify(session),
+        'EX',
+        SESSION_TTL_SECONDS
+      );
+    } catch (err) {
+      console.warn('[fsm] Redis setSession fallback to memory:', err);
+    }
   }
 
   /**
@@ -124,20 +141,36 @@ export class RedisService {
   /**
    * Check if a message has already been processed (deduplication).
    * Returns true if this is a duplicate (should be ignored).
-   * Uses atomic set-if-not-exists to prevent race conditions.
+   * Falls back to memory cache gracefully.
    */
   async isDuplicateMessage(msgId: string): Promise<boolean> {
-    const key = `msg:${msgId}`;
-    // NX = set only if key does not exist; returns null if key already existed
-    const result = await getRedis().set(key, '1', 'EX', MSG_DEDUP_TTL_SECONDS, 'NX');
-    return result === null; // null = key already existed = duplicate
+    if (!msgId) return false;
+    if (seenMessages.has(msgId)) return true;
+    seenMessages.add(msgId);
+    if (seenMessages.size > 5000) {
+      const first = seenMessages.values().next().value;
+      if (first) seenMessages.delete(first);
+    }
+
+    try {
+      const key = `msg:${msgId}`;
+      const result = await getRedis().set(key, '1', 'EX', MSG_DEDUP_TTL_SECONDS, 'NX');
+      return result === null;
+    } catch (err) {
+      return false; // don't block messages if redis is unavailable
+    }
   }
 
   /**
    * Clear the session (used when registration completes or user resets).
    */
   async clearSession(waId: string): Promise<void> {
-    await getRedis().del(`session:${waId}`);
+    memorySessions.delete(waId);
+    try {
+      await getRedis().del(`session:${waId}`);
+    } catch {
+      // non-fatal
+    }
   }
 }
 

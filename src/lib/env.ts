@@ -18,6 +18,9 @@ const EnvSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
   AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required'),
 
+  // Gemini AI
+  GEMINI_API_KEY: z.string().optional(),
+
   // Blockchain Network Selection: 'local' (Hardhat node) or 'amoy' (Polygon Amoy)
   BLOCKCHAIN_NETWORK: z.enum(['local', 'amoy', 'localhost', 'polygonAmoy', 'global']).default('local'),
 

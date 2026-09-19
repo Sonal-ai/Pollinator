@@ -72,10 +72,8 @@ unzip -o deploy.zip
 
 echo "${envB64}" | base64 -d > .env
 
-# Dynamically add the instance's Elastic IP to .env for QR generation
-TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
-PUBLIC_IP=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -s http://169.254.169.254/latest/meta-data/public-ipv4)
-echo -e "\\nNEXT_PUBLIC_APP_URL=\\"http://$PUBLIC_IP\\"" >> .env
+# Dynamically add the instance's nip.io domain to .env for QR generation
+echo -e "\\nNEXT_PUBLIC_APP_URL=\\"https://100.24.80.15.nip.io\\"" >> .env
 
 echo "Starting Docker DBs..."
 /usr/local/bin/docker-compose up -d
@@ -92,16 +90,16 @@ mkswap /swapfile
 swapon /swapfile
 
 npm run build 2>&1
-npm install -g pm2
+npm install -g pm2 localtunnel
 PORT=3000 pm2 start npm --name "pollinator" -- start
 pm2 save
 pm2 startup 2>&1 || true
 
-yum install -y nginx
+yum install -y nginx python3 augeas-libs
 cat > /etc/nginx/conf.d/pollinator.conf << 'EOF'
 server {
-    listen 80;
-    server_name _;
+    listen 80 default_server;
+    server_name 100.24.80.15.sslip.io 100.24.80.15 localhost;
     client_max_body_size 50M;
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -115,6 +113,21 @@ EOF
 rm -f /etc/nginx/conf.d/default.conf || true
 systemctl enable nginx
 systemctl start nginx
+
+echo "Setting up SSL with Certbot and sslip.io..."
+python3 -m venv /opt/certbot/
+/opt/certbot/bin/pip install --upgrade pip
+/opt/certbot/bin/pip install certbot certbot-nginx
+ln -sf /opt/certbot/bin/certbot /usr/bin/certbot
+
+# Request genuine Let's Encrypt SSL certificate for sslip.io domain
+certbot --nginx -d 100.24.80.15.sslip.io --non-interactive --agree-tos -m sonalkhanak@gmail.com --redirect || echo "Certbot failed, continuing..."
+
+echo "Starting Cloudflare quick tunnel as backup..."
+curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-x86_64.rpm -o cloudflared.rpm
+rpm -i cloudflared.rpm || true
+nohup cloudflared tunnel --url http://127.0.0.1:80 > /var/log/cloudflared.log 2>&1 &
+
 echo "DEPLOYMENT COMPLETE!"
 `;
 
@@ -122,9 +135,10 @@ echo "DEPLOYMENT COMPLETE!"
   const amiRes = await ssm.send(new GetParameterCommand({ Name: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64' }));
   const AMI_ID = amiRes.Parameter.Value;
 
-  console.log('🖥️ Launching EC2 Instance...');
+  console.log('🖥️ Launching EC2 Instance with SSH Key...');
   const runRes = await ec2.send(new RunInstancesCommand({
     ImageId: AMI_ID, InstanceType: 't3.small', MinCount: 1, MaxCount: 1,
+    KeyName: 'pollinator-key',
     SecurityGroupIds: [groupId],
     UserData: Buffer.from(userData).toString('base64')
   }));
@@ -137,7 +151,8 @@ echo "DEPLOYMENT COMPLETE!"
   
   await ec2.send(new AssociateAddressCommand({ 
     AllocationId: 'eipalloc-06fa689f83b374c2c', // The EIP we allocated earlier (100.24.80.15)
-    InstanceId: instanceId 
+    InstanceId: instanceId,
+    AllowReassociation: true
   }));
   
   console.log(`✅ Static IP 100.24.80.15 successfully attached!`);
