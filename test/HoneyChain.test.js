@@ -174,7 +174,7 @@ describe("HoneyChain", function () {
     it("Should REVERT if non-custodian tries to transfer", async function () {
       await expect(
         honeyChain.connect(other).transferCustody(testBatchIdHash, distributor.address, 5)
-      ).to.be.revertedWith("HoneyChain: Not the current custodian");
+      ).to.be.revertedWith("HoneyChain: Not current custodian or admin relayer");
     });
 
     it("Should REVERT on transfer to zero address", async function () {

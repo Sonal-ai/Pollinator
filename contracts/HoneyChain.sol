@@ -231,6 +231,8 @@ contract HoneyChain is AccessControl, Pausable {
             "HoneyChain: Not current custodian or admin relayer"
         );
         require(_to != address(0), "HoneyChain: Cannot transfer to zero address");
+        require(_newStatus != BatchStatus.Recalled, "HoneyChain: Use recallBatch to recall");
+        require(uint8(_newStatus) >= uint8(batches[_batchIdHash].status), "HoneyChain: Cannot revert status backwards");
 
         address prev = batches[_batchIdHash].currentCustodian;
         batches[_batchIdHash].currentCustodian = _to;
@@ -261,6 +263,7 @@ contract HoneyChain is AccessControl, Pausable {
             batches[_batchIdHash].currentCustodian == msg.sender || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "HoneyChain: Not current custodian or admin relayer"
         );
+        require(batches[_batchIdHash].status != BatchStatus.Packaged, "HoneyChain: Batch already packaged");
 
         // Supply chain integrity: packaged quantity cannot exceed harvested quantity
         uint32 totalPackagedGrams = _jarCount * _jarSizeGrams;
