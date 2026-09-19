@@ -64,7 +64,7 @@ export function PackagingForm({ processableBatches }: { processableBatches: Proc
         success: true,
         txHash: packData.txHash,
         polygonscanUrl: packData.polygonscanUrl,
-        qrs: qrData.results,
+        qrs: qrData.qrTokens || qrData.results,
       });
 
       // Clear form

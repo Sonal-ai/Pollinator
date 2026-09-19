@@ -139,12 +139,12 @@ export async function processQRScan(params: {
     return { valid: false, status: 'NOT_FOUND', reason: 'QR token not found in system.' };
   }
 
-  if (!token.active) {
-    return { valid: false, status: 'DEACTIVATED', reason: 'This QR has been deactivated.' };
-  }
-
   if (token.batch.recalled) {
     return { valid: false, status: 'RECALLED', reason: 'This batch has been recalled.' };
+  }
+
+  if (!token.active) {
+    return { valid: false, status: 'DEACTIVATED', reason: 'This QR has been deactivated.' };
   }
 
   // Step 3: Geolocate and log scan

@@ -85,7 +85,6 @@ unzip deploy.zip
 # Write environment variables
 cat << 'EOF' > .env
 ${envFile}
-DATABASE_URL="file:./dev.db"
 EOF
 
 # Setup database & build

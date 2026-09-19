@@ -191,13 +191,17 @@ export async function translateResponse(
     ta: 'Tamil',
   };
 
+  const sanitizedText = sanitizeInput(englishText);
   const prompt = `Translate the following text to ${languageNames[targetLanguage]}.
 Return ONLY the translation — no explanation, no quotes.
 Keep numbers and codes (like batch codes) unchanged.
-Text: ${englishText}`;
+Text:
+<user_input>
+${sanitizedText}
+</user_input>`;
 
   try {
-    return await invokeModel(prompt, 300);
+    return await invokeModelWithFallback(prompt, 300);
   } catch (err) {
     console.error('[bedrock] translateResponse failed:', err);
     return englishText; // Fallback to English if translation fails

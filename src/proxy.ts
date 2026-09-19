@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifySessionToken } from './lib/auth';
 
 // ============================================================
 // Middleware — Rate Limiting + Dashboard Auth Guard
@@ -38,7 +39,7 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
     ?? request.headers.get('x-real-ip')
@@ -46,14 +47,12 @@ export function proxy(request: NextRequest) {
 
   // ── Auth guard: protect all /dashboard/* except /dashboard/login ──
   if (pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/login')) {
-    const session = request.cookies.get('pollinator_session');
-    if (!session) {
+    const sessionCookie = request.cookies.get('pollinator_session');
+    if (!sessionCookie?.value) {
       return NextResponse.redirect(new URL('/dashboard/login', request.url));
     }
-    // Basic session validity check (not cryptographic — prototype grade)
-    try {
-      JSON.parse(Buffer.from(session.value, 'base64').toString());
-    } catch {
+    const session = await verifySessionToken(sessionCookie.value);
+    if (!session) {
       const response = NextResponse.redirect(new URL('/dashboard/login', request.url));
       response.cookies.delete('pollinator_session');
       return response;

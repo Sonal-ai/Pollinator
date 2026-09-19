@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
@@ -18,10 +19,22 @@ const SensorReadingSchema = z.object({
 // ============================================================
 
 export async function POST(request: NextRequest) {
-  // Device authentication: shared secret in Authorization header
+  // Device authentication: shared secret in Authorization header (timing-safe comparison)
   const authHeader = request.headers.get('authorization') ?? '';
-  const deviceSecret = authHeader.replace('Bearer ', '');
-  if (!process.env.IOT_DEVICE_SECRET || deviceSecret !== process.env.IOT_DEVICE_SECRET) {
+  const deviceSecret = authHeader.replace(/^Bearer\s+/i, '').trim();
+  const expectedSecret = process.env.IOT_DEVICE_SECRET;
+
+  if (!expectedSecret || !deviceSecret) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const secretBuffer = Buffer.from(deviceSecret);
+  const expectedBuffer = Buffer.from(expectedSecret);
+
+  if (
+    secretBuffer.length !== expectedBuffer.length ||
+    !crypto.timingSafeEqual(secretBuffer, expectedBuffer)
+  ) {
     return new Response('Unauthorized', { status: 401 });
   }
 
