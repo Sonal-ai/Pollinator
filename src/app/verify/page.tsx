@@ -83,9 +83,9 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
         region: 'Wardha, Maharashtra',
         lab_verified: true,
         recalled: false,
-        txHash: '0x9b4ae1c0788d44e5fa68d9047ca87fa13c3b0e36eB29b47a',
+        txHash: '0x18f372154f084b090250f34b8c4d8482c4cc7911536289f77a9cdb7d7d6df8d8',
         metadataCID: 'QmZ4tDuPp599Zghq43a41zH2X8cK9xP145yW5N7tQ',
-        metadataHash: '0xabc123789fedcba456',
+        metadataHash: '0xabc123789fedcba4567890123456789012345678901234567890123456789012',
         beekeeper: {
           name: 'Sunil Patil (KVIC Wardha Cluster CL-01)',
           region: 'Wardha, Maharashtra',
@@ -94,7 +94,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
         certificates: [
           {
             id: 'cert-1',
-            certificateHash: '0x8f2d119ec845a7bb9104c4',
+            certificateHash: '0x8f2d119ec845a7bb9104c4b650a3d926a8f777f96422d790b0e36eb29b47a',
             ipfsCID: 'QmZ4tDuPp599Zghq43a41zH2X8cK9xP145yW5N7tQ',
             createdAt: new Date('2026-09-08'),
           },
@@ -107,7 +107,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
             to: '0x321aB0e36eB29b47a98210DDB6ED7cC7e4607',
             fromCustodian: '0x06a7E556dA2e1e7C40d0C3a19DDB6ED7cC7e4607',
             toCustodian: '0x321aB0e36eB29b47a98210DDB6ED7cC7e4607',
-            txHash: '0x9b4ae1c0788d44e5fa68d9047ca87fa13c3b0e36',
+            txHash: '0x0ea37ad26fc6eb55a236eeade80201bf2ba3cddf15e378b7d00cfde3b3118304',
             createdAt: new Date('2026-09-06'),
           },
           {
@@ -117,7 +117,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
             to: '0x4B650a3d926A8f777f96422d790B0e36eB29b47a',
             fromCustodian: '0x321aB0e36eB29b47a98210DDB6ED7cC7e4607',
             toCustodian: '0x4B650a3d926A8f777f96422d790B0e36eB29b47a',
-            txHash: '0x712fa9b4ae1c0788d44e5fa68d9047ca87fa13c3',
+            txHash: '0x5fb00c62c0b560a6b0956b05ae8a280be8d7f08259a93f04dab6d0253e0b3775',
             createdAt: new Date('2026-09-09'),
           },
         ],

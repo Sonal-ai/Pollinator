@@ -94,6 +94,10 @@ const BATCH_STATUS_LABELS: Record<number, string> = {
 
 const AMOY_CONTRACT_ADDRESS = '0x4B650a3d926A8f777f96422d790B0e36eB29b47a';
 
+function isValidTxHash(hash: string | null | undefined): boolean {
+  return !!hash && /^0x[a-fA-F0-9]{64}$/.test(hash);
+}
+
 export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeDataUrl }: VerifyClientProps) {
   const [activeTab, setActiveTab] = useState<'certificate' | 'journey' | 'crypto'>('certificate');
   const [copiedTx, setCopiedTx] = useState(false);
@@ -102,10 +106,11 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
   const isRecalled = batch.recalled || chainData?.recalled;
   const isIntegrityFailed = integrity && !integrity.valid && !integrity.networkError;
 
-  const amoyExplorerTxUrl = batch.txHash
-    ? `https://amoy.polygonscan.com/tx/${batch.txHash}`
-    : `https://amoy.polygonscan.com/address/${AMOY_CONTRACT_ADDRESS}`;
   const amoyContractUrl = `https://amoy.polygonscan.com/address/${AMOY_CONTRACT_ADDRESS}`;
+  const isAmoyTxValid = isValidTxHash(batch.txHash);
+  const amoyExplorerTxUrl = isAmoyTxValid
+    ? `https://amoy.polygonscan.com/tx/${batch.txHash}`
+    : amoyContractUrl;
 
   // Dynamically resolve scanner's actual location (handles localhost/loopback gracefully)
   useEffect(() => {
@@ -479,7 +484,7 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                   </p>
                   {evt.txHash && (
                     <a
-                      href={`https://amoy.polygonscan.com/tx/${evt.txHash}`}
+                      href={isValidTxHash(evt.txHash) ? `https://amoy.polygonscan.com/tx/${evt.txHash}` : amoyContractUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11px] font-mono text-yellow-400 hover:underline flex items-center gap-1 font-bold"
@@ -600,11 +605,11 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                     {copiedTx ? <Check className="w-3.5 h-3.5 text-yellow-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                   <a
-                    href={`https://amoy.polygonscan.com/tx/${batch.txHash}`}
+                    href={isAmoyTxValid ? `https://amoy.polygonscan.com/tx/${batch.txHash}` : amoyContractUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1 rounded hover:bg-white/10 text-yellow-400 hover:text-yellow-300"
-                    title="Open in Polygonscan"
+                    title={isAmoyTxValid ? "Open in Polygonscan" : "Open Contract on Polygonscan"}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
