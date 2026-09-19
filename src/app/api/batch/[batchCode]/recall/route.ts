@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { recallBatchOnChain } from '@/lib/blockchain';
+import { recallBatchOnChain, getExplorerTxUrl } from '@/lib/blockchain';
 import { uploadBatchMetadata, type BatchMetadata } from '@/lib/ipfs';
 import { env } from '@/lib/env';
 
@@ -14,18 +14,10 @@ export async function POST(
 ) {
   const apiKey = request.headers.get('x-admin-api-key') ??
     request.headers.get('authorization')?.replace('Bearer ', '');
-  const isAdminKey = apiKey && apiKey === env.ADMIN_API_KEY;
+  const isAdminKey = Boolean(apiKey && env.ADMIN_API_KEY && apiKey === env.ADMIN_API_KEY);
 
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
-
-  let session: { role?: string } | null = null;
-  if (sessionCookie) {
-    try {
-      session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-    } catch { /* ignore */ }
-  }
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
 
   if (!isAdminKey && session?.role !== 'admin') {
     return new Response('Unauthorized. Admin role required.', { status: 401 });
@@ -88,6 +80,6 @@ export async function POST(
     recalled: true,
     reason,
     txHash,
-    polygonscanUrl: txHash ? `https://amoy.polygonscan.com/tx/${txHash}` : null,
+    polygonscanUrl: getExplorerTxUrl(txHash),
   });
 }

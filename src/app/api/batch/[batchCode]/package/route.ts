@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { packageBatchOnChain } from '@/lib/blockchain';
+import { packageBatchOnChain, getExplorerTxUrl } from '@/lib/blockchain';
 import { uploadBatchMetadata, fetchMetadata, type BatchMetadata } from '@/lib/ipfs';
 
 const PackageSchema = z.object({
@@ -30,16 +30,8 @@ export async function POST(
     return Response.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, { status: 422 });
   }
 
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
-
-  let session: { walletAddress?: string; role?: string } | null = null;
-  if (sessionCookie) {
-    try {
-      session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-    } catch { /* ignore */ }
-  }
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
 
   if (session?.role !== 'admin' && session?.role !== 'processor') {
     return Response.json({ error: 'Unauthorized. Only Processors can package honey.' }, { status: 403 });
@@ -130,5 +122,5 @@ export async function POST(
     },
   });
 
-  return Response.json({ batchCode, jarCount, jarSizeGrams, newCID, txHash, polygonscanUrl: txHash ? `https://amoy.polygonscan.com/tx/${txHash}` : null });
+  return Response.json({ batchCode, jarCount, jarSizeGrams, newCID, txHash, polygonscanUrl: getExplorerTxUrl(txHash) });
 }

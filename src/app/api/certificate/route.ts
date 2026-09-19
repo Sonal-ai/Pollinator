@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { uploadFileToPinata, computeFileHash } from '@/lib/ipfs';
-import { verifyLabOnChain, hashBatchCode } from '@/lib/blockchain';
+import { verifyLabOnChain, hashBatchCode, getExplorerTxUrl } from '@/lib/blockchain';
+import { env } from '@/lib/env';
 
 // ============================================================
 // POST /api/certificate — Upload lab certificate and commit hash on-chain
@@ -9,19 +10,11 @@ import { verifyLabOnChain, hashBatchCode } from '@/lib/blockchain';
 
 export async function POST(request: NextRequest) {
   // Authenticate via session cookie
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
-
-  let session: { walletAddress?: string; role?: string } | null = null;
-  if (sessionCookie) {
-    try {
-      session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-    } catch { /* ignore */ }
-  }
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
 
   const apiKey = request.headers.get('x-admin-api-key') ?? request.headers.get('authorization')?.replace('Bearer ', '');
-  const isAdminKey = apiKey && apiKey === process.env.ADMIN_API_KEY;
+  const isAdminKey = Boolean(apiKey && env.ADMIN_API_KEY && apiKey === env.ADMIN_API_KEY);
 
   if (!isAdminKey && session?.role !== 'lab' && session?.role !== 'admin') {
     return Response.json({ error: 'Unauthorized. Lab or Admin role required.' }, { status: 401 });
@@ -122,7 +115,7 @@ export async function POST(request: NextRequest) {
       ipfsCID,
       txHash,
       ipfsUrl:         `${process.env.IPFS_GATEWAY}${ipfsCID}`,
-      polygonscanUrl:  txHash ? `https://amoy.polygonscan.com/tx/${txHash}` : null,
+      polygonscanUrl:  getExplorerTxUrl(txHash),
     },
     { status: 201 }
   );

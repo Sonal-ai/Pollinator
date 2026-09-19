@@ -18,10 +18,19 @@ const EnvSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string().min(1, 'AWS_ACCESS_KEY_ID is required'),
   AWS_SECRET_ACCESS_KEY: z.string().min(1, 'AWS_SECRET_ACCESS_KEY is required'),
 
-  // Polygon / Blockchain
-  POLYGON_RPC_URL: z.string().min(1, 'POLYGON_RPC_URL is required'),
+  // Blockchain Network Selection: 'local' (Hardhat node) or 'amoy' (Polygon Amoy)
+  BLOCKCHAIN_NETWORK: z.enum(['local', 'amoy', 'localhost', 'polygonAmoy', 'global']).default('local'),
+
+  // Local Blockchain (Hardhat Node)
+  LOCAL_RPC_URL: z.string().default('http://127.0.0.1:8545'),
+  LOCAL_CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'LOCAL_CONTRACT_ADDRESS must be a valid EVM address').optional(),
+  LOCAL_PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'LOCAL_PRIVATE_KEY must be a 32-byte hex string').default('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'),
+
+  // Polygon Amoy (Global / Testnet)
+  POLYGON_RPC_URL: z.string().default('https://rpc-amoy.polygon.technology'),
   CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'CONTRACT_ADDRESS must be a valid EVM address').optional(),
   PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'PRIVATE_KEY must be a 32-byte hex string').optional(),
+  NEXT_PUBLIC_BLOCKCHAIN_NETWORK: z.string().optional(),
 
   // IPFS / Pinata
   AMB_ENDPOINT: z.string().url().optional(),

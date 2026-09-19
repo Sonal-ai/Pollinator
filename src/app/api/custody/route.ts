@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { transferCustodyOnChain } from '@/lib/blockchain';
+import { transferCustodyOnChain, getExplorerTxUrl } from '@/lib/blockchain';
 
 // Batch status values that map to Solidity enum indices
 const BATCH_STATUS_MAP: Record<string, number> = {
@@ -59,16 +59,8 @@ export async function POST(request: NextRequest) {
   // --------------------------------------------------------
   // Strict Authorization: Only the current custodian or an admin can transfer custody
   // --------------------------------------------------------
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
-
-  let session: { walletAddress?: string; role?: string } | null = null;
-  if (sessionCookie) {
-    try {
-      session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-    } catch { /* ignore */ }
-  }
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
 
   const isAdmin = session?.role === 'admin';
   const isCurrentCustodian = session?.walletAddress && session.walletAddress.toLowerCase() === batch.current_custodian?.toLowerCase();
@@ -121,7 +113,7 @@ export async function POST(request: NextRequest) {
     to: toAddress,
     newStatus,
     txHash,
-    polygonscanUrl: txHash ? `https://amoy.polygonscan.com/tx/${txHash}` : null,
+    polygonscanUrl: getExplorerTxUrl(txHash),
   });
 }
 

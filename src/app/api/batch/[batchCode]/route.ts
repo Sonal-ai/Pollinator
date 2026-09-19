@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getBatchFromChain } from '@/lib/blockchain';
+import { getBatchFromChain, getExplorerTxUrl } from '@/lib/blockchain';
 
 // ============================================================
 // GET /api/batch/[batchCode] — Get full batch details
@@ -46,8 +46,6 @@ export async function GET(
     batch,
     chainRecord,
     chainDiscrepancy,
-    polygonscanUrl: batch.txHash
-      ? `https://amoy.polygonscan.com/tx/${batch.txHash}`
-      : null,
+    polygonscanUrl: getExplorerTxUrl(batch.txHash),
   });
 }

@@ -20,9 +20,18 @@ import { GlowCard } from '@/components/ui/glow-card';
 import { NetworkBadge } from '@/components/ui/network-badge';
 import { InteractiveHoneycomb } from '@/components/ui/interactive-honeycomb';
 import { ProvenanceSandbox } from '@/components/ui/provenance-sandbox';
+import {
+  getActiveContractAddress,
+  getActiveNetworkName,
+  getExplorerAddressUrl,
+  isLocalChain,
+} from '@/lib/blockchain';
 
 export default function HomePage() {
-  const contractAddress = '0x4B650a3d926A8f777f96422d790B0e36eB29b47a';
+  const contractAddress = getActiveContractAddress() || '0x4B650a3d926A8f777f96422d790B0e36eB29b47a';
+  const networkName = getActiveNetworkName();
+  const isLocal = isLocalChain();
+  const explorerUrl = getExplorerAddressUrl(contractAddress);
 
   return (
     <div className="min-h-screen bg-[#080a0f] text-slate-100 relative overflow-hidden selection:bg-yellow-400 selection:text-black honeycomb-pattern">
@@ -70,7 +79,13 @@ export default function HomePage() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-3">
-            <NetworkBadge contractAddress={contractAddress} className="hidden sm:inline-flex" />
+            <NetworkBadge
+              contractAddress={contractAddress}
+              networkName={networkName}
+              isLocal={isLocal}
+              explorerUrl={explorerUrl}
+              className="hidden sm:inline-flex"
+            />
             <RollButton href="/dashboard" size="sm" variant="primary">
               Launch Hive
             </RollButton>
@@ -320,15 +335,21 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
-            <a
-              href={`https://amoy.polygonscan.com/address/${contractAddress}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-yellow-400 transition-colors flex items-center gap-1 font-mono text-yellow-400/80"
-            >
-              Contract: {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
-              <ArrowUpRight className="w-3 h-3" />
-            </a>
+            {explorerUrl ? (
+              <a
+                href={explorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-yellow-400 transition-colors flex items-center gap-1 font-mono text-yellow-400/80"
+              >
+                Contract: {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)}
+                <ArrowUpRight className="w-3 h-3" />
+              </a>
+            ) : (
+              <span className="flex items-center gap-1 font-mono text-emerald-400/80">
+                Contract: {contractAddress.slice(0, 6)}...{contractAddress.slice(-4)} ({networkName})
+              </span>
+            )}
             <Link href="/dashboard" className="hover:text-white transition-colors">
               Supply Chain Dashboard
             </Link>
