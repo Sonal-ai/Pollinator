@@ -46,7 +46,12 @@ export default function HomePage() {
       <div className="absolute top-[1700px] left-0 w-[600px] h-[600px] bg-yellow-400/20 dark:bg-amber-500/10 blur-[160px] pointer-events-none -z-10" />
 
       {/* Floating Glass Navigation Header */}
-      <Navbar contractAddress={contractAddress} />
+      <Navbar
+        contractAddress={contractAddress}
+        networkName={networkName}
+        explorerUrl={explorerUrl}
+        isLocal={isLocal}
+      />
 
       {/* Hero Section */}
       <section className="max-w-6xl mx-auto px-6 pt-16 pb-20 sm:pt-24 sm:pb-28 relative z-10">

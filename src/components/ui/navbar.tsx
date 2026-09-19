@@ -22,7 +22,19 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'verify-demo', label: 'Verify Nectar' },
 ];
 
-export function Navbar({ contractAddress }: { contractAddress: string }) {
+interface NavbarProps {
+  contractAddress?: string;
+  networkName?: string;
+  explorerUrl?: string | null;
+  isLocal?: boolean;
+}
+
+export function Navbar({
+  contractAddress,
+  networkName,
+  explorerUrl,
+  isLocal,
+}: NavbarProps) {
   const [activeSection, setActiveSection] = useState<string>('how-it-works');
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -161,7 +173,13 @@ export function Navbar({ contractAddress }: { contractAddress: string }) {
 
         {/* Right: Network, Theme Toggle, Launch CTA */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          <NetworkBadge contractAddress={contractAddress} className="hidden lg:inline-flex" />
+          <NetworkBadge
+            contractAddress={contractAddress}
+            networkName={networkName}
+            explorerUrl={explorerUrl}
+            isLocal={isLocal}
+            className="hidden lg:inline-flex"
+          />
           <ThemeToggle />
           
           <RollButton href="/dashboard" size="sm" variant="primary" className="hidden sm:inline-flex">
@@ -209,7 +227,12 @@ export function Navbar({ contractAddress }: { contractAddress: string }) {
             </div>
 
             <div className="pt-3 border-t border-black/5 dark:border-white/10 flex items-center justify-between gap-2">
-              <NetworkBadge contractAddress={contractAddress} />
+              <NetworkBadge
+                contractAddress={contractAddress}
+                networkName={networkName}
+                explorerUrl={explorerUrl}
+                isLocal={isLocal}
+              />
               <RollButton href="/dashboard" size="sm" variant="primary" className="flex-1">
                 Launch Hive
               </RollButton>
