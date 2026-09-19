@@ -55,116 +55,43 @@ The Indian apiculture industry faces two critical challenges:
 ```mermaid
 flowchart TD
 
-  %% -----------------------------------------------------------
-  %% LAYER 1: FIELD IOT SENSING & USER TOUCHPOINTS
-  %% -----------------------------------------------------------
-  subgraph Layer1["1️⃣ Ingress: Field IoT & Stakeholder Touchpoints"]
-    direction TB
-    subgraph SubIoT["🐝 Physical Apiary & Star IoT Mesh"]
-      direction TB
-      HiveNode["🏠 Physical Smart Beehives (Brood & Super Chambers)<br/>• SHT31: Brood Temp & Humidity Sensor<br/>• HX711: Super Weight & Nectar Flow Load Cell<br/>• INMP441: Acoustic Microphone (Colony Buzzing)<br/>• ESP32-CAM: Visual Comb & Pest Inspection"]
-      FieldGateway["📡 Central Apiary Field Gateway Hub<br/>Solar Powered ESP32 + 4G/LTE GSM Master"]
-    end
-
-    subgraph SubUsers["👥 User Stakeholders & Touchpoints"]
-      direction TB
-      Farmer["🌾 Beekeeper / Farmer<br/>(WhatsApp Voice & Text Interface)"]
-      Processor["🏭 Honey Processor & Packaging Team<br/>(Batch Packaging & Custody Handover)"]
-      Lab["🔬 Certified Quality Testing Lab<br/>(Purity & NMR Report Upload Portal)"]
-      Consumer["🛒 End Consumer<br/>(Smart QR Scanner & Provenance Portal)"]
-    end
+  %% --- 1. USERS & FIELD IOT ---
+  subgraph Ingress["👥 Stakeholders & Field IoT (Star Mesh)"]
+    direction LR
+    Users["👥 User Stakeholders<br/>• Farmer: WhatsApp Voice & Chat<br/>• Processor: Batch Packaging<br/>• Lab: NMR & Purity Reports<br/>• Consumer: Smart QR Scanner"]
+    Hive["🐝 Physical Smart Hive<br/>• SHT31: Brood Temp & Humidity<br/>• HX711: Super Weight Load Cell<br/>• INMP441: Acoustic Microphone<br/>• ESP32-CAM: Comb Inspection"]
+    Gateway["📡 Central Solar GSM Hub<br/>Star Topology Master Gateway"]
+    Hive -->|"ESP-NOW / LoRa"| Gateway
   end
 
-  %% -----------------------------------------------------------
-  %% LAYER 2: INGESTION & GATEWAY ROUTING
-  %% -----------------------------------------------------------
-  subgraph Layer2["2️⃣ Ingestion, Edge Gateway & Security"]
+  %% --- 2. CLOUD CORE ---
+  subgraph Cloud["☁️ AWS EC2 Cloud Core Backend"]
     direction TB
-    MQTTBroker["📨 MQTT Star Topology Broker (Mosquitto / AWS IoT Core)<br/>Topic: telemetry/{apiary_id}/{hive_id}"]
-    IngestWorker["⚡ Telemetry Ingestion Worker (/api/sensor-data)<br/>Payload Decompression & Normalization"]
-    NginxSSL["🌐 NGINX Reverse Proxy + Let's Encrypt SSL<br/>(100.24.80.15.sslip.io)"]
-    AuthEdge["🛡️ Edge Security & HMAC Signature Validator<br/>Rate Limiter & Anti-Replay Guard"]
+    MQTT["📨 MQTT Star Broker (Mosquitto / AWS IoT Core)"]
+    Backend["⚡ Next.js 16 Full-Stack Engine & NGINX SSL"]
+    DB[("🗄️ PostgreSQL Database (Prisma) + Redis FSM")]
+    MQTT -->|"Telemetry Stream"| Backend
+    Backend ---|"State Sync & Queries"| DB
   end
 
-  %% -----------------------------------------------------------
-  %% LAYER 3: AWS CORE CLOUD BACKEND & DATA
-  %% -----------------------------------------------------------
-  subgraph Layer3["3️⃣ AWS EC2 Cloud Core Backend & Persistence"]
-    direction TB
-    NextApp["⚡ Next.js 16 Full-Stack Engine (App Router)<br/>APIs, WhatsApp Webhook & Server Actions"]
-    RedisFSM["🔄 Redis / In-Memory FSM<br/>Session State Machine & Message Deduplication"]
-    PostgresDB[("🗄️ PostgreSQL Database (Prisma ORM)<br/>Sensor Telemetry, Batches, Custody & Audit Logs")]
+  %% --- 3. SPECIALIZED ENGINES ---
+  subgraph Engines["🚀 Processing, Intelligence & Trust Engines"]
+    direction LR
+    AI["🧠 AI Health Engine<br/>• Gemini 3.5 Flash: Voice NLP<br/>• Acoustic FFT: Swarm & Piping<br/>• CV Model: Pest & Varroa Mites<br/>• Hive Health Score (0-100)"]
+    Trust["⛓️ Blockchain & Storage<br/>• HoneyChain.sol: Polygon Amoy<br/>• Pinata IPFS: Lab Reports<br/>• Custody Transfer Protocol"]
+    Security["🛡️ Anti-Clone Security<br/>• Dynamic HMAC-SHA256 QR<br/>• Geo-Velocity Anomaly Audit<br/>• 1-Click Cryptographic Recall"]
   end
 
-  %% -----------------------------------------------------------
-  %% LAYER 4: SPECIALIZED PROCESSING, TRUST & SECURITY ENGINES
-  %% -----------------------------------------------------------
-  subgraph Layer4["4️⃣ AI Intelligence, Blockchain & Anti-Clone Security"]
-    direction TB
+  %% --- DATA & EVENT FLOWS ---
+  Gateway -->|"MQTT Pub"| MQTT
+  Users -->|"HTTPS / WhatsApp Webhook"| Backend
 
-    subgraph AIEngine["🧠 AI Models & Health Analytics Engine"]
-      direction TB
-      GeminiVoice["🗣️ Google Gemini 3.5 Flash<br/>Multimodal Voice Transcription & Intent NLP"]
-      AcousticAI["🎵 Acoustic Buzzing Model<br/>FFT Frequency Analysis: Swarming & Queen Piping"]
-      VisionAI["👁️ Computer Vision Model<br/>Varroa Mite, Foulbrood & Pest Detection"]
-      HiveScoreEngine["📊 Hive Health Score Algorithm<br/>Weight + Brood Temp + Humidity + Sound FFT"]
-    end
+  Backend -->|"Audio & Telemetry"| AI
+  AI -->|"Store Health Score"| DB
 
-    subgraph TrustEngine["⛓️ Blockchain, Storage & Custody Transfer"]
-      direction TB
-      PinataIPFS["📦 Pinata IPFS Distributed Storage<br/>Lab Certificates, NMR Spectra & Provenance CIDs"]
-      SmartContract["📜 HoneyChain.sol (Polygon Amoy Testnet)<br/>ERC-721 Batch Provenance & Immutable Ledger"]
-      CustodyEngine["🤝 Custody Transfer Protocol<br/>Beekeeper -> Processor -> Distributor -> Retailer"]
-    end
-
-    subgraph SecurityEngine["🛡️ Anti-QR Cloning & Verification Engine"]
-      direction TB
-      HMACSigner["🔐 Dynamic HMAC-SHA256 Token Generator<br/>Unique Cryptographic Seal per Honey Jar"]
-      GeoAudit["🗺️ Geo-Fencing & Scan Velocity Anomaly Detector<br/>Counterfeit Clone Flagging & Replay Prevention"]
-      RecallEngine["🚨 Cryptographic Batch Recall System<br/>Instant Batch Invalidation & Consumer Warning"]
-    end
-  end
-
-  %% --- Field IoT Edge Flow ---
-  HiveNode -->|"ESP-NOW / LoRa Star Mesh"| FieldGateway
-  FieldGateway -->|"Cellular MQTT Publish"| MQTTBroker
-  MQTTBroker -->|"Forward Telemetry"| IngestWorker
-  IngestWorker -->|"Ingest Sensor Data"| NextApp
-
-  %% --- User Ingress Flow ---
-  Farmer -->|"WhatsApp Voice & Text"| NginxSSL
-  Processor -->|"Custody Handover & Packaging"| NginxSSL
-  Lab -->|"Upload Purity Certificate"| NginxSSL
-  Consumer -->|"Scan Smart QR Label"| NginxSSL
-  NginxSSL -->|"Reverse Proxy"| AuthEdge
-  AuthEdge -->|"Validated Requests"| NextApp
-
-  %% --- Core State & Persistence Flow ---
-  NextApp -->|"Session State"| RedisFSM
-  RedisFSM -->|"State Sync"| NextApp
-  NextApp -->|"Read & Write Records"| PostgresDB
-  PostgresDB -->|"Data Queries"| NextApp
-
-  %% --- AI Diagnostics Pipelines ---
-  NextApp -->|"Audio Voice Notes (.ogg)"| GeminiVoice
-  NextApp -->|"Acoustic Audio Samples (.wav)"| AcousticAI
-  NextApp -->|"Comb Imagery"| VisionAI
-  NextApp -->|"Telemetry Vectors"| HiveScoreEngine
-  HiveScoreEngine -->|"Store Health Score 0-100"| PostgresDB
-
-  %% --- Trust & Custody Pipelines ---
-  NextApp -->|"Upload Lab Certs"| PinataIPFS
-  PinataIPFS -->|"IPFS Metadata CID"| SmartContract
-  NextApp -->|"Mint Honey Batch NFT"| SmartContract
-  NextApp -->|"Initiate Custody Handover"| CustodyEngine
-  CustodyEngine -->|"Update Custodian On-Chain"| SmartContract
-
-  %% --- Anti-Clone Security Pipelines ---
-  NextApp -->|"Generate Secure QR Token"| HMACSigner
-  NextApp -->|"Audit Scan Location & Speed"| GeoAudit
-  GeoAudit -->|"Record Scan Event"| PostgresDB
-  RecallEngine -.->|"Flag Compromised Batch"| SmartContract
-  RecallEngine -.->|"Invalidate QR Tokens"| NextApp
+  Backend -->|"Mint NFT & Pin CID"| Trust
+  Backend -->|"Generate & Verify QR"| Security
+  Security -.->|"Flag Tampered Batch"| Trust
 ```
 
 ### 🔄 End-to-End Honey Lifecycle & Custody Transfer Sequence
