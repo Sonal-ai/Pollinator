@@ -34,11 +34,11 @@ export function RollButton({
 
   const variantClasses = {
     primary:
-      'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-black shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/45 border border-yellow-300/80 hover:scale-[1.02]',
+      'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 hover:from-yellow-300 hover:to-amber-400 text-black shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 border border-yellow-300/80 hover:scale-[1.02]',
     secondary:
-      'bg-amber-100/80 dark:bg-[#12151f]/90 hover:bg-amber-200/80 dark:hover:bg-[#181d2b] text-slate-800 dark:text-slate-100 border border-amber-300/60 dark:border-yellow-400/20 hover:border-amber-400 dark:hover:border-yellow-400/50 backdrop-blur-md hover:text-amber-800 dark:hover:text-yellow-400',
+      'bg-white/95 dark:bg-[#12151f]/90 hover:bg-white dark:hover:bg-[#181d2b] text-slate-800 dark:text-slate-100 border-2 border-amber-300/80 dark:border-yellow-400/20 hover:border-amber-500 dark:hover:border-yellow-400/50 shadow-sm shadow-amber-500/10 backdrop-blur-md hover:text-amber-700 dark:hover:text-yellow-400',
     outline:
-      'bg-transparent hover:bg-amber-100/50 dark:hover:bg-yellow-400/10 text-amber-700 dark:text-yellow-400 border border-amber-400/50 dark:border-yellow-400/40 hover:border-amber-500 dark:hover:border-yellow-300',
+      'bg-white/50 dark:bg-transparent hover:bg-amber-100/50 dark:hover:bg-yellow-400/10 text-amber-800 dark:text-yellow-400 border-2 border-amber-400/60 dark:border-yellow-400/40 hover:border-amber-600 dark:hover:border-yellow-300',
     ghost:
       'bg-transparent hover:bg-amber-100/50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 hover:text-amber-800 dark:hover:text-yellow-400 border-transparent',
   }[variant];

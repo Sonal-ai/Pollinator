@@ -40,9 +40,9 @@ export default function HomePage() {
       <div className="absolute inset-0 honeycomb-grid-overlay pointer-events-none opacity-50 dark:opacity-40 z-0" />
 
       {/* Radiant Beehive Yellow Aura Lights */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[650px] bg-gradient-to-b from-amber-400/15 dark:from-yellow-500/20 via-yellow-400/10 dark:via-amber-500/10 to-transparent blur-[140px] pointer-events-none -z-10" />
-      <div className="absolute top-[850px] right-0 w-[550px] h-[550px] bg-yellow-400/15 dark:bg-yellow-500/10 blur-[160px] pointer-events-none -z-10" />
-      <div className="absolute top-[1700px] left-0 w-[600px] h-[600px] bg-amber-400/15 dark:bg-amber-500/10 blur-[160px] pointer-events-none -z-10" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[650px] bg-gradient-to-b from-amber-400/20 dark:from-yellow-500/20 via-yellow-300/15 dark:via-amber-500/10 to-transparent blur-[140px] pointer-events-none -z-10" />
+      <div className="absolute top-[850px] right-0 w-[550px] h-[550px] bg-amber-400/20 dark:bg-yellow-500/10 blur-[160px] pointer-events-none -z-10" />
+      <div className="absolute top-[1700px] left-0 w-[600px] h-[600px] bg-yellow-400/20 dark:bg-amber-500/10 blur-[160px] pointer-events-none -z-10" />
 
       {/* Floating Glass Navigation Header */}
       <Navbar contractAddress={contractAddress} />
@@ -61,14 +61,14 @@ export default function HomePage() {
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.08]">
               The Proof-of-Nectar Standard for{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 dark:from-yellow-300 dark:via-amber-300 dark:to-yellow-500 drop-shadow-[0_0_35px_rgba(245,158,11,0.2)] dark:drop-shadow-[0_0_35px_rgba(255,210,30,0.4)]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-700 via-amber-500 to-amber-600 dark:from-yellow-300 dark:via-amber-300 dark:to-yellow-500 drop-shadow-[0_2px_20px_rgba(217,119,6,0.2)] dark:drop-shadow-[0_0_35px_rgba(255,210,30,0.4)]">
                 Pure Honey.
               </span>
             </h1>
 
             {/* Subhead */}
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-              77% of commercial honey is adulterated with synthetic syrups. Pollinator links smart hive IoT sensors directly to the Polygon blockchain — guaranteeing the authenticity and origin of every jar.
+              77% of commercial honey is adulterated with synthetic syrups. Pollinators links smart hive IoT sensors directly to the Polygon blockchain — guaranteeing the authenticity and origin of every jar.
             </p>
 
             {/* CTAs */}
@@ -90,22 +90,22 @@ export default function HomePage() {
             </div>
 
             {/* Quick Proof Pills */}
-            <div className="pt-6 border-t border-amber-200/70 dark:border-yellow-400/15 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
-              <div>
+            <div className="pt-6 border-t border-amber-200/80 dark:border-yellow-400/15 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
+              <div className="p-3 rounded-2xl bg-amber-500/[0.05] dark:bg-transparent border border-amber-200/60 dark:border-transparent">
                 <p className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">100%</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">On-Chain Hashes</p>
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">On-Chain Hashes</p>
               </div>
-              <div>
+              <div className="p-3 rounded-2xl bg-amber-500/[0.05] dark:bg-transparent border border-amber-200/60 dark:border-transparent">
                 <p className="text-2xl font-extrabold text-amber-600 dark:text-yellow-400 font-mono">Zero</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Adulteration Risk</p>
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Adulteration Risk</p>
               </div>
-              <div>
+              <div className="p-3 rounded-2xl bg-amber-500/[0.05] dark:bg-transparent border border-amber-200/60 dark:border-transparent">
                 <p className="text-2xl font-extrabold text-amber-700 dark:text-amber-400 font-mono">6 Langs</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Forager Voice AI</p>
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Forager Voice AI</p>
               </div>
-              <div>
+              <div className="p-3 rounded-2xl bg-amber-500/[0.05] dark:bg-transparent border border-amber-200/60 dark:border-transparent">
                 <p className="text-2xl font-extrabold text-amber-600 dark:text-yellow-300 font-mono">5 Mins</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Hive Telemetry</p>
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Hive Telemetry</p>
               </div>
             </div>
           </div>

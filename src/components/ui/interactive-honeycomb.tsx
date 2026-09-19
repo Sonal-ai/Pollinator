@@ -2,10 +2,13 @@
 
 import React, { useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { useTheme } from '@/components/theme-provider';
 
 export function InteractiveHoneycomb() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredCell, setHoveredCell] = useState<number | null>(null);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   // Mouse coordinates with spring physics
   const mouseX = useMotionValue(0);
@@ -65,7 +68,11 @@ export function InteractiveHoneycomb() {
       className="relative flex items-center justify-center w-full max-w-[550px] aspect-square mx-auto select-none perspective-[1200px]"
     >
       {/* Radiant Beehive Yellow Background Glow */}
-      <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-yellow-500/25 via-amber-400/20 to-transparent blur-[90px] pointer-events-none animate-hive-pulse" />
+      <div className={`absolute inset-4 rounded-full pointer-events-none animate-hive-pulse ${
+        isDark
+          ? 'bg-gradient-to-tr from-yellow-500/25 via-amber-400/20 to-transparent blur-[90px]'
+          : 'bg-gradient-to-tr from-amber-400/30 via-yellow-300/20 to-transparent blur-[85px]'
+      }`} />
 
       {/* 3D Motion Canvas */}
       <motion.div
@@ -78,27 +85,40 @@ export function InteractiveHoneycomb() {
       >
         <svg
           viewBox="0 0 500 440"
-          className="w-full h-full drop-shadow-[0_20px_60px_rgba(255,210,30,0.3)] overflow-visible"
+          className={`w-full h-full overflow-visible ${
+            isDark
+              ? 'drop-shadow-[0_20px_60px_rgba(255,210,30,0.3)]'
+              : 'drop-shadow-[0_16px_35px_rgba(217,119,6,0.18)]'
+          }`}
         >
           <defs>
-            {/* Standard Cell Gradient */}
-            <linearGradient id="beehiveCell" x1="0%" y1="0%" x2="100%" y2="100%">
+            {/* Dark Mode Standard Cell Gradient */}
+            <linearGradient id="beehiveCellDark" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#ffd21e" stopOpacity="0.25" />
               <stop offset="50%" stopColor="#ffb800" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="#0c0e14" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#0c0e14" stopOpacity="0.88" />
             </linearGradient>
 
-            {/* Active Highlighted Cell Gradient */}
-            <linearGradient id="activeBeehiveCell" x1="0%" y1="0%" x2="100%" y2="100%">
+            {/* Dark Mode Active Highlighted Cell Gradient */}
+            <linearGradient id="activeBeehiveCellDark" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#fff176" stopOpacity="0.95" />
               <stop offset="50%" stopColor="#ffd21e" stopOpacity="0.75" />
               <stop offset="100%" stopColor="#ff9800" stopOpacity="0.4" />
             </linearGradient>
 
-            {/* Gold Wireframe Pattern */}
-            <pattern id="hexWire" width="8" height="8" patternUnits="userSpaceOnUse">
-              <path d="M 0 0 L 8 8 M 8 0 L 0 8" fill="none" stroke="rgba(255,210,30,0.08)" strokeWidth="0.5" />
-            </pattern>
+            {/* Light Mode Standard Cell Gradient (Creamy Warm Ivory Honey) */}
+            <linearGradient id="beehiveCellLight" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+              <stop offset="50%" stopColor="#fef3c7" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#fde047" stopOpacity="0.85" />
+            </linearGradient>
+
+            {/* Light Mode Active Highlighted Cell Gradient (Electric Honey Amber) */}
+            <linearGradient id="activeBeehiveCellLight" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ffd21e" stopOpacity="1" />
+              <stop offset="50%" stopColor="#ffb800" stopOpacity="1" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="1" />
+            </linearGradient>
 
             <filter id="beeGlow" x="-30%" y="-30%" width="160%" height="160%">
               <feGaussianBlur stdDeviation="8" result="blur" />
@@ -107,7 +127,13 @@ export function InteractiveHoneycomb() {
           </defs>
 
           {/* Golden Nectar Data Highways Linking Cells */}
-          <g stroke="#ffd21e" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.35" className="animate-pulse">
+          <g
+            stroke={isDark ? '#ffd21e' : '#d97706'}
+            strokeWidth={isDark ? '1.5' : '1.8'}
+            strokeDasharray="3 3"
+            opacity={isDark ? 0.35 : 0.5}
+            className="animate-pulse"
+          >
             <line x1="250" y1="220" x2={250 + hexWidth} y2="220" />
             <line x1="250" y1="220" x2={250 - hexWidth} y2="220" />
             <line x1="250" y1="220" x2={250 + hexWidth / 2} y2={220 - vertSpacing} />
@@ -133,9 +159,17 @@ export function InteractiveHoneycomb() {
                 {/* Hexagon Outer Cell */}
                 <polygon
                   points={getHexPoints(c.x, c.y, hexRadius - 3)}
-                  fill={isHovered ? 'url(#activeBeehiveCell)' : 'url(#beehiveCell)'}
-                  stroke={isHovered ? '#ffd21e' : 'rgba(255, 210, 30, 0.28)'}
-                  strokeWidth={isHovered ? 2.5 : 1.2}
+                  fill={
+                    isDark
+                      ? (isHovered ? 'url(#activeBeehiveCellDark)' : 'url(#beehiveCellDark)')
+                      : (isHovered ? 'url(#activeBeehiveCellLight)' : 'url(#beehiveCellLight)')
+                  }
+                  stroke={
+                    isDark
+                      ? (isHovered ? '#ffd21e' : 'rgba(255, 210, 30, 0.28)')
+                      : (isHovered ? '#b45309' : 'rgba(217, 119, 6, 0.45)')
+                  }
+                  strokeWidth={isHovered ? 2.5 : 1.4}
                   filter={isHovered ? 'url(#beeGlow)' : undefined}
                   className="transition-all duration-300"
                 />
@@ -144,7 +178,11 @@ export function InteractiveHoneycomb() {
                 <polygon
                   points={getHexPoints(c.x, c.y, hexRadius - 9)}
                   fill="none"
-                  stroke={isHovered ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 210, 30, 0.12)'}
+                  stroke={
+                    isDark
+                      ? (isHovered ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 210, 30, 0.12)')
+                      : (isHovered ? 'rgba(180, 83, 9, 0.35)' : 'rgba(217, 119, 6, 0.2)')
+                  }
                   strokeWidth="1"
                 />
 
@@ -161,7 +199,7 @@ export function InteractiveHoneycomb() {
                   x={c.x}
                   y={c.y + 13}
                   textAnchor="middle"
-                  fill={isHovered ? '#000000' : '#ffffff'}
+                  fill={isHovered ? '#000000' : (isDark ? '#ffffff' : '#0f172a')}
                   className="text-[12px] font-extrabold font-sans select-none pointer-events-none tracking-tight"
                 >
                   {c.label}
@@ -170,7 +208,7 @@ export function InteractiveHoneycomb() {
                   x={c.x}
                   y={c.y + 26}
                   textAnchor="middle"
-                  fill={isHovered ? '#262626' : '#ffd21e'}
+                  fill={isHovered ? (isDark ? '#1a1a1a' : '#451a03') : (isDark ? '#ffd21e' : '#92400e')}
                   className="text-[9px] font-bold font-mono select-none pointer-events-none"
                 >
                   {c.sub}
@@ -184,11 +222,11 @@ export function InteractiveHoneycomb() {
         <motion.div
           animate={{ y: [-5, 5, -5] }}
           transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-          className="absolute -bottom-4 bg-white/95 dark:bg-[#0c0e14]/90 backdrop-blur-2xl border border-amber-300/60 dark:border-yellow-400/40 px-4 py-2 rounded-full flex items-center gap-2.5 shadow-xl shadow-amber-500/10 dark:shadow-yellow-500/20"
+          className="absolute -bottom-4 bg-white/95 dark:bg-[#0c0e14]/90 backdrop-blur-2xl border-2 border-amber-300/80 dark:border-yellow-400/40 px-4 py-2 rounded-full flex items-center gap-2.5 shadow-xl shadow-amber-500/15 dark:shadow-yellow-500/20"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-amber-500 dark:bg-yellow-400 animate-ping" />
-          <span className="text-xs font-mono text-slate-800 dark:text-slate-200">
-            Hive Consensus: <span className="text-amber-600 dark:text-yellow-400 font-extrabold">HoneyChain Amoy</span>
+          <span className="text-xs font-mono text-slate-800 dark:text-slate-200 font-semibold">
+            Hive Consensus: <span className="text-amber-700 dark:text-yellow-400 font-extrabold">HoneyChain Amoy</span>
           </span>
         </motion.div>
       </motion.div>
