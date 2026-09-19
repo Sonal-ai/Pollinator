@@ -27,7 +27,7 @@ export function NetworkBadge({
           (process.env.NEXT_PUBLIC_BLOCKCHAIN_NETWORK === 'local' ||
             process.env.NEXT_PUBLIC_BLOCKCHAIN_NETWORK === 'localhost'));
 
-  const label = networkName || (isLocalNetwork ? 'HoneyChain Local' : 'HoneyChain Amoy');
+  const label = networkName || (isLocalNetwork ? 'Local Hive' : 'HoneyChain Amoy');
   const targetExplorerUrl =
     explorerUrl !== undefined
       ? explorerUrl
@@ -45,48 +45,56 @@ export function NetworkBadge({
 
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-full border border-yellow-400/30 bg-[#12151f]/80 px-3.5 py-1.5 text-xs font-medium text-yellow-300 backdrop-blur-md transition-all hover:border-yellow-400/60 hover:bg-[#181d2b] shadow-lg shadow-yellow-500/10 ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full border border-amber-300/60 dark:border-yellow-400/25 bg-amber-50/90 dark:bg-[#12151f]/85 px-3 py-1.5 text-xs font-semibold text-amber-900 dark:text-yellow-300 backdrop-blur-md transition-all shadow-sm shrink-0 ${className}`}
     >
-      <span className="relative flex h-2.5 w-2.5">
-        <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${isLocalNetwork ? 'bg-emerald-400' : 'bg-yellow-400'}`}></span>
-        <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${isLocalNetwork ? 'bg-emerald-400' : 'bg-yellow-400'}`}></span>
+      <span className="relative flex h-2 w-2 shrink-0">
+        <span
+          className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${
+            isLocalNetwork ? 'bg-emerald-500' : 'bg-yellow-400'
+          }`}
+        />
+        <span
+          className={`relative inline-flex h-2 w-2 rounded-full ${
+            isLocalNetwork ? 'bg-emerald-500' : 'bg-yellow-400'
+          }`}
+        />
       </span>
 
-      <span className="flex items-center gap-1.5 text-slate-200">
-        <Hexagon className={`h-3.5 w-3.5 ${isLocalNetwork ? 'text-emerald-400 fill-emerald-400/20' : 'text-yellow-400 fill-yellow-400/20'}`} />
-        <span className={`font-bold ${isLocalNetwork ? 'text-emerald-300' : 'text-yellow-300'}`}>{label}</span>
+      <span className="flex items-center gap-1.5 whitespace-nowrap">
+        <Hexagon
+          className={`h-3.5 w-3.5 shrink-0 ${
+            isLocalNetwork ? 'text-emerald-500 fill-emerald-500/20' : 'text-yellow-500 dark:text-yellow-400 fill-yellow-400/20'
+          }`}
+        />
+        <span className="font-extrabold text-[11px] sm:text-xs">{label}</span>
       </span>
 
-      <span className="h-3 w-px bg-yellow-400/30" />
+      <span className="hidden xl:inline-block h-3 w-px bg-amber-200 dark:bg-yellow-400/25" />
 
       <button
         type="button"
         onClick={copyToClipboard}
-        className="group/copy flex items-center gap-1 font-mono text-slate-400 hover:text-white transition-colors"
+        className="hidden xl:inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
         title="Click to copy contract address"
       >
         <span>{shortAddress}</span>
         {copied ? (
-          <Check className="h-3 w-3 text-yellow-400" />
+          <Check className="h-3 w-3 text-emerald-500 dark:text-yellow-400" />
         ) : (
-          <Copy className="h-3 w-3 opacity-60 group-hover/copy:opacity-100" />
+          <Copy className="h-3 w-3 opacity-60 hover:opacity-100" />
         )}
       </button>
 
-      {targetExplorerUrl ? (
+      {targetExplorerUrl && (
         <a
           href={targetExplorerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-yellow-400/70 hover:text-yellow-300 transition-colors ml-0.5"
-          title="View on Block Explorer"
+          className="text-amber-600 dark:text-yellow-400/80 hover:text-amber-700 dark:hover:text-yellow-300 transition-colors ml-0.5 shrink-0"
+          title="View on Explorer"
         >
           <ExternalLink className="h-3 w-3" />
         </a>
-      ) : (
-        <span className="text-[10px] text-emerald-400/60 font-mono px-1 border border-emerald-400/20 rounded">
-          dev
-        </span>
       )}
     </div>
   );
