@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -48,9 +49,12 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png?v=3" />
         <link rel="shortcut icon" href="/favicon.ico?v=3" />
-
-        {/* Prevent flash of wrong theme */}
-        <script
+      </head>
+      <body className="min-h-full flex flex-col bg-[#fbf9f4] dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 selection:bg-yellow-400 selection:text-black transition-colors duration-300">
+        {/* Prevent flash of wrong theme using Next.js Script */}
+        <Script
+          id="pollinator-theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -69,8 +73,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className="min-h-full flex flex-col bg-[#fbf9f4] dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 selection:bg-yellow-400 selection:text-black transition-colors duration-300">
         <ThemeProvider>
           {children}
         </ThemeProvider>

@@ -23,9 +23,8 @@ export function NetworkBadge({
   const isLocalNetwork =
     isLocal !== undefined
       ? isLocal
-      : (typeof window !== 'undefined' &&
-          (process.env.NEXT_PUBLIC_BLOCKCHAIN_NETWORK === 'local' ||
-            process.env.NEXT_PUBLIC_BLOCKCHAIN_NETWORK === 'localhost'));
+      : (process.env.NEXT_PUBLIC_BLOCKCHAIN_NETWORK === 'local' ||
+         process.env.NEXT_PUBLIC_BLOCKCHAIN_NETWORK === 'localhost');
 
   const label = networkName || (isLocalNetwork ? 'Local Hive' : 'HoneyChain Amoy');
   const targetExplorerUrl =
