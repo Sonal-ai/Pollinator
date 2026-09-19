@@ -69,11 +69,32 @@ export async function POST(request: NextRequest) {
     }
 
     const validRoles = ['admin', 'processor', 'lab', 'distributor', 'retailer', 'beekeeper'];
+    const emailKey = rawIdentifier.toLowerCase();
+
+    // Friendly persona mapping
+    let walletIdentifier = emailKey;
+    if (emailKey === 'transporter@pollinator.com' || emailKey === 'distributor@pollinator.com') {
+      role = 'distributor';
+      walletIdentifier = 'distributor@pollinator.com';
+    } else if (emailKey === 'producer@pollinator.com' || emailKey === 'processor@pollinator.com') {
+      role = 'processor';
+      walletIdentifier = 'processor@pollinator.com';
+    } else if (emailKey === 'lab@pollinator.com') {
+      role = 'lab';
+      walletIdentifier = 'lab@pollinator.com';
+    } else if (emailKey === 'admin@pollinator.com') {
+      role = 'admin';
+      walletIdentifier = 'admin@pollinator.com';
+    } else if (emailKey === 'beekeeper@pollinator.com' || emailKey === 'sonal@pollinator.com') {
+      role = 'beekeeper';
+      walletIdentifier = '8882218036';
+    }
+
     if (!role || !validRoles.includes(role)) {
       return Response.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    const privateKeyHex = '0x' + createHmac('sha256', secret).update(rawIdentifier.toLowerCase()).digest('hex');
+    const privateKeyHex = '0x' + createHmac('sha256', secret).update(walletIdentifier).digest('hex');
     walletAddress = new ethers.Wallet(privateKeyHex).address;
   }
 

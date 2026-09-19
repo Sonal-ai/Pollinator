@@ -15,7 +15,14 @@ export default async function CustodyPage() {
   const myBatches = await prisma.honeyBatch.findMany({
     where: {
       recalled: false,
-      ...(isAdmin ? {} : { current_custodian: walletAddress }),
+      ...(isAdmin ? {} : {
+        OR: [
+          { current_custodian: walletAddress },
+          { current_custodian: walletAddress?.toLowerCase() },
+          { beekeeper: { wallet: walletAddress } },
+          { beekeeper: { wallet: walletAddress?.toLowerCase() } },
+        ],
+      }),
     },
     select: {
       id: true,

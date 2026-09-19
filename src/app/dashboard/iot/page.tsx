@@ -1,9 +1,10 @@
+import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { IotChartClient } from './chart-client';
 import { IotSimulatorModal } from './simulator-modal';
 import { calculateHiveHealth } from '@/lib/iot-health-model';
-import { Cpu, Wifi, Thermometer, Droplets, Scale, BatteryCharging, Activity, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Cpu, Wifi, Thermometer, Droplets, Scale, BatteryCharging, Activity, ShieldAlert, Sparkles, CheckCircle2, Bug, ArrowRight } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,10 @@ export default async function IoTPage() {
     where: whereClause,
     include: {
       beekeeper: { select: { name: true } },
+      inferences: {
+        orderBy: { inferredAt: 'desc' },
+        take: 1,
+      },
       readings: {
         orderBy: { timestamp: 'desc' },
         take: 2,
@@ -194,6 +199,35 @@ export default async function IoTPage() {
                             ))}
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* Latest Varroa Mite Scan Result */}
+                    {hive.inferences?.[0] && (
+                      <div className="p-3.5 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <Bug className="w-4 h-4 text-amber-400 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-white">Latest Varroa AI Scan</p>
+                            <p className="text-[10px] text-slate-400 font-mono">
+                              {new Date(hive.inferences[0].inferredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • Model {hive.inferences[0].modelVersion}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[10px] font-mono px-2.5 py-1 rounded-full font-bold uppercase border ${
+                              hive.inferences[0].prediction === 'healthy'
+                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                                : 'bg-red-500/15 border-red-500/30 text-red-400'
+                            }`}
+                          >
+                            {hive.inferences[0].prediction === 'healthy' ? 'Healthy Colony' : 'Varroa Suspected'}
+                          </span>
+                          <Link href="/dashboard/health" className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
                       </div>
                     )}
 

@@ -1,4 +1,5 @@
 import { env } from '../env';
+import { translateResponse, type SupportedLanguage } from './gemini';
 
 // ============================================================
 // WhatsApp Cloud API Client
@@ -51,20 +52,36 @@ class WhatsAppClient {
   /**
    * Send a plain text message.
    */
-  async sendText(to: string, text: string): Promise<void> {
+  async sendText(to: string, text: string, lang: SupportedLanguage = 'en'): Promise<void> {
+    const translated = await translateResponse(text, lang);
     await this.post({
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       to,
       type: 'text',
-      text: { preview_url: false, body: text },
+      text: { preview_url: false, body: translated },
     });
   }
 
   /**
    * Send an interactive message with up to 3 reply buttons.
    */
-  async sendButtons(to: string, text: string, buttons: WhatsAppButton[]): Promise<void> {
+  async sendButtons(to: string, text: string, buttons: WhatsAppButton[], lang: SupportedLanguage = 'en'): Promise<void> {
+    const translatedBody = await translateResponse(text, lang);
+    
+    const translatedButtons = await Promise.all(
+      buttons.map(async (btn) => {
+        const translatedTitle = await translateResponse(btn.reply.title, lang);
+        return {
+          type: btn.type,
+          reply: {
+            id: btn.reply.id,
+            title: translatedTitle.substring(0, 20)
+          }
+        };
+      })
+    );
+
     await this.post({
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
@@ -72,8 +89,8 @@ class WhatsAppClient {
       type: 'interactive',
       interactive: {
         type: 'button',
-        body: { text },
-        action: { buttons },
+        body: { text: translatedBody },
+        action: { buttons: translatedButtons },
       },
     });
   }
@@ -86,8 +103,36 @@ class WhatsAppClient {
     headerText: string,
     bodyText: string,
     buttonLabel: string,
-    sections: WhatsAppListSection[]
+    sections: WhatsAppListSection[],
+    lang: SupportedLanguage = 'en'
   ): Promise<void> {
+    const translatedHeader = await translateResponse(headerText, lang);
+    const translatedBody = await translateResponse(bodyText, lang);
+    const translatedButton = await translateResponse(buttonLabel, lang);
+
+    const translatedSections = await Promise.all(
+      sections.map(async (sec) => {
+        const translatedSecTitle = await translateResponse(sec.title, lang);
+        
+        const translatedRows = await Promise.all(
+          sec.rows.map(async (row) => {
+            const translatedRowTitle = await translateResponse(row.title, lang);
+            const translatedRowDesc = row.description ? await translateResponse(row.description, lang) : undefined;
+            return {
+              id: row.id,
+              title: translatedRowTitle.substring(0, 24),
+              description: translatedRowDesc ? translatedRowDesc.substring(0, 72) : undefined
+            };
+          })
+        );
+        
+        return {
+          title: translatedSecTitle.substring(0, 24),
+          rows: translatedRows
+        };
+      })
+    );
+
     await this.post({
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
@@ -95,11 +140,11 @@ class WhatsAppClient {
       type: 'interactive',
       interactive: {
         type: 'list',
-        header: { type: 'text', text: headerText },
-        body: { text: bodyText },
+        header: { type: 'text', text: translatedHeader.substring(0, 60) },
+        body: { text: translatedBody },
         action: {
-          button: buttonLabel,
-          sections,
+          button: translatedButton.substring(0, 20),
+          sections: translatedSections,
         },
       },
     });

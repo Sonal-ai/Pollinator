@@ -100,6 +100,70 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="rounded-3xl border border-white/10 bg-[#0d111a]/90 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+          {/* Quick 1-Click Demo Persona Switcher */}
+          <div className="space-y-2 pb-4 border-b border-white/10">
+            <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
+              ⚡ 1-Click Demo Personas:
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('8882218036');
+                  setRole('beekeeper');
+                  setPassword('');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-500/30 text-[11px] font-mono text-yellow-300 transition-all active:scale-95"
+              >
+                🐝 Beekeeper (Sonal)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('transporter@pollinator.com');
+                  setRole('distributor');
+                  setPassword('Pollinator@2026');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-[11px] font-mono text-orange-300 transition-all active:scale-95"
+              >
+                🚚 Transporter
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('lab@pollinator.com');
+                  setRole('lab');
+                  setPassword('Pollinator@2026');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] font-mono text-emerald-300 transition-all active:scale-95"
+              >
+                🧪 QA Lab
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('processor@pollinator.com');
+                  setRole('processor');
+                  setPassword('Pollinator@2026');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-[11px] font-mono text-purple-300 transition-all active:scale-95"
+              >
+                🏭 Processor
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('admin@pollinator.com');
+                  setRole('admin');
+                  setPassword('Pollinator@2026');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-[11px] font-mono text-cyan-300 transition-all active:scale-95"
+              >
+                🔑 Admin
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Role selection */}
             <div>

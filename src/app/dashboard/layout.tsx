@@ -13,7 +13,8 @@ import {
   LogOut,
   Hexagon,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  ShieldAlert
 } from 'lucide-react';
 import PageTransition from './PageTransition';
 import { NetworkBadge } from '@/components/ui/network-badge';
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/lab',       label: 'Lab Certificates',     icon: FileCheck,       roles: ['admin', 'lab'] },
   { href: '/dashboard/custody',   label: 'Custody Transfer',     icon: Truck,           roles: ['admin', 'processor', 'distributor', 'retailer'] },
   { href: '/dashboard/iot',       label: 'IoT Telemetry',        icon: Wifi,            roles: ['admin', 'beekeeper'] },
+  { href: '/dashboard/health',    label: 'Bee Health AI',        icon: ShieldAlert,     roles: ['admin', 'beekeeper'] },
   { href: '/dashboard/analytics', label: 'Scan Analytics',       icon: LineChart,       roles: ['admin'] },
   { href: '/dashboard/recall',    label: 'Recall Management',    icon: AlertOctagon,    roles: ['admin'] },
 ];

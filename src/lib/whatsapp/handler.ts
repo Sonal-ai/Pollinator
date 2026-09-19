@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { prisma } from '../db';
 import {
   ConversationState,
@@ -16,6 +17,7 @@ import {
 } from './gemini';
 import { whatsapp } from './client';
 import { getExplorerTxUrl } from '../blockchain';
+import { detectVarroaFromBuffer } from '../varroa-detector';
 
 // ============================================================
 // Incoming Message Shape (Meta Webhook)
@@ -72,7 +74,7 @@ const STRINGS: Record<SupportedLanguage, Record<string, StringValue>> = {
     }) as StringValue,
     harvest_cancel:     '❌ Harvest cancelled. Returning to main menu.',
     market_info:        '💰 *Current Honey Market & Subsidies*\n\n🍯 *Farmgate Honey Rates (approx.)*\n• Mustard Honey: ₹100–130/kg\n• Litchi Honey: ₹150–180/kg\n• Multiflora Honey: ₹90–120/kg\n• Forest/Raw: ₹180–240/kg\n\n🏛️ *Govt Schemes & Subsidies*\n• *KVIC National Honey Mission*: Up to 80% subsidy on 10 bee boxes & live colonies.\n• *National Bee Board (NBB)*: Subsidy for beekeeping clusters & training.\n• Portal: https://nbb.gov.in',
-    bee_health_info:    '🐝 *Bee Health & Hive Care*\n\n• *Varroa Mite*: Inspect brood frames monthly for mites. Use organic oxalic acid vaporizing if needed.\n• *Queen Health*: Normal queen laying pattern produces continuous circular brood.\n• *Swarming Signs*: High hive temperature (>37°C) & loud acoustic hum often indicate swarming.\n• *Feeding*: Feed 1:1 sugar syrup in early spring or drought periods.',
+    bee_health_info:    '🐝 *Bee Health & Hive Care*\n\n📸 *AI Varroa Mite Scanner Active!*\n👉 *Send a photo of your bee comb/frame directly here* for instant computer vision detection of Varroa mites and colony health diagnosis!\n\n• *Varroa Mite*: Inspect brood frames monthly. Use organic oxalic acid vaporizing if needed.\n• *Queen Health*: Normal queen laying pattern produces continuous circular brood.\n• *Swarming Signs*: High hive temperature (>37°C) & acoustic hum indicate swarming.\n• *Feeding*: Feed 1:1 sugar syrup in early spring or drought periods.',
     ask_question:       '❓ Please type or speak your beekeeping question (voice notes welcome!):',
     hive_no_data:       '📡 No sensor data found for your hives yet. Tap "Pair IoT Hive" to link your ESP32 sensor box!',
     error_generic:      '⚠️ Something went wrong. Please try again.',
@@ -111,7 +113,7 @@ const STRINGS: Record<SupportedLanguage, Record<string, StringValue>> = {
     }) as StringValue,
     harvest_cancel:     '❌ फसल रद्द। मुख्य मेनू पर वापस।',
     market_info:        '💰 *वर्तमान शहद बाज़ार दरें और सरकारी योजनाएं*\n\n🍯 *अनुमानित बाज़ार भाव:*\n• सरसों शहद: ₹100–130/किग्रा\n• लीची शहद: ₹150–180/किग्रा\n• मल्टीफ्लोरा: ₹90–120/किग्रा\n• कच्चा/जंगली शहद: ₹180–240/किग्रा\n\n🏛️ *सरकारी योजनाएं:*\n• *KVIC हनी मिशन*: 10 मधुमक्खी बक्से पर 80% तक की सब्सिडी।\n• *राष्ट्रीय मधुमक्खी बोर्ड (NBB)*: प्रशिक्षण और क्लस्टर सहायता।\n• पोर्टल: https://nbb.gov.in',
-    bee_health_info:    '🐝 *मधुमक्खी स्वास्थ्य और देखभाल*\n\n• *वरोआ माइट*: महीने में एक बार छत्ते का निरीक्षण करें।\n• *रानी मधुमक्खी*: स्वस्थ रानी लगातार गोल आकार में अंडे देती है।\n• *छत्ता तापमान*: 37°C से अधिक तापमान झुंड (swarming) का संकेत हो सकता है।',
+    bee_health_info:    '🐝 *मधुमक्खी स्वास्थ्य और देखभाल*\n\n📸 *AI वरोआ माइट स्कैनर सक्रिय है!*\n👉 *अपने छत्ते या फ्रेम की तस्वीर सीधे यहाँ भेजें* — हमारा AI तुरंत वरोआ माइट्स की पहचान कर स्वास्थ्य रिपोर्ट देगा!\n\n• *वरोआ माइट*: महीने में एक बार छत्ते का निरीक्षण करें।\n• *रानी मधुमक्खी*: स्वस्थ रानी लगातार गोल आकार में अंडे देती है।\n• *छत्ता तापमान*: 37°C से अधिक तापमान झुंड (swarming) का संकेत हो सकता है।',
     ask_question:       '❓ कृपया अपना प्रश्न लिखें या बोलकर भेजें (वॉइस नोट भी भेज सकते हैं):',
     hive_no_data:       '📡 आपके छत्तों का कोई सेंसर डेटा नहीं मिला। कृपया "IoT छत्ता जोड़ें" विकल्प चुनें।',
     error_generic:      '⚠️ कुछ गड़बड़ हुई। कृपया पुनः प्रयास करें।',
@@ -138,11 +140,83 @@ const STRINGS: Record<SupportedLanguage, Record<string, StringValue>> = {
 };
 
 function t(lang: SupportedLanguage, key: string, ...args: unknown[]): string {
-  const str = STRINGS[lang]?.[key] ?? STRINGS.en[key] ?? key;
+  const str = STRINGS.en[key] ?? key;
   if (typeof str === 'function') {
     return (str as (...a: unknown[]) => string)(...args);
   }
   return str;
+}
+
+// ============================================================
+// AI Image Analysis (AWS Lambda Varroa Detector)
+// ============================================================
+
+async function handleIncomingImage(
+  waId: string,
+  imageId: string,
+  lang: SupportedLanguage
+): Promise<void> {
+  const cleanWaId = waId.replace(/[\s-]/g, '');
+  const digitsOnly = cleanWaId.replace(/[^0-9]/g, '');
+  const last10 = digitsOnly.slice(-10);
+
+  const beekeeper = await prisma.beekeeper.findFirst({
+    where: {
+      OR: [
+        { phone: cleanWaId },
+        { phone: last10 },
+        { phone: `+91${last10}` },
+        { phone: `91${last10}` },
+      ],
+    },
+    include: { hives: { take: 1 } },
+  });
+
+  const waitMsg = '🔍 *Analyzing your bee frame photo for Varroa mites...*\nRunning YOLO11 AI inference on AWS Lambda. Please wait a moment...';
+  
+  await whatsapp.sendText(waId, waitMsg, lang);
+
+  try {
+    const imageBuffer = await whatsapp.downloadMedia(imageId);
+    const result = await detectVarroaFromBuffer(imageBuffer);
+    const imageHash = createHash('sha256').update(imageBuffer).digest('hex');
+
+    const maxConfidence = result.detections.length > 0
+      ? Math.max(...result.detections.map((d) => d.confidence))
+      : 0.95;
+
+    await prisma.aIInference.create({
+      data: {
+        beekeeperId: beekeeper?.id ?? null,
+        hiveId: beekeeper?.hives?.[0]?.id ?? null,
+        modelVersion: 'yolo11l-varroa-onnx-v1.0',
+        inputImageHash: imageHash,
+        prediction: result.alert.level === 'GREEN' ? 'healthy' : 'varroa_parasite_suspected',
+        confidence: maxConfidence,
+        rawOutput: JSON.stringify(result),
+      },
+    });
+
+    const { bee_count, mite_count } = result.summary;
+    const rate = result.alert.infestation_rate_pct;
+    const level = result.alert.level;
+
+    let responseText = '';
+
+    if (level === 'RED') {
+      responseText = `🚨 *COLONY HEALTH: CRITICAL INFESTATION!*\n\n🐝 Honey Bees Detected: *${bee_count}*\n🔬 Varroa Destructor Mites: *${mite_count}*\n📊 Infestation Rate: *${rate}%*\n\n⚠️ *URGENT ACTION REQUIRED*:\nMite load exceeds the critical threshold (>3%). Immediate treatment is vital to prevent colony collapse.\n\nRecommended: Apply approved Oxalic Acid vaporization or Formic Acid flash treatment immediately.\n\n💻 *Bee Health Dashboard*: Detailed scan is now updated on your Pollinator Web Station.`;
+    } else if (level === 'YELLOW') {
+      responseText = `⚠️ *COLONY HEALTH: MODERATE INFESTATION*\n\n🐝 Honey Bees Detected: *${bee_count}*\n🔬 Varroa Destructor Mites: *${mite_count}*\n📊 Infestation Rate: *${rate}%*\n\n🔔 *ADVISORY*:\nMite presence is elevated (1%–3%). Weekly monitoring recommended.\n\nRecommended: Consider drone comb trapping or natural Thymol essential oil strips within 7 days.\n\n💻 *Bee Health Dashboard*: Detailed scan is now updated on your Pollinator Web Station.`;
+    } else {
+      responseText = `✅ *COLONY HEALTH: OPTIMAL (HEALTHY)*\n\n🐝 Honey Bees Detected: *${bee_count}*\n🔬 Varroa Destructor Mites: *${mite_count}*\n📊 Infestation Rate: *${rate}%*\n\n🌿 Normal or zero mite presence detected. Your colony demonstrates strong hygienic behavior. Continue routine monthly frame inspections.\n\n💻 *Bee Health Dashboard*: Diagnostic report logged in real-time.`;
+    }
+
+    await whatsapp.sendText(waId, responseText, lang);
+  } catch (err) {
+    console.error('[handler-image] Error processing bee frame photo:', err);
+    const failMsg = '⚠️ Sorry, could not process your hive photo. Please send a clear, focused photo of the comb or bees.';
+    await whatsapp.sendText(waId, failMsg, lang);
+  }
 }
 
 // ============================================================
@@ -165,6 +239,13 @@ export async function handleIncomingMessage(body: MetaWebhookBody): Promise<void
   const session = await fsm.getSession(waId);
   let lang = (session.data.language as SupportedLanguage) || 'en';
 
+  // Handle incoming photo/image message (AI Varroa Detector on AWS Lambda)
+  if (message.type === 'image' && message.image?.id) {
+    console.log(`[handler] Received WhatsApp image ${message.image.id} from ${waId}`);
+    await handleIncomingImage(waId, message.image.id, lang);
+    return;
+  }
+
   // 1. Process text or audio content
   let incomingText = extractText(message);
   let detectedLang: SupportedLanguage = lang;
@@ -181,7 +262,7 @@ export async function handleIncomingMessage(body: MetaWebhookBody): Promise<void
       console.log(`[handler-audio] Transcribed: "${incomingText}" | Lang: ${detectedLang} | Intent: ${intent}`);
     } catch (err) {
       console.error('[handler-audio] Audio processing error:', err);
-      await whatsapp.sendText(waId, '⚠️ Sorry, could not process voice note. Please try sending text.');
+      await whatsapp.sendText(waId, '⚠️ Sorry, could not process voice note. Please try sending text.', lang);
       return;
     }
   } else if (message.type === 'text' && incomingText.trim()) {
@@ -207,7 +288,7 @@ export async function handleIncomingMessage(body: MetaWebhookBody): Promise<void
     await route(waId, message, session, lang, incomingText, intent);
   } catch (err) {
     console.error('[handler] Message routing error:', err);
-    await whatsapp.sendText(waId, t(lang, 'error_generic'));
+    await whatsapp.sendText(waId, t(lang, 'error_generic'), lang);
   }
 }
 
@@ -258,7 +339,7 @@ async function route(
     await whatsapp.sendText(
       waId,
       `✅ Language set to ${langNames[lang] || lang}!\n\nReturning to menu...`
-    );
+    , lang);
     if (beekeeper) {
       await sendMainMenu(waId, lang, beekeeper.name);
     } else {
@@ -306,7 +387,7 @@ async function route(
       normalizedText.includes('sign up')
     ) {
       await fsm.setSession(waId, ConversationState.REGISTRATION_NAME, { language: lang });
-      await whatsapp.sendText(waId, `🐝 *Pollinator Registration (Step 1/4)*\n\n${t(lang, 'ask_name')}`);
+      await whatsapp.sendText(waId, `🐝 *Pollinator Registration (Step 1/4)*\n\n${t(lang, 'ask_name')}`, lang);
       return;
     }
 
@@ -321,32 +402,32 @@ async function route(
         '4. 🏛️ *Govt Schemes*: Guidance for KVIC National Honey Mission subsidies.\n\n' +
         'Ready to get started?';
 
-      const localized = await translateResponse(infoText, lang);
-      await whatsapp.sendButtons(waId, localized, [
+      
+      await whatsapp.sendButtons(waId, infoText, [
         { type: 'reply', reply: { id: 'onboard_register', title: t(lang, 'btn_onboard_register') } },
         { type: 'reply', reply: { id: 'onboard_doubt', title: t(lang, 'btn_onboard_doubt') } },
-      ]);
+      ], lang);
       return;
     }
 
     // If user tapped "Ask a Question"
     if (buttonId === 'onboard_doubt') {
       await fsm.setSession(waId, ConversationState.ASK_QUESTION, { language: lang });
-      await whatsapp.sendText(waId, t(lang, 'ask_question'));
+      await whatsapp.sendText(waId, t(lang, 'ask_question'), lang);
       return;
     }
 
     // Handle ongoing registration steps for unregistered users
     if (state === ConversationState.REGISTRATION_NAME) {
       if (!text.trim()) {
-        await whatsapp.sendText(waId, t(lang, 'ask_name'));
+        await whatsapp.sendText(waId, t(lang, 'ask_name'), lang);
         return;
       }
       await fsm.setSession(waId, ConversationState.REGISTRATION_REGION, {
         language: lang,
         registration: { name: text.trim() },
       });
-      await whatsapp.sendText(waId, `*Step 2/4:* ${t(lang, 'ask_region')}`);
+      await whatsapp.sendText(waId, `*Step 2/4:* ${t(lang, 'ask_region')}`, lang);
       return;
     }
 
@@ -355,21 +436,21 @@ async function route(
         ...session.data,
         registration: { ...session.data.registration, region: text.trim() },
       });
-      await whatsapp.sendText(waId, `*Step 3/4:* ${t(lang, 'ask_hive_count')}`);
+      await whatsapp.sendText(waId, `*Step 3/4:* ${t(lang, 'ask_hive_count')}`, lang);
       return;
     }
 
     if (state === ConversationState.REGISTRATION_HIVE_COUNT) {
       const count = parseInt(text.replace(/[^0-9]/g, ''), 10);
       if (isNaN(count) || count <= 0) {
-        await whatsapp.sendText(waId, t(lang, 'invalid_number'));
+        await whatsapp.sendText(waId, t(lang, 'invalid_number'), lang);
         return;
       }
       await fsm.setSession(waId, ConversationState.REGISTRATION_PRACTICES, {
         ...session.data,
         registration: { ...session.data.registration, hivesCount: count },
       });
-      await whatsapp.sendText(waId, `*Step 4/4:* ${t(lang, 'ask_practices')}`);
+      await whatsapp.sendText(waId, `*Step 4/4:* ${t(lang, 'ask_practices')}`, lang);
       return;
     }
 
@@ -402,7 +483,7 @@ async function route(
       await whatsapp.sendText(
         waId,
         `${t(lang, 'registration_done')}\n\n*Your Web Dashboard Login ID:*\n\`${beekeeperWallet.address}\``
-      );
+      , lang);
       await sendMainMenu(waId, lang);
       return;
     }
@@ -410,27 +491,27 @@ async function route(
     // In ASK_QUESTION state for unregistered user
     if (state === ConversationState.ASK_QUESTION) {
       const advice = await generateBeekeepingAdvice(text);
-      const localized = await translateResponse(advice, lang);
-      await whatsapp.sendText(waId, `🐝 *Pollinator AI:*\n\n${localized}`);
+      
+      await whatsapp.sendText(waId, `🐝 *Pollinator AI:*\n\n${advice}`, lang);
       await sendOnboardingMenu(waId, lang);
       return;
     }
 
     // If unregistered user asks a question or says hi/hello
     const onboardingRes = await generateOnboardingResponse(text, lang);
-    const localizedReply = await translateResponse(onboardingRes.response, lang);
+    
 
     if (onboardingRes.ready_to_register) {
       await fsm.setSession(waId, ConversationState.REGISTRATION_NAME, { language: lang });
-      await whatsapp.sendText(waId, `${localizedReply}\n\n*Step 1/4:* ${t(lang, 'ask_name')}`);
+      await whatsapp.sendText(waId, `${onboardingRes.response}\n\n*Step 1/4:* ${t(lang, 'ask_name')}`, lang);
       return;
     }
 
-    await whatsapp.sendButtons(waId, localizedReply, [
+    await whatsapp.sendButtons(waId, onboardingRes.response, [
       { type: 'reply', reply: { id: 'onboard_register', title: t(lang, 'btn_onboard_register') } },
       { type: 'reply', reply: { id: 'onboard_info', title: t(lang, 'btn_onboard_info') } },
       { type: 'reply', reply: { id: 'onboard_doubt', title: t(lang, 'btn_onboard_doubt') } },
-    ]);
+    ], lang);
     await fsm.setSession(waId, ConversationState.ONBOARDING, { language: lang });
     return;
   }
@@ -465,7 +546,7 @@ async function route(
     await whatsapp.sendButtons(waId, t(lang, 'market_info'), [
       { type: 'reply', reply: { id: 'menu_harvest', title: t(lang, 'btn_harvest') } },
       { type: 'reply', reply: { id: 'btn_back_menu', title: t(lang, 'btn_back_menu') } },
-    ]);
+    ], lang);
     return;
   }
 
@@ -480,7 +561,7 @@ async function route(
     await whatsapp.sendButtons(waId, t(lang, 'bee_health_info'), [
       { type: 'reply', reply: { id: 'menu_ask', title: t(lang, 'btn_ask') } },
       { type: 'reply', reply: { id: 'btn_back_menu', title: t(lang, 'btn_back_menu') } },
-    ]);
+    ], lang);
     return;
   }
 
@@ -494,7 +575,7 @@ async function route(
       ...session.data,
       beekeeper_id: beekeeper.id,
     });
-    await whatsapp.sendText(waId, t(lang, 'harvest_type'));
+    await whatsapp.sendText(waId, t(lang, 'harvest_type'), lang);
     return;
   }
 
@@ -503,7 +584,7 @@ async function route(
       ...session.data,
       beekeeper_id: beekeeper.id,
     });
-    await whatsapp.sendText(waId, t(lang, 'ask_device_id'));
+    await whatsapp.sendText(waId, t(lang, 'ask_device_id'), lang);
     return;
   }
 
@@ -512,7 +593,7 @@ async function route(
       ...session.data,
       beekeeper_id: beekeeper.id,
     });
-    await whatsapp.sendText(waId, t(lang, 'ask_question'));
+    await whatsapp.sendText(waId, t(lang, 'ask_question'), lang);
     return;
   }
 
@@ -532,7 +613,7 @@ async function route(
       },
     });
 
-    await whatsapp.sendText(waId, `✅ Hive [${deviceId}] successfully paired to your farm!\n\nSensor readings will now appear in your Hive Status.`);
+    await whatsapp.sendText(waId, `✅ Hive [${deviceId}] successfully paired to your farm!\n\nSensor readings will now appear in your Hive Status.`, lang);
     await fsm.setSession(waId, ConversationState.MAIN_MENU, { ...session.data, beekeeper_id: beekeeper.id });
     await sendMainMenu(waId, lang);
     return;
@@ -545,14 +626,14 @@ async function route(
       beekeeper_id: beekeeper.id,
       harvest_draft: { honeyType: text.trim() },
     });
-    await whatsapp.sendText(waId, t(lang, 'harvest_quantity'));
+    await whatsapp.sendText(waId, t(lang, 'harvest_quantity'), lang);
     return;
   }
 
   if (state === ConversationState.HARVEST_QUANTITY) {
     const grams = parseInt(text.replace(/[^0-9]/g, ''), 10);
     if (isNaN(grams) || grams <= 0) {
-      await whatsapp.sendText(waId, t(lang, 'invalid_number'));
+      await whatsapp.sendText(waId, t(lang, 'invalid_number'), lang);
       return;
     }
 
@@ -568,7 +649,7 @@ async function route(
     await whatsapp.sendButtons(waId, confirmText, [
       { type: 'reply', reply: { id: 'harvest_yes', title: t(lang, 'btn_yes') } },
       { type: 'reply', reply: { id: 'harvest_no', title: t(lang, 'btn_no') } },
-    ]);
+    ], lang);
     return;
   }
 
@@ -577,7 +658,7 @@ async function route(
       await createHarvestBatch(waId, session.data, lang);
     } else {
       await fsm.setSession(waId, ConversationState.MAIN_MENU, session.data);
-      await whatsapp.sendText(waId, t(lang, 'harvest_cancel'));
+      await whatsapp.sendText(waId, t(lang, 'harvest_cancel'), lang);
       await sendMainMenu(waId, lang);
     }
     return;
@@ -586,8 +667,8 @@ async function route(
   // 3. ASK A QUESTION
   if (state === ConversationState.ASK_QUESTION || intent === 'ASK_DOUBT' || text.includes('?')) {
     const advice = await generateBeekeepingAdvice(text);
-    const localized = await translateResponse(advice, lang);
-    await whatsapp.sendText(waId, `🐝 *Pollinator AI:*\n\n${localized}`);
+    
+    await whatsapp.sendText(waId, `🐝 *Pollinator AI:*\n\n${advice}`, lang);
     await fsm.setSession(waId, ConversationState.MAIN_MENU, { ...session.data, beekeeper_id: beekeeper.id });
     await sendMainMenu(waId, lang);
     return;
@@ -611,7 +692,7 @@ async function sendOnboardingMenu(waId: string, lang: SupportedLanguage): Promis
     { type: 'reply' as const, reply: { id: 'onboard_info', title: t(lang, 'btn_onboard_info') } },
     { type: 'reply' as const, reply: { id: 'onboard_doubt', title: t(lang, 'btn_onboard_doubt') } },
   ];
-  await whatsapp.sendButtons(waId, t(lang, 'welcome_onboarding'), buttons);
+  await whatsapp.sendButtons(waId, t(lang, 'welcome_onboarding'), buttons, lang);
 }
 
 async function sendMainMenu(waId: string, lang: SupportedLanguage, beekeeperName?: string | null): Promise<void> {
@@ -642,7 +723,7 @@ async function sendMainMenu(waId: string, lang: SupportedLanguage, beekeeperName
         ],
       },
     ]
-  );
+  , lang);
 }
 
 async function handleHiveStatus(
@@ -651,7 +732,7 @@ async function handleHiveStatus(
   lang: SupportedLanguage
 ): Promise<void> {
   if (!sessionData.beekeeper_id) {
-    await whatsapp.sendText(waId, t(lang, 'hive_no_data'));
+    await whatsapp.sendText(waId, t(lang, 'hive_no_data'), lang);
     return;
   }
 
@@ -676,11 +757,11 @@ async function handleHiveStatus(
       '• Health Score: *100% OPTIMAL* 🌟\n' +
       '• Battery: 96% 🔋\n\n' +
       '💡 *Tip*: To pair your real ESP32 hive sensor, tap "Pair IoT Hive" from the menu!';
-    const localized = await translateResponse(demoStatus, lang);
-    await whatsapp.sendButtons(waId, localized, [
+    
+    await whatsapp.sendButtons(waId, demoStatus, [
       { type: 'reply', reply: { id: 'menu_register_hive', title: t(lang, 'btn_register_hive') } },
       { type: 'reply', reply: { id: 'btn_back_menu', title: t(lang, 'btn_back_menu') } },
-    ]);
+    ], lang);
     return;
   }
 
@@ -717,10 +798,10 @@ async function handleHiveStatus(
     }
   }
 
-  const localized = await translateResponse(statusText, lang);
-  await whatsapp.sendButtons(waId, localized, [
+  
+  await whatsapp.sendButtons(waId, statusText, [
     { type: 'reply', reply: { id: 'btn_back_menu', title: t(lang, 'btn_back_menu') } },
-  ]);
+  ], lang);
 }
 
 async function createHarvestBatch(
@@ -730,7 +811,7 @@ async function createHarvestBatch(
 ): Promise<void> {
   const { beekeeper_id, harvest_draft } = sessionData;
   if (!beekeeper_id || !harvest_draft) {
-    await whatsapp.sendText(waId, t(lang, 'error_generic'));
+    await whatsapp.sendText(waId, t(lang, 'error_generic'), lang);
     return;
   }
 
@@ -759,7 +840,7 @@ async function createHarvestBatch(
     const result = (await response.json()) as { batchCode: string; txHash: string };
     const successText = t(lang, 'harvest_success', result.batchCode, result.txHash);
 
-    await whatsapp.sendText(waId, successText);
+    await whatsapp.sendText(waId, successText, lang);
     await fsm.setSession(waId, ConversationState.MAIN_MENU, {
       ...sessionData,
       harvest_draft: undefined,
@@ -767,7 +848,7 @@ async function createHarvestBatch(
     await sendMainMenu(waId, lang);
   } catch (err) {
     console.error('[handler] createHarvestBatch failed:', err);
-    await whatsapp.sendText(waId, t(lang, 'error_generic'));
+    await whatsapp.sendText(waId, t(lang, 'error_generic'), lang);
   }
 }
 

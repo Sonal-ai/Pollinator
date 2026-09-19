@@ -117,10 +117,39 @@ export function PackagingForm({ processableBatches }: { processableBatches: Proc
           </select>
         </div>
 
+        {/* Packaging Presets */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          <span className="text-[10px] font-mono text-slate-400 self-center">Quick Packaging Presets:</span>
+          <button
+            type="button"
+            onClick={() => {
+              const selected = processableBatches.find(b => b.batchCode === batchCode) || processableBatches[0];
+              const totalGrams = selected?.quantity_grams ?? 25000;
+              setJarCount(1);
+              setJarSizeGrams(totalGrams);
+            }}
+            className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[10px] font-mono text-amber-300 transition-all"
+          >
+            🍯 1 Full Bulk Barrel / Container (Full Weight)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const selected = processableBatches.find(b => b.batchCode === batchCode) || processableBatches[0];
+              const totalGrams = selected?.quantity_grams ?? 25000;
+              setJarSizeGrams(500);
+              setJarCount(Math.max(1, Math.floor(totalGrams / 500)));
+            }}
+            className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-mono text-slate-300 transition-all"
+          >
+            🫙 500g Consumer Jars
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
-              Number of Jars
+              Number of Jars / Containers
             </label>
             <input
               type="number"
@@ -130,22 +159,22 @@ export function PackagingForm({ processableBatches }: { processableBatches: Proc
               value={jarCount}
               onChange={(e) => setJarCount(e.target.value === '' ? '' : Number(e.target.value))}
               className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-white focus:outline-none focus:border-amber-400 transition-colors"
-              placeholder="e.g. 100"
+              placeholder="e.g. 1"
             />
           </div>
           <div>
             <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
-              Jar Size (Grams)
+              Jar / Container Size (Grams)
             </label>
             <input
               type="number"
               min="1"
-              max="5000"
+              max="1000000"
               required
               value={jarSizeGrams}
               onChange={(e) => setJarSizeGrams(e.target.value === '' ? '' : Number(e.target.value))}
               className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-white focus:outline-none focus:border-amber-400 transition-colors"
-              placeholder="e.g. 500"
+              placeholder="e.g. 50000"
             />
           </div>
         </div>
@@ -190,21 +219,29 @@ export function PackagingForm({ processableBatches }: { processableBatches: Proc
 
               <div>
                 <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-3">
-                  HMAC-Signed Jar Labels ({result.qrs?.length})
+                  HMAC-Signed Anti-Clone Labels ({result.qrs?.length}) — Click to Open Verification
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-96 overflow-y-auto p-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto p-1">
                   {result.qrs?.map((qr) => (
-                    <div
+                    <a
                       key={qr.jarIndex}
-                      className="bg-black/60 border border-white/10 rounded-2xl p-3 text-center space-y-2"
+                      href={qr.verifyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-black/60 hover:bg-black/80 border border-white/10 hover:border-amber-400/50 rounded-2xl p-3 text-center space-y-2 group transition-all"
                     >
                       <img
                         src={qr.qrImageBase64}
                         alt={`QR for Jar ${qr.jarIndex}`}
-                        className="w-full h-auto rounded-lg bg-white p-1"
+                        className="w-full h-auto rounded-lg bg-white p-1 group-hover:scale-105 transition-transform"
                       />
-                      <p className="text-[11px] font-mono text-amber-400 font-bold">Jar #{qr.jarIndex}</p>
-                    </div>
+                      <p className="text-[11px] font-mono text-amber-400 font-bold">
+                        Jar #{qr.jarIndex} ({jarSizeGrams}g)
+                      </p>
+                      <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center justify-center gap-1">
+                        Open & Verify →
+                      </span>
+                    </a>
                   ))}
                 </div>
               </div>
