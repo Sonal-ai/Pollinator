@@ -12,6 +12,7 @@ import {
   type SupportedLanguage,
 } from './bedrock';
 import { whatsapp } from './client';
+import { getExplorerTxUrl } from '../blockchain';
 
 // ============================================================
 // Incoming Message Shape (Meta Webhook)
@@ -63,8 +64,11 @@ const STRINGS: Record<SupportedLanguage, Record<string, StringValue>> = {
     harvest_quantity: '⚖️ How many grams of honey did you harvest? (Enter a number)',
     harvest_confirm:  ((type: string, grams: number) =>
                         `Confirm harvest:\n🍯 Type: ${type}\n⚖️ Quantity: ${(grams/1000).toFixed(2)} kg\n\nIs this correct?`) as StringValue,
-    harvest_success:  ((code: string, tx: string) =>
-                        `✅ *Harvest registered on blockchain!*\n\nBatch Code: \`${code}\`\nView on Polygonscan: https://amoy.polygonscan.com/tx/${tx}`) as StringValue,
+    harvest_success:  ((code: string, tx: string) => {
+      const explorerUrl = getExplorerTxUrl(tx);
+      const linkText = explorerUrl ? `View on Polygonscan: ${explorerUrl}` : `Local Hardhat TX: ${tx.slice(0, 14)}...`;
+      return `✅ *Harvest registered on blockchain!*\n\nBatch Code: \`${code}\`\n${linkText}`;
+    }) as StringValue,
     harvest_cancel:   '❌ Harvest cancelled. Returning to main menu.',
     market_info:      '💰 *Current Honey Market Rates (approx.)*\n\n• Mustard: ₹100–130/kg\n• Litchi: ₹150–180/kg\n• Multiflora: ₹90–120/kg\n\nKVIC procurement: Contact your nearest KVIC office.\nNational Bee Board: https://nbb.gov.in',
     ask_question:     '❓ Please type your beekeeping question:',
@@ -94,8 +98,11 @@ const STRINGS: Record<SupportedLanguage, Record<string, StringValue>> = {
     harvest_quantity:  '⚖️ आपने कितने ग्राम शहद काटा? (एक संख्या दर्ज करें)',
     harvest_confirm:  ((type: string, grams: number) =>
                         `फसल की पुष्टि करें:\n🍯 प्रकार: ${type}\n⚖️ मात्रा: ${(grams/1000).toFixed(2)} किग्रा\n\nक्या यह सही है?`) as StringValue,
-    harvest_success:  ((code: string, tx: string) =>
-                        `✅ *फसल ब्लॉकचेन पर दर्ज हो गई!*\n\nबैच कोड: \`${code}\`\nPolygonscan पर देखें: https://amoy.polygonscan.com/tx/${tx}`) as StringValue,
+    harvest_success:  ((code: string, tx: string) => {
+      const explorerUrl = getExplorerTxUrl(tx);
+      const linkText = explorerUrl ? `Polygonscan पर देखें: ${explorerUrl}` : `लोकल ब्लॉकचेन TX: ${tx.slice(0, 14)}...`;
+      return `✅ *फसल ब्लॉकचेन पर दर्ज हो गई!*\n\nबैच कोड: \`${code}\`\n${linkText}`;
+    }) as StringValue,
     harvest_cancel:   '❌ फसल रद्द। मुख्य मेनू पर वापस।',
     market_info:      '💰 *वर्तमान शहद बाज़ार दरें (अनुमानित)*\n\n• सरसों: ₹100–130/किग्रा\n• लीची: ₹150–180/किग्रा\n• मल्टीफ्लोरा: ₹90–120/किग्रा',
     ask_question:     '❓ कृपया अपना मधुमक्खी पालन प्रश्न लिखें:',
@@ -244,9 +251,14 @@ async function route(
   if (state === ConversationState.REGISTRATION_PRACTICES) {
     const reg = session.data.registration ?? {};
     
-    // Generate a custodial wallet for the Beekeeper
+    // Generate a deterministic custodial wallet for the Beekeeper (GAP-06 fix)
     const ethers = await import('ethers');
-    const randomWallet = ethers.Wallet.createRandom();
+    const { createHmac } = await import('crypto');
+    const { env } = await import('../env');
+    
+    // Derive a 32-byte private key deterministically from the user's waId
+    const privateKeyHex = '0x' + createHmac('sha256', env.WHATSAPP_APP_SECRET).update(waId).digest('hex');
+    const beekeeperWallet = new ethers.Wallet(privateKeyHex);
 
     // Save to DB
     const beekeeper = await prisma.beekeeper.create({
@@ -256,7 +268,7 @@ async function route(
         region: reg.region ?? '',
         hivesCount: reg.hivesCount ?? 0,
         practices: text.trim(),
-        wallet: randomWallet.address,
+        wallet: beekeeperWallet.address,
       },
     });
 
@@ -509,7 +521,10 @@ async function createHarvestBatch(
     // Call the batch creation API route internally
     const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/batch`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.ADMIN_API_KEY ? { 'x-admin-api-key': process.env.ADMIN_API_KEY } : {}),
+      },
       body: JSON.stringify({
         beekeeperId: beekeeper_id,
         honeyType: harvest_draft.honeyType,
