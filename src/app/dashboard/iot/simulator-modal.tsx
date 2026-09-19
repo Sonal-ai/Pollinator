@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Radio, Zap, AlertTriangle, CheckCircle2, Flame, Wind, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
 
@@ -13,6 +13,8 @@ export function IotSimulatorModal({ deviceId }: SimulatorModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamCount, setStreamCount] = useState(0);
 
   const [temp, setTemp] = useState(35.0);
   const [humidity, setHumidity] = useState(58.0);
@@ -54,8 +56,64 @@ export function IotSimulatorModal({ deviceId }: SimulatorModalProps) {
     }
   }
 
+  // Auto-stream interval effect (every 2 seconds)
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isStreaming) {
+      let liveWeight = weight;
+      interval = setInterval(async () => {
+        // Realistic biological jitter
+        const liveTemp = Number((34.8 + Math.random() * 0.7).toFixed(1));
+        const liveHum = Number((55 + Math.random() * 5).toFixed(1));
+        liveWeight = Number((liveWeight + (Math.random() * 0.08 - 0.02)).toFixed(2));
+        const liveBat = Math.round(92 + Math.random() * 5);
+
+        try {
+          const res = await fetch('/api/sensor-data', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer pollinator-iot-device-secret',
+            },
+            body: JSON.stringify({
+              hiveId: deviceId,
+              deviceId: deviceId,
+              temperatureC: liveTemp,
+              humidityPct: liveHum,
+              weightKg: liveWeight,
+              batteryPct: liveBat,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setStreamCount((c) => c + 1);
+            setLastResult(`📡 Packet #${streamCount + 1}: ${liveTemp}°C • ${liveHum}% • ${liveWeight}kg (Score: ${data.healthAssessment?.score}%)`);
+            router.refresh();
+          }
+        } catch {
+          // ignore stream error
+        }
+      }, 2000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isStreaming, deviceId, weight, streamCount, router]);
+
   return (
-    <div>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => setIsStreaming(!isStreaming)}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-mono transition-all shadow-md active:scale-95 ${
+          isStreaming
+            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-emerald-500/20'
+            : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+        }`}
+      >
+        <span className={`w-2 h-2 rounded-full ${isStreaming ? 'bg-emerald-400 animate-ping' : 'bg-slate-500'}`} />
+        <span>{isStreaming ? `Live 2s Stream ON (#${streamCount})` : 'Start 2s Stream'}</span>
+      </button>
+
       <button
         onClick={() => setIsOpen(true)}
         className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-amber-500/20 border border-cyan-400/40 text-xs font-mono text-cyan-300 hover:border-cyan-400 hover:text-white transition-all shadow-lg shadow-cyan-500/10 active:scale-95"

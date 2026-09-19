@@ -12,7 +12,8 @@
     "deploy:amoy": "hardhat run scripts/deploy.js --network polygonAmoy",
     "test:chain": "hardhat test",
     "compile:chain": "hardhat compile",
-    "simulate:iot": "node scripts/simulate-iot.js"
+    "simulate:iot": "node scripts/simulate-iot.js",
+    "seed:demo": "node scripts/seed-complete-demo.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1136.0",

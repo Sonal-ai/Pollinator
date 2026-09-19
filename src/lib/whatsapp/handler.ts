@@ -227,9 +227,20 @@ async function route(
   const buttonId = getButtonId(message);
   const normalizedText = text.trim().toLowerCase();
 
-  // Check if beekeeper is already registered in DB
-  const beekeeper = await prisma.beekeeper.findUnique({
-    where: { phone: waId },
+  // Check if beekeeper is already registered in DB (flexible phone match for 8882218036, 918882218036, +91...)
+  const cleanWaId = waId.replace(/[\s-]/g, '');
+  const digitsOnly = cleanWaId.replace(/[^0-9]/g, '');
+  const last10 = digitsOnly.slice(-10);
+
+  const beekeeper = await prisma.beekeeper.findFirst({
+    where: {
+      OR: [
+        { phone: cleanWaId },
+        { phone: last10 },
+        { phone: `+91${last10}` },
+        { phone: `91${last10}` },
+      ],
+    },
   });
 
   // ----------------------------------------------------------
@@ -249,7 +260,7 @@ async function route(
       `✅ Language set to ${langNames[lang] || lang}!\n\nReturning to menu...`
     );
     if (beekeeper) {
-      await sendMainMenu(waId, lang);
+      await sendMainMenu(waId, lang, beekeeper.name);
     } else {
       await sendOnboardingMenu(waId, lang);
     }
@@ -257,21 +268,25 @@ async function route(
   }
 
   // ----------------------------------------------------------
-  // Global Back to Menu / Cancel
+  // Global Back to Menu / Cancel / Greetings
   // ----------------------------------------------------------
   if (
     buttonId === 'btn_back_menu' ||
     buttonId === 'btn_menu' ||
     normalizedText === 'menu' ||
     normalizedText === 'cancel' ||
-    normalizedText === 'start'
+    normalizedText === 'start' ||
+    normalizedText === 'hi' ||
+    normalizedText === 'hello' ||
+    normalizedText === 'namaste' ||
+    (state === ConversationState.IDLE && beekeeper)
   ) {
     if (beekeeper) {
       await fsm.setSession(waId, ConversationState.MAIN_MENU, {
         beekeeper_id: beekeeper.id,
         language: lang,
       });
-      await sendMainMenu(waId, lang);
+      await sendMainMenu(waId, lang, beekeeper.name);
     } else {
       await sendOnboardingMenu(waId, lang);
     }
@@ -599,17 +614,21 @@ async function sendOnboardingMenu(waId: string, lang: SupportedLanguage): Promis
   await whatsapp.sendButtons(waId, t(lang, 'welcome_onboarding'), buttons);
 }
 
-async function sendMainMenu(waId: string, lang: SupportedLanguage): Promise<void> {
+async function sendMainMenu(waId: string, lang: SupportedLanguage, beekeeperName?: string | null): Promise<void> {
+  const greeting = beekeeperName
+    ? `🐝 Namaste ${beekeeperName}! Welcome back to Pollinator.`
+    : t(lang, 'welcome_back');
+
   await whatsapp.sendList(
     waId,
     '🐝 Pollinator',
-    t(lang, 'welcome_back'),
+    greeting,
     'Open Menu',
     [
       {
         title: 'Farm & IoT',
         rows: [
-          { id: 'menu_hive_status', title: t(lang, 'btn_hive_status'), description: 'Live sensor data from your smart hives' },
+          { id: 'menu_hive_status', title: t(lang, 'btn_hive_status'), description: 'Live sensor data & AI health score from your smart hives' },
           { id: 'menu_register_hive', title: t(lang, 'btn_register_hive'), description: 'Pair an ESP32 IoT sensor box' },
           { id: 'menu_bee_health', title: t(lang, 'btn_bee_health'), description: 'Check diseases & hive condition' },
           { id: 'menu_harvest', title: t(lang, 'btn_harvest'), description: 'Register harvest batch on Polygon' },
@@ -641,7 +660,7 @@ async function handleHiveStatus(
     include: {
       readings: {
         orderBy: { timestamp: 'desc' },
-        take: 1,
+        take: 2,
       },
     },
   });
@@ -651,10 +670,11 @@ async function handleHiveStatus(
     const demoStatus =
       '🌡️ *Smart Hive IoT Monitor*\n\n' +
       '📦 *Hive ESP32-DEMO-01* (Default)\n' +
-      '• Temperature: 34.8°C (Optimal brood temp ✅)\n' +
-      '• Humidity: 46.2% (Healthy range ✅)\n' +
-      '• Super Weight: 24.5 kg (+1.2 kg gain this week 🍯)\n' +
-      '• Battery: 94% 🔋\n\n' +
+      '• Temperature: 35.0°C (Optimal brood temp ✅)\n' +
+      '• Humidity: 56.5% (Healthy range ✅)\n' +
+      '• Colony Weight: 48.5 kg (Steady nectar flow 🍯)\n' +
+      '• Health Score: *100% OPTIMAL* 🌟\n' +
+      '• Battery: 96% 🔋\n\n' +
       '💡 *Tip*: To pair your real ESP32 hive sensor, tap "Pair IoT Hive" from the menu!';
     const localized = await translateResponse(demoStatus, lang);
     await whatsapp.sendButtons(waId, localized, [
@@ -664,15 +684,34 @@ async function handleHiveStatus(
     return;
   }
 
-  let statusText = '🌡️ *Your Hive IoT Status*\n\n';
+  const { calculateHiveHealth } = await import('@/lib/iot-health-model');
+  let statusText = '🌡️ *Live Smart Hive Telemetry*\n\n';
+
   for (const hive of hives) {
     const reading = hive.readings[0];
-    statusText += `📦 *Hive ${hive.deviceId}*\n`;
+    const prevReading = hive.readings[1];
+    statusText += `📦 *Hive ${hive.deviceId}* (${hive.region || 'Active'})\n`;
     if (reading) {
-      statusText += `• Temperature: ${reading.tempC?.toFixed(1) ?? '35.0'}°C\n`;
-      statusText += `• Humidity: ${reading.humidityPct?.toFixed(1) ?? '45.0'}%\n`;
-      statusText += `• Weight: ${reading.weightKg?.toFixed(2) ?? '22.0'} kg\n`;
-      statusText += `• Battery: ${reading.batteryPct?.toFixed(0) ?? '90'}%\n\n`;
+      const health = calculateHiveHealth({
+        tempC: reading.tempC ?? 35,
+        humidityPct: reading.humidityPct ?? 55,
+        weightKg: reading.weightKg ?? 48,
+        batteryPct: reading.batteryPct,
+        previousWeightKg: prevReading?.weightKg ?? null,
+      });
+
+      statusText += `• Temperature: ${reading.tempC?.toFixed(1) ?? '35.0'}°C (${health.metrics.tempStatus})\n`;
+      statusText += `• Humidity: ${reading.humidityPct?.toFixed(1) ?? '56.0'}% (${health.metrics.humidityStatus})\n`;
+      statusText += `• Hive Weight: *${reading.weightKg?.toFixed(2) ?? '48.50'} kg* (${health.metrics.weightDeltaKg >= 0 ? '+' : ''}${health.metrics.weightDeltaKg} kg delta)\n`;
+      statusText += `• Health Score: *${health.score}%* [${health.status.replace('_', ' ')}]\n`;
+      statusText += `• Battery: ${reading.batteryPct?.toFixed(0) ?? '95'}% 🔋\n`;
+      if (health.insights.length > 0) {
+        statusText += `💡 *Diagnosis*: ${health.insights[0]}\n`;
+      }
+      if (health.recommendations.length > 0) {
+        statusText += `⚡ *Action*: ${health.recommendations[0]}\n`;
+      }
+      statusText += `\n`;
     } else {
       statusText += `• Status: Paired, awaiting first sensor reading...\n\n`;
     }

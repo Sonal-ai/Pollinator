@@ -18,11 +18,29 @@ type OwnedBatch = {
   status: string;
 };
 
+const ACTOR_PRESETS = [
+  { label: '🚚 Transporter / Logistics (distributor@pollinator.com)', address: '0x8872b0e36eB29b47a98210DDB6ED7cC7e4607', status: 'IN_DISTRIBUTION' },
+  { label: '🧪 QA Testing Laboratory (lab@pollinator.com)', address: '0x321aB0e36eB29b47a98210DDB6ED7cC7e4607', status: 'PROCESSED' },
+  { label: '🏭 Processor / Production Facility (processor@pollinator.com)', address: '0x4B650a3d926A8f777f96422d790B0e36eB29b47a', status: 'PACKAGED' },
+  { label: '🏪 Retail Shelf Store (retailer@pollinator.com)', address: '0x5511b0e36eB29b47a98210DDB6ED7cC7e4607', status: 'AT_RETAIL' },
+  { label: 'Custom Address / Manual Input', address: '', status: 'IN_DISTRIBUTION' },
+];
+
 export function CustodyTransferForm({ myBatches }: { myBatches: OwnedBatch[] }) {
   const [batchId, setBatchId] = useState(myBatches[0]?.id ?? '');
-  const [toAddress, setToAddress] = useState('');
+  const [selectedActor, setSelectedActor] = useState(ACTOR_PRESETS[0].address);
+  const [toAddress, setToAddress] = useState(ACTOR_PRESETS[0].address);
   const [newStatus, setNewStatus] = useState('IN_DISTRIBUTION');
   const [loading, setLoading] = useState(false);
+
+  function handleActorSelect(addr: string) {
+    setSelectedActor(addr);
+    setToAddress(addr);
+    const preset = ACTOR_PRESETS.find(p => p.address === addr);
+    if (preset && preset.status) {
+      setNewStatus(preset.status);
+    }
+  }
   const [result, setResult] = useState<{
     success?: boolean;
     txHash?: string;
@@ -96,14 +114,35 @@ export function CustodyTransferForm({ myBatches }: { myBatches: OwnedBatch[] }) 
           </select>
         </div>
 
+        {/* Next Recipient Actor Selection */}
         <div>
           <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
-            Recipient EVM Wallet Address
+            Select Next Custodian / Actor
+          </label>
+          <select
+            value={selectedActor}
+            onChange={(e) => handleActorSelect(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-yellow-400 transition-colors mb-2"
+          >
+            {ACTOR_PRESETS.map((p, idx) => (
+              <option key={idx} value={p.address} className="bg-[#0d1017] text-white">
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+            Recipient Custody Wallet Address
           </label>
           <input
             type="text"
             value={toAddress}
-            onChange={(e) => setToAddress(e.target.value)}
+            onChange={(e) => {
+              setToAddress(e.target.value);
+              setSelectedActor(e.target.value);
+            }}
             placeholder="0x..."
             className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-yellow-300 placeholder-slate-600 focus:outline-none focus:border-yellow-400 transition-colors"
             required

@@ -184,6 +184,36 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     ? await verifyMetadataIntegrity(batch.metadataCID, expectedHash).catch(() => null)
     : null;
 
+  // Fetch QR Token details and live scan records if scanned with a specific jar nonce
+  let tokenData = null;
+  if (nonce) {
+    tokenData = await prisma.qRToken.findUnique({
+      where: { nonce },
+      include: {
+        scans: {
+          orderBy: { timestamp: 'desc' },
+          take: 5,
+        },
+      },
+    });
+  }
+
+  const scanInfo = tokenData ? {
+    jarIndex: tokenData.jarIndex ?? 1,
+    jarSizeGrams: tokenData.jarSizeGrams ?? 500,
+    totalScans: tokenData.scans.length,
+    latestScan: tokenData.scans[0] ? {
+      timestamp: tokenData.scans[0].timestamp,
+      ipRegion: tokenData.scans[0].ipRegion,
+      ipCity: tokenData.scans[0].ipCity,
+      ipCountry: tokenData.scans[0].ipCountry,
+    } : null,
+    firstScan: tokenData.scans[tokenData.scans.length - 1] ? {
+      timestamp: tokenData.scans[tokenData.scans.length - 1].timestamp,
+      ipRegion: tokenData.scans[tokenData.scans.length - 1].ipRegion,
+    } : null,
+  } : null;
+
   return (
     <div className="min-h-screen bg-[#07090e] text-slate-100 py-10 px-4 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/10 blur-[130px] pointer-events-none -z-10" />
@@ -215,6 +245,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
         batch={batch as any}
         chainData={chain}
         integrity={integrity}
+        scanInfo={scanInfo}
       />
     </div>
   );
