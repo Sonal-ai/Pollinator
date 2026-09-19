@@ -17,11 +17,13 @@ const ROLES = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('admin');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const isPhone = /^\+?[0-9\s-]{7,15}$/.test(identifier.trim());
 
   const handleRoleChange = (newRole: string) => {
     setRole(newRole);
@@ -31,14 +33,16 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!email.includes('@')) {
-      setError('Please enter a valid email address');
-      return;
-    }
-    
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
+    if (!isPhone) {
+      if (!identifier.includes('@')) {
+        setError('Please enter a valid email address or phone number');
+        return;
+      }
+      
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters');
+        return;
+      }
     }
 
     setLoading(true);
@@ -46,7 +50,12 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify({
+          email: identifier,
+          identifier,
+          password: isPhone ? undefined : password,
+          role: isPhone ? 'beekeeper' : role,
+        }),
       });
 
       if (response.ok) {
@@ -110,38 +119,45 @@ export default function LoginPage() {
               </select>
             </div>
 
-            {/* Email input */}
+            {/* Identifier input (Email or WhatsApp Phone) */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-2 uppercase font-mono tracking-wider">
-                Email Address
+                Email Address or WhatsApp Phone
               </label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="name@company.com or +919876543210"
                 className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-amber-300 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition-colors"
                 required
               />
+              {isPhone && (
+                <p className="text-[11px] text-emerald-400 mt-1.5 font-sans flex items-center gap-1.5">
+                  <span>📱</span> WhatsApp Beekeeper detected: Instant passwordless login.
+                </p>
+              )}
             </div>
 
-            {/* Password input */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-2 uppercase font-mono tracking-wider">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-amber-300 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition-colors"
-                required
-              />
-              <p className="text-[10px] text-slate-500 mt-1.5 font-sans">
-                Web2 Abstraction Mode: Your EVM wallet is automatically generated and secured by the server.
-              </p>
-            </div>
+            {/* Password input (hidden for phone logins) */}
+            {!isPhone && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-2 uppercase font-mono tracking-wider">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-amber-300 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition-colors"
+                  required={!isPhone}
+                />
+                <p className="text-[10px] text-slate-500 mt-1.5 font-sans">
+                  Web2 Abstraction Mode: Your EVM wallet is automatically generated and secured by the server.
+                </p>
+              </div>
+            )}
 
             {error && (
               <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400">

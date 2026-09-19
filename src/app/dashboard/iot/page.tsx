@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { IotChartClient } from './chart-client';
+import { IotSimulatorModal } from './simulator-modal';
 import { calculateHiveHealth } from '@/lib/iot-health-model';
 import { Cpu, Wifi, Thermometer, Droplets, Scale, BatteryCharging, Activity, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
 
@@ -47,9 +48,12 @@ export default async function IoTPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs font-mono text-cyan-300">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-          <span>MQTT Broker: AWS Active</span>
+        <div className="flex items-center gap-3">
+          <IotSimulatorModal deviceId={hives[0]?.deviceId ?? 'ESP32-001'} />
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs font-mono text-cyan-300">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span>MQTT Broker: AWS Active</span>
+          </div>
         </div>
       </div>
 
