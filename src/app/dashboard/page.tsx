@@ -67,122 +67,153 @@ export default async function DashboardPage({
   const pages = Math.ceil(total / limit);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Honey Batch Registry</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{total} batches total</p>
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600 tracking-tight">
+            Batch Registry
+          </h1>
+          <p className="text-sm font-medium text-slate-500 mt-1">Manage and track your honey supply chain • {total} records</p>
         </div>
         <div className="flex gap-3">
           <a
             href="/dashboard?status=RECALLED"
-            className="text-sm px-3 py-2 border border-red-200 text-red-700 rounded-lg hover:bg-red-50"
+            className="flex items-center gap-2 text-sm px-4 py-2 bg-white/50 backdrop-blur-md border border-red-200 text-red-600 rounded-xl hover:bg-red-50 hover:border-red-300 transition-all shadow-sm"
           >
-            🚨 Recalled
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            View Recalled
           </a>
           <a
             href="/dashboard"
-            className="text-sm px-3 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
+            className="text-sm font-medium px-5 py-2 bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-xl shadow-md shadow-amber-500/20 hover:shadow-amber-500/40 hover:-translate-y-0.5 transition-all"
           >
             All Batches
           </a>
         </div>
       </div>
 
-      {/* Batch Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              <tr>
-                <th className="px-5 py-3">Batch Code</th>
-                <th className="px-5 py-3">Honey Type</th>
-                <th className="px-5 py-3">Qty (kg)</th>
-                <th className="px-5 py-3">Beekeeper</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Lab ✓</th>
-                <th className="px-5 py-3">QRs</th>
-                <th className="px-5 py-3">Alerts</th>
-                <th className="px-5 py-3 text-right">Actions</th>
+      {/* Batch Table / Grid */}
+      <div className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 overflow-hidden flex-1">
+        <div className="overflow-x-auto h-full">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-slate-50/50 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100/60">
+              <tr className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                <th className="px-6 py-4">Batch Code</th>
+                <th className="px-6 py-4">Origin & Type</th>
+                <th className="px-6 py-4">Quantity</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-center">Alerts</th>
+                <th className="px-6 py-4 text-right">Details</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {batches.length === 0 && (
+            <tbody className="divide-y divide-slate-100/50">
+              {batches.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-gray-400 text-sm">
-                    No honey batches found. Register a harvest via WhatsApp to get started.
+                  <td colSpan={6} className="px-6 py-16 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center">
+                      <span className="text-4xl mb-3">🍯</span>
+                      <p className="font-medium">No batches found.</p>
+                      <p className="text-xs mt-1">Wait for a Beekeeper to log a harvest.</p>
+                    </div>
                   </td>
                 </tr>
+              ) : (
+                batches.map((b) => (
+                  <tr key={b.id} className="hover:bg-amber-50/30 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="font-mono text-sm font-bold text-slate-800 bg-slate-100/50 w-fit px-2 py-1 rounded-md border border-slate-200/50">
+                        {b.batchCode}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-1.5 font-medium truncate max-w-[150px]" title={b.id}>
+                        id: {b.id.slice(-8)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-bold text-slate-800">{b.honey_type}</div>
+                      <div className="text-xs font-medium text-slate-500 mt-0.5 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                        {b.beekeeper?.name ?? 'Unknown'} • {(b as any).region ?? b.beekeeper?.region}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-semibold text-slate-800">
+                        {(b.quantity_grams / 1000).toFixed(1)} <span className="text-slate-400 text-xs">KG</span>
+                      </div>
+                      {b._count.qrTokens > 0 && (
+                        <div className="text-[10px] uppercase font-bold tracking-wider text-teal-600 mt-1 bg-teal-50 w-fit px-1.5 py-0.5 rounded">
+                          {b._count.qrTokens} Jars
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${statusBadge(
+                          b.status
+                        )}`}
+                      >
+                        {b.status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {b._count.scanAlerts > 0 ? (
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-100 text-red-700 text-xs font-bold ring-4 ring-red-50">
+                          {b._count.scanAlerts}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 text-sm">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Link
+                        href={`/dashboard/batch/${b.batchCode}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        View
+                        <span className="text-[10px]">→</span>
+                      </Link>
+                    </td>
+                  </tr>
+                ))
               )}
-              {batches.map((batch) => (
-                <tr key={batch.id} className="hover:bg-amber-50/30 transition-colors">
-                  <td className="px-5 py-4 font-mono text-xs text-gray-700 font-medium">
-                    {batch.batchCode}
-                  </td>
-                  <td className="px-5 py-4 text-sm text-gray-700">{batch.honey_type}</td>
-                  <td className="px-5 py-4 text-sm text-gray-700">
-                    {(batch.quantity_grams / 1000).toFixed(1)}
-                  </td>
-                  <td className="px-5 py-4 text-sm text-gray-600">
-                    {batch.beekeeper?.name ?? '—'}
-                    {batch.beekeeper?.region && (
-                      <span className="text-gray-400 text-xs block">{batch.beekeeper.region}</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge(batch.status)}`}>
-                      {batch.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-center">
-                    {batch.lab_verified ? (
-                      <span className="text-green-600 font-bold text-sm">✓</span>
-                    ) : (
-                      <span className="text-gray-300 text-sm">—</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-sm text-gray-600 text-center">
-                    {batch._count.qrTokens > 0 ? batch._count.qrTokens : '—'}
-                  </td>
-                  <td className="px-5 py-4 text-center">
-                    {batch._count.scanAlerts > 0 ? (
-                      <span className="text-red-600 font-bold text-xs">⚠ {batch._count.scanAlerts}</span>
-                    ) : (
-                      <span className="text-gray-300 text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-4 text-right">
-                    <Link
-                      href={`/dashboard/batch/${batch.batchCode}`}
-                      className="text-sm text-amber-600 hover:text-amber-800 font-medium"
-                    >
-                      View →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
-        {pages > 1 && (
-          <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-            <span>Page {page} of {pages}</span>
-            <div className="flex gap-2">
-              {page > 1 && (
-                <a href={`?page=${page - 1}${status ? `&status=${status}` : ''}`}
-                  className="px-3 py-1.5 border rounded-lg hover:bg-gray-50">← Prev</a>
-              )}
-              {page < pages && (
-                <a href={`?page=${page + 1}${status ? `&status=${status}` : ''}`}
-                  className="px-3 py-1.5 border rounded-lg hover:bg-gray-50">Next →</a>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Pagination */}
+      {pages > 1 && (
+        <div className="flex items-center justify-between mt-6 px-2">
+          <p className="text-sm font-medium text-slate-500">
+            Page {page} of {pages}
+          </p>
+          <div className="flex gap-2">
+            <Link
+              href={`/dashboard?page=${page - 1}${status ? `&status=${status}` : ''}`}
+              className={`px-4 py-2 text-sm font-bold rounded-xl transition-all ${
+                page <= 1 
+                  ? 'bg-slate-100 text-slate-400 pointer-events-none' 
+                  : 'bg-white text-slate-700 hover:bg-slate-50 shadow-sm border border-slate-200'
+              }`}
+            >
+              Previous
+            </Link>
+            <Link
+              href={`/dashboard?page=${page + 1}${status ? `&status=${status}` : ''}`}
+              className={`px-4 py-2 text-sm font-bold rounded-xl transition-all ${
+                page >= pages 
+                  ? 'bg-slate-100 text-slate-400 pointer-events-none' 
+                  : 'bg-white text-slate-700 hover:bg-slate-50 shadow-sm border border-slate-200'
+              }`}
+            >
+              Next
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

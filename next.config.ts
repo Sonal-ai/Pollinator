@@ -47,6 +47,8 @@ const nextConfig: NextConfig = {
     return config;
   },
 
+  turbopack: {},
+
   // ── Logging ──────────────────────────────────────────────
   logging: {
     fetches: {

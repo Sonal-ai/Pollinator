@@ -54,14 +54,14 @@ export async function checkDuplicateScanAnomaly(params: AnomalyCheckParams): Pro
           batchId,
           qrTokenId,
           alertType: 'GEOGRAPHIC_ANOMALY',
-          details: {
+          details: JSON.stringify({
             batchCode,
             regions: Array.from(regions),
             scanCount: recentScans.length,
             windowMinutes: 30,
             detectedAt: new Date().toISOString(),
             note: 'Same QR scanned from multiple geographic regions within 30 minutes.',
-          },
+          }),
         });
       }
     }
@@ -73,13 +73,13 @@ export async function checkDuplicateScanAnomaly(params: AnomalyCheckParams): Pro
         batchId,
         qrTokenId,
         alertType: 'HIGH_VOLUME',
-        details: {
+        details: JSON.stringify({
           batchCode,
           totalScans,
           threshold: HIGH_VOLUME_THRESHOLD,
           detectedAt: new Date().toISOString(),
           note: 'Unusually high number of scans for a single QR token.',
-        },
+        }),
       });
     }
   } catch (err) {
@@ -96,7 +96,7 @@ async function createAlertIfNotExists(params: {
   batchId: string;
   qrTokenId: string;
   alertType: string;
-  details: Record<string, unknown>;
+  details: string;
 }): Promise<void> {
   const { batchId, qrTokenId, alertType, details } = params;
 
@@ -114,8 +114,7 @@ async function createAlertIfNotExists(params: {
         batchId,
         qrTokenId,
         alertType,
-        // Prisma v5 requires explicit cast for Json fields
-        details: details as Parameters<typeof prisma.scanAlert.create>[0]['data']['details'],
+        details,
         resolved: false,
       },
     });

@@ -59,8 +59,8 @@ export default async function RecallPage() {
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">{new Date(alert.createdAt).toLocaleString('en-IN')}</p>
                     {/* Details */}
-                    <pre className="mt-2 text-xs bg-gray-50 rounded p-2 overflow-x-auto text-gray-600 max-h-24">
-                      {JSON.stringify(alert.details, null, 2)}
+                    <pre className="mt-2 p-2 bg-gray-50 rounded text-xs overflow-auto text-gray-700">
+                      {alert.details}
                     </pre>
                   </div>
                   <div className="shrink-0 flex flex-col gap-2">

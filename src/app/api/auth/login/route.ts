@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Invalid wallet address' }, { status: 400 });
   }
 
-  const validRoles = ['admin', 'lab', 'distributor', 'retailer', 'beekeeper'];
+  const validRoles = ['admin', 'processor', 'lab', 'distributor', 'retailer', 'beekeeper'];
   if (!role || !validRoles.includes(role)) {
     return Response.json({ error: 'Invalid role' }, { status: 400 });
   }

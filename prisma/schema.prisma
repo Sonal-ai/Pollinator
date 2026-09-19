@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ============================================================
@@ -81,7 +81,7 @@ model AIInference {
   inputImageHash String?   // SHA-256 of input image for audit
   prediction     String    // "healthy" | "varroa_parasite_suspected" | "pollen_carrier" | "uncertain"
   confidence     Float     // 0.0 - 1.0
-  rawOutput      Json?     // Full model output for audit
+  rawOutput      String?     // Full model output for audit
   inferredAt     DateTime  @default(now())
 
   @@index([hiveId, inferredAt])
@@ -187,7 +187,7 @@ model ScanAlert {
   batch       HoneyBatch? @relation(fields: [batchId], references: [id])
   qrTokenId   String?
   alertType   String     // "GEOGRAPHIC_ANOMALY" | "HIGH_VOLUME" | "RECALLED_SCAN"
-  details     Json       // Structured alert context (regions, scan counts, etc.)
+  details     String       // Structured alert context (regions, scan counts, etc.)
   resolved    Boolean    @default(false)
   resolvedAt  DateTime?
   resolvedBy  String?    // Admin wallet or "SYSTEM"
