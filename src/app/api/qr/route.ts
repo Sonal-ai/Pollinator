@@ -25,16 +25,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, { status: 422 });
   }
 
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
-
-  let session: { walletAddress?: string; role?: string } | null = null;
-  if (sessionCookie) {
-    try {
-      session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-    } catch { /* ignore */ }
-  }
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
 
   if (session?.role !== 'admin' && session?.role !== 'processor') {
     return Response.json({ error: 'Unauthorized. Only Processors can generate QR tokens.' }, { status: 403 });
@@ -57,24 +49,34 @@ export async function POST(request: NextRequest) {
     jarSizeGrams,
   });
 
-  // Generate QR code images as base64 data URLs
-  const results = await Promise.all(
-    tokens.map(async (token) => {
-      const qrDataUrl = await QRCode.toDataURL(token.verifyUrl, {
-        errorCorrectionLevel: 'H', // High error correction for damaged labels
-        width: 400,
-        margin: 2,
-        color: { dark: '#1a1a2e', light: '#ffffff' },
-      });
+  // Generate QR code images as base64 data URLs in chunks to prevent OOM / Event Loop DoS (GAP-11 fix)
+  const results: Array<{ jarIndex: number; nonce: string; verifyUrl: string; qrImageBase64: string }> = [];
+  const chunkSize = 50;
+  
+  for (let i = 0; i < tokens.length; i += chunkSize) {
+    const chunk = tokens.slice(i, i + chunkSize);
+    const chunkResults = await Promise.all(
+      chunk.map(async (token) => {
+        const qrDataUrl = await QRCode.toDataURL(token.verifyUrl, {
+          errorCorrectionLevel: 'H', // High error correction for damaged labels
+          width: 400,
+          margin: 2,
+          color: { dark: '#1a1a2e', light: '#ffffff' },
+        });
 
-      return {
-        jarIndex: token.jarIndex,
-        nonce: token.nonce,
-        verifyUrl: token.verifyUrl,
-        qrImageBase64: qrDataUrl, // data:image/png;base64,...
-      };
-    })
-  );
+        return {
+          jarIndex: token.jarIndex,
+          nonce: token.nonce,
+          verifyUrl: token.verifyUrl,
+          qrImageBase64: qrDataUrl, // data:image/png;base64,...
+        };
+      })
+    );
+    results.push(...chunkResults);
+    
+    // Yield to the event loop between chunks
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
 
   return Response.json({ batchCode, jarCount, jarSizeGrams, qrTokens: results }, { status: 201 });
 }
