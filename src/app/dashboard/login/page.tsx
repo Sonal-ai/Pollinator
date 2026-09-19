@@ -15,35 +15,29 @@ const ROLES = [
   { value: 'beekeeper',   label: '🐝 Beekeeper — IoT telemetry & harvest logs' },
 ];
 
-const PRESET_WALLETS: Record<string, string> = {
-  admin: '0x06a7E556dA2e1e7C40d0C3a19DDB6ED7cC7e4607',
-  processor: '0x4B650a3d926A8f777f96422d790B0e36eB29b47a',
-  lab: '0x321aB0e36eB29b47a98210DDB6ED7cC7e4607',
-  distributor: '0x8872b0e36eB29b47a98210DDB6ED7cC7e4607',
-  retailer: '0x5511b0e36eB29b47a98210DDB6ED7cC7e4607',
-  beekeeper: '0x9922b0e36eB29b47a98210DDB6ED7cC7e4607',
-};
-
 export default function LoginPage() {
   const router = useRouter();
-  const [walletAddress, setWalletAddress] = useState(PRESET_WALLETS.admin);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState('admin');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRoleChange = (newRole: string) => {
     setRole(newRole);
-    if (PRESET_WALLETS[newRole]) {
-      setWalletAddress(PRESET_WALLETS[newRole]);
-    }
   };
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
 
-    if (!walletAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-      setError('Please enter a valid EVM wallet address (0x...)');
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -52,7 +46,7 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress, role }),
+        body: JSON.stringify({ email, password, role }),
       });
 
       if (response.ok) {
@@ -116,31 +110,36 @@ export default function LoginPage() {
               </select>
             </div>
 
-            {/* Wallet Address input */}
+            {/* Email input */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-slate-300 uppercase font-mono tracking-wider">
-                  Wallet Address
-                </label>
-                <button
-                  type="button"
-                  onClick={() => handleRoleChange(role)}
-                  className="text-[10px] font-mono text-amber-400 hover:underline flex items-center gap-1"
-                >
-                  <Zap className="w-2.5 h-2.5" /> Set Demo Wallet
-                </button>
-              </div>
-
+              <label className="block text-xs font-semibold text-slate-300 mb-2 uppercase font-mono tracking-wider">
+                Email Address
+              </label>
               <input
-                type="text"
-                value={walletAddress}
-                onChange={(e) => setWalletAddress(e.target.value)}
-                placeholder="0x..."
-                className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-amber-300 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition-colors"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-amber-300 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition-colors"
+                required
+              />
+            </div>
+
+            {/* Password input */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-2 uppercase font-mono tracking-wider">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-amber-300 placeholder-slate-600 focus:outline-none focus:border-amber-400 transition-colors"
                 required
               />
               <p className="text-[10px] text-slate-500 mt-1.5 font-sans">
-                Prototype mode: Role is self-asserted for immediate evaluation.
+                Web2 Abstraction Mode: Your EVM wallet is automatically generated and secured by the server.
               </p>
             </div>
 
