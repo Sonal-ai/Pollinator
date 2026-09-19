@@ -1,26 +1,172 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #080a0f;
+  --foreground: #f8fafc;
+  --bee-yellow: #ffd21e;
+  --bee-gold: #ffb800;
+  --bee-amber: #f59e0b;
+  --bee-honey: #d97706;
+  --bee-glow: rgba(255, 210, 30, 0.4);
+  --emerald-verified: #10b981;
+  --cyber-blue: #38bdf8;
+  --alert-crimson: #ef4444;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+  
+  /* Beehive Yellow Palette */
+  --color-bee-50: #fffde7;
+  --color-bee-100: #fff9c4;
+  --color-bee-200: #fff59d;
+  --color-bee-300: #fff176;
+  --color-bee-400: #ffee58;
+  --color-bee-500: #ffd21e;
+  --color-bee-600: #ffb800;
+  --color-bee-700: #f59e0b;
+  --color-bee-800: #d97706;
+  --color-bee-900: #b45309;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Hive Obsidian/Dark Slate */
+  --color-hive-950: #06070a;
+  --color-hive-900: #0c0e14;
+  --color-hive-850: #12151f;
+  --color-hive-800: #181d2b;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  selection-background-color: #ffd21e;
+  selection-color: #000000;
+}
+
+/* Custom Honeycomb Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #080a0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #232a3b;
+  border-radius: 9999px;
+  border: 1px solid #080a0f;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ffd21e;
+}
+
+/* Subtle SVG Honeycomb Pattern Background */
+.honeycomb-pattern {
+  background-color: #080a0f;
+  background-image: radial-gradient(rgba(255, 210, 30, 0.07) 1px, transparent 0),
+    radial-gradient(rgba(255, 184, 0, 0.05) 1px, #080a0f 0);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+
+.honeycomb-grid-overlay {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill-rule='evenodd' stroke='%23ffd21e' stroke-width='0.6' stroke-opacity='0.08' fill='none' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM0 41.5l14 8 14-8v-1.5l-14 8-14-8v1.5zm28-34L14-.5 0 7.5V9l14-8 14 8V7.5z'/%3E%3C/svg%3E");
+}
+
+/* Glassmorphic Hive Panels */
+.hive-glass {
+  background: rgba(14, 17, 26, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 210, 30, 0.12);
+}
+
+.hive-card {
+  background: radial-gradient(120% 120% at 50% 0%, rgba(28, 33, 48, 0.75) 0%, rgba(12, 15, 24, 0.85) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 210, 30, 0.12);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
+}
+
+.hive-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hive-card-hover:hover {
+  border-color: rgba(255, 210, 30, 0.45);
+  box-shadow: 0 16px 50px -10px rgba(255, 210, 30, 0.22);
+  transform: translateY(-2px);
+}
+
+/* Glowing Neon Bee Auras */
+.glow-bee-yellow {
+  box-shadow: 0 0 40px -8px rgba(255, 210, 30, 0.45);
+}
+
+.glow-bee-gold {
+  box-shadow: 0 0 45px -8px rgba(255, 184, 0, 0.45);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.4);
+}
+
+/* Holographic Honeycomb Shimmer */
+@keyframes honey-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.foil-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 210, 30, 0.25) 25%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 210, 30, 0.25) 75%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: honey-shimmer 6s infinite linear;
+}
+
+/* Honey float animation */
+@keyframes bee-hover {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-6px) rotate(1.5deg);
+  }
+  75% {
+    transform: translateY(4px) rotate(-1.5deg);
+  }
+}
+
+.animate-bee-hover {
+  animation: bee-hover 5s ease-in-out infinite;
+}
+
+/* Pulse Glow */
+@keyframes hive-pulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.06);
+  }
+}
+
+.animate-hive-pulse {
+  animation: hive-pulse 4s ease-in-out infinite;
 }

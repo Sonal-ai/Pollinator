@@ -38,6 +38,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+deploy.zip
 next-env.d.ts
 
 # hardhat
