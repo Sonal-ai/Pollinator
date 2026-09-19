@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
+    const { getSession } = await import('@/lib/auth');
+    const session = await getSession();
+    if (!session || !['admin', 'processor', 'lab'].includes(session.role)) {
+      return NextResponse.json({ error: 'Unauthorized. Authenticated session required.' }, { status: 401 });
+    }
+
     const data = await request.json();
     
     // Check if the environment variable for Pinata JWT exists

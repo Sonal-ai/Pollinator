@@ -147,16 +147,17 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     );
   }
 
-  // Fetch blockchain record and IPFS integrity
-  const [chainRecord, integrityCheck] = await Promise.allSettled([
-    getBatchFromChain(batchCode),
-    batch.metadataCID && batch.metadataHash
-      ? verifyMetadataIntegrity(batch.metadataCID, batch.metadataHash)
-      : Promise.resolve(null),
-  ]);
+  // Fetch live blockchain record from Polygon
+  const chain = await getBatchFromChain(batchCode).catch(() => null);
 
-  const chain = chainRecord.status === 'fulfilled' ? chainRecord.value : null;
-  const integrity = integrityCheck.status === 'fulfilled' ? integrityCheck.value : null;
+  // Anchor integrity check directly to on-chain record if available, falling back to DB record
+  const expectedHash = (chain?.metadataHash && chain.metadataHash !== '0x0000000000000000000000000000000000000000000000000000000000000000')
+    ? chain.metadataHash
+    : batch.metadataHash;
+
+  const integrity = (batch.metadataCID && expectedHash)
+    ? await verifyMetadataIntegrity(batch.metadataCID, expectedHash).catch(() => null)
+    : null;
 
   return (
     <div className="min-h-screen bg-[#07090e] text-slate-100 py-12 px-4 relative overflow-hidden">

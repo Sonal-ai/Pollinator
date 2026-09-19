@@ -6,19 +6,11 @@ import { Package, ShieldCheck } from 'lucide-react';
 export const dynamic = 'force-dynamic';
 
 export default async function ProcessorPage() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
   
-  let walletAddress: string | null = null;
-  let isAdmin = false;
-
-  if (sessionCookie) {
-    try {
-      const session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-      walletAddress = session.walletAddress ?? null;
-      isAdmin = session.role === 'admin';
-    } catch { /* ignore */ }
-  }
+  const walletAddress = session?.walletAddress ?? null;
+  const isAdmin = session?.role === 'admin';
 
   const processableBatches = await prisma.honeyBatch.findMany({
     where: {

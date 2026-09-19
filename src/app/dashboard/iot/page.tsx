@@ -6,19 +6,13 @@ import { Cpu, Wifi, Thermometer, Droplets, Scale, BatteryCharging } from 'lucide
 export const dynamic = 'force-dynamic';
 
 export default async function IoTPage() {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
   let beekeeperId: string | null = null;
-  let session: { walletAddress?: string; role?: string } | null = null;
 
-  if (sessionCookie) {
-    try {
-      session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-      if (session?.walletAddress) {
-        const bk = await prisma.beekeeper.findFirst({ where: { wallet: session.walletAddress } });
-        beekeeperId = bk?.id ?? null;
-      }
-    } catch { /* session parse failed */ }
+  if (session?.walletAddress) {
+    const bk = await prisma.beekeeper.findFirst({ where: { wallet: session.walletAddress } });
+    beekeeperId = bk?.id ?? null;
   }
 
   const isAdmin = session?.role === 'admin';

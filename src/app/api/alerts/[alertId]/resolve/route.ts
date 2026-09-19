@@ -9,19 +9,15 @@ export async function POST(
 ) {
   const { alertId } = await params;
 
-  const session = request.cookies.get('pollinator_session');
-  if (!session) return new Response('Unauthorized', { status: 401 });
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
 
-  let resolvedBy = 'ADMIN';
-  try {
-    const parsed = JSON.parse(Buffer.from(session.value, 'base64').toString()) as { walletAddress?: string; role?: string };
-    if (parsed.role !== 'admin') {
-      return new Response('Forbidden. Only admins can resolve alerts.', { status: 403 });
-    }
-    resolvedBy = parsed.walletAddress ?? 'ADMIN';
-  } catch {
-    return new Response('Invalid session', { status: 401 });
+  if (!session) return new Response('Unauthorized', { status: 401 });
+  if (session.role !== 'admin') {
+    return new Response('Forbidden. Only admins can resolve alerts.', { status: 403 });
   }
+
+  const resolvedBy = session.walletAddress ?? 'ADMIN';
 
   const alert = await prisma.scanAlert.findUnique({ where: { id: alertId } });
   if (!alert) return Response.json({ error: 'Alert not found' }, { status: 404 });

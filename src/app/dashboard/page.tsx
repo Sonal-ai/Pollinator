@@ -29,24 +29,15 @@ export default async function DashboardPage({
   const status = sp.status;
   const limit  = 20;
 
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
   
-  let walletAddress: string | null = null;
-  let role = 'admin';
-
-  if (sessionCookie) {
-    try {
-      const session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-      walletAddress = session.walletAddress ?? null;
-      role = session.role ?? 'admin';
-    } catch { /* ignore */ }
-  }
+  const walletAddress = session?.walletAddress ?? null;
+  const role = session?.role ?? 'admin';
 
   const where: any = status ? { status } : {};
   if (role === 'beekeeper' && walletAddress) {
-    where.beekeeper = { walletAddress: walletAddress };
+    where.beekeeper = { wallet: walletAddress };
   }
 
   const [batches, total, verifiedCount, alertCount] = await Promise.all([

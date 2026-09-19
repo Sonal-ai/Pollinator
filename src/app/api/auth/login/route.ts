@@ -22,14 +22,11 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Invalid role' }, { status: 400 });
   }
 
-  // Create a simple base64-encoded session (prototype-grade)
-  // Production: use JWT signed with JWT_SECRET, or MetaMask eth_sign
-  const sessionPayload = Buffer.from(
-    JSON.stringify({ walletAddress, role, createdAt: Date.now() })
-  ).toString('base64');
+  const { createSessionToken } = await import('@/lib/auth');
+  const token = await createSessionToken({ walletAddress, role });
 
   const cookieStore = await cookies();
-  cookieStore.set('pollinator_session', sessionPayload, {
+  cookieStore.set('pollinator_session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

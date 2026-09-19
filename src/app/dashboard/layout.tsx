@@ -28,17 +28,10 @@ const NAV_ITEMS = [
 ];
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('pollinator_session');
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
 
-  if (!sessionCookie) {
-    return <div className="min-h-screen bg-[#07090e] text-slate-100">{children}</div>;
-  }
-
-  let session: { walletAddress?: string; role?: string; name?: string } = {};
-  try {
-    session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
-  } catch {
+  if (!session) {
     return <div className="min-h-screen bg-[#07090e] text-slate-100">{children}</div>;
   }
 
