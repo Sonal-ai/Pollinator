@@ -47,7 +47,7 @@ export default async function DashboardPage({
   // Filter based on role
   const where: any = status ? { status } : {};
   if (role === 'beekeeper' && walletAddress) {
-    where.beekeeper = { walletAddress: { equals: walletAddress, mode: 'insensitive' } };
+    where.beekeeper = { walletAddress: walletAddress };
   }
 
   const [batches, total] = await Promise.all([

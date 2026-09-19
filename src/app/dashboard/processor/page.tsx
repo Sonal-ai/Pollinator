@@ -24,7 +24,7 @@ export default async function ProcessorPage() {
     where: {
       recalled: false,
       status: 'LAB_VERIFIED', // Must be lab verified to be safely packaged
-      ...(isAdmin ? {} : { current_custodian: { equals: walletAddress, mode: 'insensitive' } }),
+      ...(isAdmin ? {} : { current_custodian: walletAddress }),
     },
     select: {
       batchCode: true,
