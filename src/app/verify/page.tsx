@@ -5,6 +5,7 @@ import { verifyMetadataIntegrity } from '@/lib/ipfs';
 import { getBatchFromChain } from '@/lib/blockchain';
 import { processQRScan } from '@/lib/qr';
 import { headers } from 'next/headers';
+import QRCode from 'qrcode';
 import { VerifyClient } from './verify-client';
 import { ShieldAlert, AlertTriangle, QrCode, ArrowLeft } from 'lucide-react';
 
@@ -158,6 +159,12 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
               quantityGrams: 25000,
             }}
             integrity={{ valid: true }}
+            qrCodeDataUrl={await QRCode.toDataURL(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify?b=${batchCode}`, {
+              errorCorrectionLevel: 'H',
+              width: 320,
+              margin: 2,
+              color: { dark: '#0a0d14', light: '#ffffff' },
+            }).catch(() => null)}
           />
         </div>
       );
@@ -202,6 +209,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     jarIndex: tokenData.jarIndex ?? 1,
     jarSizeGrams: tokenData.jarSizeGrams ?? 500,
     totalScans: tokenData.scans.length,
+    nonce: tokenData.nonce,
     latestScan: tokenData.scans[0] ? {
       timestamp: tokenData.scans[0].timestamp,
       ipRegion: tokenData.scans[0].ipRegion,
@@ -213,6 +221,27 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
       ipRegion: tokenData.scans[tokenData.scans.length - 1].ipRegion,
     } : null,
   } : null;
+
+  // Generate scannable QR code data URL for this exact verification link
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const qrTargetUrl = nonce && signature
+    ? `${appUrl}/verify?b=${batchCode}&n=${nonce}&sig=${signature}`
+    : `${appUrl}/verify?b=${batchCode}`;
+
+  let qrCodeDataUrl: string | null = null;
+  try {
+    qrCodeDataUrl = await QRCode.toDataURL(qrTargetUrl, {
+      errorCorrectionLevel: 'H',
+      width: 320,
+      margin: 2,
+      color: {
+        dark: '#0a0d14',
+        light: '#ffffff',
+      },
+    });
+  } catch (err) {
+    console.error('Failed to generate verification QR code:', err);
+  }
 
   return (
     <div className="min-h-screen bg-[#07090e] text-slate-100 py-10 px-4 relative overflow-hidden">
@@ -246,6 +275,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
         chainData={chain}
         integrity={integrity}
         scanInfo={scanInfo}
+        qrCodeDataUrl={qrCodeDataUrl}
       />
     </div>
   );

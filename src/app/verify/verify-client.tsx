@@ -66,11 +66,13 @@ interface VerifyClientProps {
   integrity: {
     valid: boolean;
     reason?: string;
+    networkError?: boolean;
   } | null;
   scanInfo?: {
     jarIndex: number;
     jarSizeGrams: number;
     totalScans: number;
+    nonce?: string;
     latestScan: {
       timestamp: Date;
       ipRegion: string | null;
@@ -82,6 +84,7 @@ interface VerifyClientProps {
       ipRegion: string | null;
     } | null;
   } | null;
+  qrCodeDataUrl?: string | null;
 }
 
 const BATCH_STATUS_LABELS: Record<number, string> = {
@@ -89,18 +92,23 @@ const BATCH_STATUS_LABELS: Record<number, string> = {
   4: 'Packaged', 5: 'In Distribution', 6: 'At Retail', 7: 'Sold', 8: 'Recalled',
 };
 
-export function VerifyClient({ batch, chainData, integrity, scanInfo }: VerifyClientProps) {
+export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeDataUrl }: VerifyClientProps) {
   const [activeTab, setActiveTab] = useState<'certificate' | 'journey' | 'crypto'>('certificate');
   const [copiedTx, setCopiedTx] = useState(false);
 
   const isRecalled = batch.recalled || chainData?.recalled;
-  const isIntegrityFailed = integrity && !integrity.valid;
+  const isIntegrityFailed = integrity && !integrity.valid && !integrity.networkError;
 
   const copyTx = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedTx(true);
     setTimeout(() => setCopiedTx(false), 2000);
   };
+
+  // Format title without duplicating "Honey"
+  const formattedTitle = batch.honey_type.toLowerCase().includes('honey')
+    ? batch.honey_type
+    : `${batch.honey_type} Honey`;
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6 relative z-10">
@@ -124,44 +132,75 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo }: VerifyCl
         )}
 
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center justify-center gap-2">
-          <span>{batch.honey_type} Honey</span>
+          <span>{formattedTitle}</span>
           <span className="text-yellow-400">🍯</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-400">
           Batch <span className="font-mono text-yellow-400 font-bold">{batch.batchCode}</span> · KVIC Honey Mission Protocol
         </p>
 
-        {/* Live Physical Jar & Scan Analytics Banner */}
-        {scanInfo && (
-          <div className="mt-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 border border-yellow-400/30 text-left space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <QrCode className="w-4 h-4 text-yellow-400 animate-pulse" />
-                <span className="text-xs font-bold text-white font-mono uppercase">
-                  Physical Jar #{scanInfo.jarIndex} ({scanInfo.jarSizeGrams}g Net)
-                </span>
-              </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-                Scan #{scanInfo.totalScans} Verified
+        {/* Live Physical Jar & Scannable QR Code Banner */}
+        <div className="mt-4 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 border border-yellow-400/30 text-left space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <QrCode className="w-4 h-4 text-yellow-400 animate-pulse" />
+              <span className="text-xs font-bold text-white font-mono uppercase tracking-wider">
+                {scanInfo ? `Physical Jar #${scanInfo.jarIndex} (${scanInfo.jarSizeGrams}g Net)` : 'Retail Serialized Jar'}
               </span>
             </div>
+            {scanInfo ? (
+              <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                Scan #{scanInfo.totalScans} Verified
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 font-bold">
+                Batch Verified
+              </span>
+            )}
+          </div>
 
-            <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 font-mono pt-1 border-t border-white/5">
-              <div>
-                <span className="text-slate-400">Scan Location:</span>{' '}
-                <span className="text-white font-bold">{scanInfo.latestScan?.ipRegion || scanInfo.latestScan?.ipCity || 'India (Live Node)'}</span>
+          <div className="flex flex-col sm:flex-row items-center gap-5">
+            {/* Scannable QR Code Image */}
+            {qrCodeDataUrl && (
+              <div className="flex flex-col items-center shrink-0 bg-white p-2.5 rounded-2xl shadow-2xl border-2 border-yellow-400/60 group">
+                <img
+                  src={qrCodeDataUrl}
+                  alt={`QR Code for ${batch.batchCode}`}
+                  className="w-32 h-32 sm:w-36 sm:h-36 object-contain rounded-lg"
+                />
+                <span className="text-[10px] text-slate-900 font-mono font-extrabold mt-1.5 flex items-center gap-1">
+                  <span>📱 Scan with Phone</span>
+                </span>
               </div>
-              <div>
-                <span className="text-slate-400">Scanned At:</span>{' '}
-                <span className="text-yellow-300 font-bold">{new Date(scanInfo.latestScan?.timestamp || Date.now()).toLocaleTimeString()}</span>
+            )}
+
+            {/* Scan Analytics & Details */}
+            <div className="flex-1 space-y-2.5 text-xs font-mono w-full">
+              <div className="grid grid-cols-2 gap-3 text-[11px] text-slate-300 bg-black/40 p-3 rounded-xl border border-white/5">
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase">Scan Node</span>
+                  <span className="text-white font-bold">{scanInfo?.latestScan?.ipRegion || scanInfo?.latestScan?.ipCity || 'India (Wardha Gateway)'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[10px] uppercase">Scanned At</span>
+                  <span className="text-yellow-300 font-bold">{new Date(scanInfo?.latestScan?.timestamp || Date.now()).toLocaleTimeString()}</span>
+                </div>
+              </div>
+
+              {scanInfo?.nonce && (
+                <div className="text-[10px] text-slate-400 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 truncate">
+                  <span className="text-slate-500">Jar Nonce: </span>
+                  <span className="text-amber-300 font-mono">{scanInfo.nonce}</span>
+                </div>
+              )}
+
+              <div className="p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-400/20 text-[11px] text-yellow-200/90 leading-relaxed">
+                💡 <strong>Judges / Evaluators:</strong> Point your mobile camera at the QR code on the left to trigger a live duplicate scan. Your smartphone will open this page, and the scan counter will dynamically increment from <strong>#{scanInfo?.totalScans ?? 1}</strong> to <strong>#{(scanInfo?.totalScans ?? 1) + 1}</strong>!
               </div>
             </div>
-
-            <p className="text-[10px] text-slate-400 italic pt-1">
-              💡 Judges: Scanning this QR again from another phone will record a duplicate scan with your location in real-time.
-            </p>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Tab Controls */}
