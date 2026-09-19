@@ -46,27 +46,44 @@ export interface TextAnalysisResult {
 }
 
 // ============================================================
-// Invoke Bedrock Helper
+// Invoke Bedrock Helper with Fallback Ladder (GAP-15 fix)
 // ============================================================
 
-async function invokeModel(prompt: string, maxTokens = 500): Promise<string> {
-  // Upgraded to Claude 3.5 Sonnet for the aws-bedrock-ai branch for maximum intelligence
-  const response = await getBedrockClient().send(
-    new InvokeModelCommand({
-      modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
-      contentType: 'application/json',
-      accept: 'application/json',
-      body: JSON.stringify({
-        anthropic_version: 'bedrock-2023-05-31',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    })
-  );
+function sanitizeInput(text: string): string {
+  // Prevent prompt injection by escaping XML-like tags
+  return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-  const bodyString = new TextDecoder().decode(response.body);
-  const result = JSON.parse(bodyString) as { content: [{ text: string }] };
-  return result.content[0].text;
+async function invokeModelWithFallback(prompt: string, maxTokens = 500): Promise<string> {
+  const models = [
+    'anthropic.claude-3-5-sonnet-20240620-v1:0', // Primary: High Intelligence
+    'anthropic.claude-3-haiku-20240307-v1:0'     // Fallback: Fast & Resilient
+  ];
+  
+  let lastError = null;
+  for (const modelId of models) {
+    try {
+      const response = await getBedrockClient().send(
+        new InvokeModelCommand({
+          modelId,
+          contentType: 'application/json',
+          accept: 'application/json',
+          body: JSON.stringify({
+            anthropic_version: 'bedrock-2023-05-31',
+            max_tokens: maxTokens,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+        })
+      );
+      const bodyString = new TextDecoder().decode(response.body);
+      const result = JSON.parse(bodyString) as { content: [{ text: string }] };
+      return result.content[0].text;
+    } catch (err) {
+      console.warn(`[bedrock] Model ${modelId} failed. Falling back...`, err);
+      lastError = err;
+    }
+  }
+  throw lastError;
 }
 
 // ============================================================
@@ -78,6 +95,7 @@ async function invokeModel(prompt: string, maxTokens = 500): Promise<string> {
  * Returns structured JSON parsed from Claude's response.
  */
 export async function analyzeIncomingText(text: string): Promise<TextAnalysisResult> {
+  const sanitizedText = sanitizeInput(text);
   const prompt = `You are a multilingual classifier for a beekeeper assistant app.
 Analyze the user's message and respond ONLY with valid JSON — no explanation, no markdown.
 
@@ -97,10 +115,13 @@ Intent definitions:
 - TRANSFER: User wants to transfer honey batch custody
 - UNKNOWN: Cannot determine intent
 
-User message: "${text.replace(/"/g, '\\"')}"`;
+User message:
+<user_input>
+${sanitizedText}
+</user_input>`;
 
   try {
-    const raw = await invokeModel(prompt, 200);
+    const raw = await invokeModelWithFallback(prompt, 200);
     // Extract JSON even if Claude wraps it in backticks
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON found in response');
@@ -127,13 +148,17 @@ export async function generateBeekeepingAdvice(
   question: string,
   context?: string
 ): Promise<string> {
+  const sanitizedQuestion = sanitizeInput(question);
   const prompt = `You are an expert beekeeper assistant for the Pollinator platform serving Indian farmers.
 Answer the question concisely in 1-3 sentences. Be practical and specific.
-${context ? `Context from earlier in conversation: ${context}` : ''}
-Farmer's question (in English): ${question}`;
+${context ? `Context from earlier in conversation: ${sanitizeInput(context)}` : ''}
+Farmer's question (in English):
+<user_input>
+${sanitizedQuestion}
+</user_input>`;
 
   try {
-    return await invokeModel(prompt, 200);
+    return await invokeModelWithFallback(prompt, 200);
   } catch (err) {
     console.error('[bedrock] generateBeekeepingAdvice failed:', err);
     return 'I am currently unable to answer questions. Please try again shortly.';

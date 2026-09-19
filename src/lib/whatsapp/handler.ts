@@ -276,7 +276,7 @@ async function route(
       language: lang,
       beekeeper_id: beekeeper.id,
     });
-    await whatsapp.sendText(waId, `${t(lang, 'registration_done')}\n\n*Your Dashboard Login ID:*\n\`${randomWallet.address}\``);
+    await whatsapp.sendText(waId, `${t(lang, 'registration_done')}\n\n*Your Dashboard Login ID:*\n\`${beekeeperWallet.address}\``);
     await sendMainMenu(waId, lang);
     return;
   }
