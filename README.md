@@ -52,45 +52,199 @@ The Indian apiculture industry faces two critical challenges:
 
 ## 🏗️ System Architecture
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           FARMER TOUCHPOINTS                            │
-│    WhatsApp Voice Note (.ogg) / Text in Hindi, Telugu, Marathi, etc.    │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                      META WHATSAPP CLOUD API                            │
-│            Webhook Delivery with HMAC-SHA256 Signatures                 │
-└────────────────────────────────────┬────────────────────────────────────┘
-                                     │
-                                     ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                   AWS CLOUD INFRASTRUCTURE (EC2)                        │
-│                                                                         │
-│  ┌───────────────────────────────────────────────────────────────────┐  │
-│  │ NGINX Reverse Proxy + Let's Encrypt Native SSL (100.24.80.15)     │  │
-│  └─────────────────────────────────┬─────────────────────────────────┘  │
-│                                    │                                    │
-│  ┌─────────────────────────────────▼─────────────────────────────────┐  │
-│  │ Next.js 16 Engine (/api/webhook/whatsapp) (PM2 Process)           │  │
-│  │                                                                   │  │
-│  │  • Gemini Multimodal Audio Transcription & Intent Analysis         │  │
-│  │  • Redis Finite State Machine (FSM) with In-Memory Fallback       │  │
-│  │  • Prisma ORM with PostgreSQL Database                            │  │
-│  │  • Deterministic EVM Custodial Wallet Derivation                  │  │
-│  └─────────────────────────────────┬─────────────────────────────────┘  │
-└────────────────────────────────────┼────────────────────────────────────┘
-                                     │
-           ┌─────────────────────────┴─────────────────────────┐
-           ▼                                                   ▼
-┌───────────────────────────────┐               ┌───────────────────────────────┐
-│     POLYGON BLOCKCHAIN        │               │       DECENTRALIZED IPFS      │
-│  Smart Contracts on Amoy      │               │  Pinata Distributed Gateway   │
-│  • ERC-721 Honey Batch Mint   │               │  • Lab Quality Certificates   │
-│  • Custody Transfer Records   │               │  • Batch Metadata & Hashes    │
-└───────────────────────────────┘               └───────────────────────────────┘
+```mermaid
+flowchart TD
+  subgraph Stakeholders["👥 User Stakeholders & Touchpoints"]
+    Farmer["🌾 Beekeeper / Farmer (WhatsApp Voice & Text)"]
+    Processor["🏭 Processing Facility & Packaging Team"]
+    Lab["🔬 Certified Quality Testing Lab"]
+    Consumer["🛒 End Consumer (Smart Scanner)"]
+  end
+
+  subgraph BeehiveIoT["🐝 Physical Beehive & Star Topology IoT Layer"]
+    subgraph Hive1["Hive #1 (Brood & Super Chambers)"]
+      Sensors1["Sensors: Temp/Humidity (SHT31), Super Weight (HX711), Acoustic Mic (INMP441), Camera (ESP32-CAM)"]
+    end
+    subgraph Hive2["Hive #2"]
+      Sensors2["Sensors: SHT31 Temp/Hum, HX711 Weight, INMP441 Mic"]
+    end
+    subgraph HiveN["Hive #N (Star Topology Nodes)"]
+      SensorsN["Sensors: SHT31 Temp/Hum, HX711 Weight, INMP441 Mic"]
+    end
+    Gateway["📡 Central Field Gateway (ESP32 / 4G GSM Master Hub)"]
+  end
+
+  subgraph MQTTLayer["📶 MQTT Ingestion Layer (Star Topology)"]
+    MQTTBroker["📨 MQTT Broker (Mosquitto / AWS IoT Core)"]
+    IngestionWorker["⚡ Telemetry Ingestion Service (/api/sensor-data)"]
+  end
+
+  subgraph CloudBackend["☁️ AWS EC2 Cloud Infrastructure & Backend"]
+    Nginx["🌐 NGINX Proxy + Let's Encrypt SSL (100.24.80.15.sslip.io)"]
+    NextApp["⚡ Next.js 16 Full-Stack Engine (App Router)"]
+    AuthMiddleware["🛡️ HMAC Signature Auth & Edge JWT Validator"]
+    RedisFSM["🔄 Redis FSM (State Machine & Deduplication)"]
+    PostgresDB[("🗄️ PostgreSQL Database (Prisma ORM)")]
+  end
+
+  subgraph AIIntelligence["🧠 AI Models & Health Analytics Engine"]
+    GeminiNLP["🗣️ Google Gemini 3.5 Flash (Multimodal Audio & NLP)"]
+    AcousticAI["🎵 Acoustic Buzzing Model (Swarming & Queen Piping)"]
+    VisionAI["👁️ Computer Vision Model (Varroa Mite & Disease Detection)"]
+    HiveScoreEngine["📊 Hive Health Score Algorithm (Weight, Temp, Humidity, Acoustics)"]
+  end
+
+  subgraph BlockchainIPFS["⛓️ Polygon Blockchain & Decentralized IPFS"]
+    SmartContract["📜 HoneyChain.sol (Polygon Amoy Testnet)"]
+    PinataIPFS["📦 Pinata IPFS Distributed Storage (Lab Certs & Metadata)"]
+    CustodyEngine["🤝 Custody Transfer State Machine"]
+  end
+
+  subgraph AntiCloneEngine["🛡️ Anti-QR Cloning & Consumer Verification"]
+    HMACSigner["🔐 Dynamic HMAC-SHA256 Token Generator"]
+    GeoAudit["🗺️ Geo-Fencing & Scan Velocity Anomaly Detector"]
+    RecallEngine["🚨 One-Click Cryptographic Recall System"]
+  end
+
+  %% Star Topology Telemetry Stream
+  Sensors1 -->|ESP-NOW / LoRa| Gateway
+  Sensors2 -->|ESP-NOW / LoRa| Gateway
+  SensorsN -->|ESP-NOW / LoRa| Gateway
+  Gateway -->|MQTT Pub: telemetry/hive_id| MQTTBroker
+  MQTTBroker -->|Forward Telemetry Payload| IngestionWorker
+  IngestionWorker --> NextApp
+
+  %% User Ingress
+  Farmer -->|WhatsApp Voice Note / Text| Nginx
+  Processor -->|Batch Packaging & Custody Handover| Nginx
+  Lab -->|Purity Certificate & NMR Upload| Nginx
+  Consumer -->|Scan Anti-Clone QR Code| Nginx
+
+  %% Edge & Processing
+  Nginx --> AuthMiddleware
+  AuthMiddleware --> NextApp
+  NextApp <--> RedisFSM
+  NextApp <--> PostgresDB
+
+  %% AI Processing
+  NextApp -->|Audio/Text Payload| GeminiNLP
+  IngestionWorker -->|FFT Acoustic Analysis| AcousticAI
+  NextApp -->|Hive Photo Inspection| VisionAI
+  IngestionWorker & PostgresDB --> HiveScoreEngine
+  HiveScoreEngine -->|Health Score 0-100| PostgresDB
+
+  %% Blockchain & Storage
+  NextApp -->|Mint Honey Batch NFT| SmartContract
+  NextApp -->|Pin NMR & Purity Reports| PinataIPFS
+  PinataIPFS -->|IPFS Hash (CID)| SmartContract
+  Processor -->|Initiate Custody Transfer| CustodyEngine
+  CustodyEngine -->|On-Chain Ownership Record| SmartContract
+
+  %% Anti-Clone & Verification
+  NextApp -->|Generate Secure QR Label| HMACSigner
+  Consumer -->|Verify Honey Purity| AntiCloneEngine
+  AntiCloneEngine --> GeoAudit
+  GeoAudit -->|Increment Scan Count & Check Geo-Anomaly| PostgresDB
+  RecallEngine -.->|Flag Compromised Batch| SmartContract
+  RecallEngine -.->|Invalidate QR Codes| AntiCloneEngine
 ```
+
+### 🔄 End-to-End Honey Lifecycle & Custody Transfer Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Farmer as 🌾 Beekeeper
+    participant Hive as 🐝 Smart Hive (IoT)
+    participant MQTT as 📡 MQTT Broker
+    participant Backend as ⚡ Next.js / AWS EC2
+    participant AI as 🧠 AI Models (Gemini/Audio/CV)
+    participant DB as 🗄️ PostgreSQL (Prisma)
+    participant Chain as ⛓️ Polygon Amoy
+    participant IPFS as 📦 Pinata IPFS
+    actor Processor as 🏭 Honey Processor
+    actor Consumer as 🛒 End Consumer
+
+    %% 1. Telemetry & Scoring
+    Hive->>MQTT: Publish Temp, Humidity, Weight, Acoustic (.wav) via Star Topology
+    MQTT->>Backend: Ingest Telemetry (/api/sensor-data)
+    Backend->>AI: Analyze Acoustic Buzzing + SHT31/HX711 Telemetry
+    AI-->>Backend: Anomaly: None | Hive Score: 94/100 (Optimal Brood)
+    Backend->>DB: Store Sensor Readings & Hive Health Score
+
+    %% 2. Harvest Logging via WhatsApp
+    Farmer->>Backend: WhatsApp Voice Note: "Logging 25kg Multiflora Harvest"
+    Backend->>AI: Gemini Multimodal Transcribe & Intent Classify
+    Backend->>Chain: Mint Honey Batch (Token ID, Harvest Hash, Hive Score)
+    Chain-->>Backend: Polygon TX Hash (0x4B65...)
+    Backend-->>Farmer: WhatsApp Confirmation + Blockchain Explorer Link
+
+    %% 3. Lab Testing & IPFS
+    Backend->>IPFS: Upload Lab Purity Certificate & NMR Analysis
+    IPFS-->>Backend: Return CID (QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco)
+    Backend->>Chain: Attach IPFS CID to Batch On-Chain
+
+    %% 4. Custody Transfer
+    Farmer->>Processor: Handover Physical Honey Consignment
+    Processor->>Backend: Request Custody Transfer (Batch Code)
+    Backend->>Chain: Update Custodian Address (Beekeeper -> Processor)
+    Backend->>DB: Record Audit Trail with Timestamp & Geo Coordinates
+
+    %% 5. Packaging & Anti-Clone QR Generation
+    Processor->>Backend: Package Honey into 500g Jars
+    Backend->>Backend: Generate Dynamic Anti-Clone QR (HMAC-SHA256 + Batch ID)
+    Backend-->>Processor: Download Crypto-Tamper-Proof QR Labels
+
+    %% 6. Consumer Verification
+    Consumer->>Backend: Scan QR Code on Honey Jar (/verify?code=...&hmac=...)
+    Backend->>Backend: Validate Cryptographic HMAC Signature
+    Backend->>DB: Increment Scan Count & Check Geo-Anomaly Velocity
+    Backend->>Chain: Query Real-Time On-Chain Batch & Recall Status
+    Backend->>IPFS: Fetch Original Lab Purity Certificate
+    Backend-->>Consumer: Display Holographic Provenance Journey & Purity Proof
+```
+
+---
+
+## 🔬 Deep-Dive: Core Technical Components
+
+### 1. 📡 Star Topology IoT Architecture & MQTT Broker
+Each apiary operates on a **Star Topology Mesh**:
+* **Sensor Nodes:** Individual hives contain lightweight microcontrollers (ESP32/ESP8266) equipped with:
+  * **SHT31 / DHT22:** High-precision brood temperature (±0.2°C) and relative humidity.
+  * **HX711 Load Cell:** Continuous super weight tracking (detecting nectar flow vs. consumption).
+  * **INMP441 I2S Microphone:** Acoustic audio sampling of hive buzzing frequencies (100 Hz – 600 Hz).
+  * **ESP32-CAM:** Periodic visual inspection snapshots of landing boards.
+* **Star Topology Master Gateway:** Field hives broadcast telemetry locally via low-power ESP-NOW / LoRa to a central Solar-Powered GSM Gateway.
+* **MQTT Broker:** The gateway publishes compressed JSON packets over cellular MQTT to Mosquitto / AWS IoT Core (`telemetry/{apiary_id}/{hive_id}`).
+
+### 2. 🧠 AI Intelligence Layer & Hive Scoring Engine
+* **Acoustic Buzzing Frequency Analysis:**
+  * Healthy Queen/Colony: Dominant frequency band around $200\text{--}250\text{ Hz}$.
+  * Swarming Impending: Audio spikes in the $450\text{--}600\text{ Hz}$ range ("piping" sounds) triggers automated early swarming warnings.
+* **Computer Vision Disease Detection:**
+  * Analyzes landing board and comb imagery using transfer-learned models to identify Varroa mite infestation, American Foulbrood, and wax moth larvae.
+* **Dynamic Hive Health Score Algorithm:**
+  $$\text{Hive Score} = w_T \cdot S_T(T) + w_H \cdot S_H(H) + w_W \cdot S_W(\Delta W) + w_A \cdot S_A(f) - D_{\text{penalty}}$$
+  * $S_T$: Optimal brood temperature score ($34.5\text{--}35.5^\circ\text{C}$).
+  * $S_H$: Relative humidity score ($40\text{--}60\%$).
+  * $S_W$: Weight trend derivative (positive delta during harvest flow).
+  * $S_A$: Acoustic stability index.
+  * $D_{\text{penalty}}$: Penalties from visual disease detections.
+
+### 3. 🛡️ Anti-Clone Cryptographic QR System
+Standard QR codes are trivially copy-pasted onto fake honey jars. Pollinator prevents counterfeiting through a 4-tier security defense:
+1. **Dynamic HMAC-SHA256 Tokenization:** Each QR URL contains a tamper-evident signature computed from the secret salt, batch identifier, and jar packaging index:
+   $$\text{Token} = \text{HMAC-SHA256}(K_{\text{secret}}, \text{BatchCode} \mathbin{\Vert} \text{JarID})$$
+2. **Scan Velocity & Geo-Anomaly Detection:** If the same jar QR code is scanned in New Delhi and Mumbai within 10 minutes, the engine automatically flags the batch as cloned and triggers an inspection alert.
+3. **Scan Counter Invalidation:** The first scan indicates consumer purchase. Subsequent scans display warning badges highlighting potential package re-use.
+4. **Cryptographic One-Click Recall:** Administrators can instantly revoke a compromised batch on-chain, rendering all associated QR codes immediately "RECALLED / DO NOT CONSUME" globally.
+
+### 4. 🤝 Decentralized Custody Transfer State Machine
+Every honey consignment moves through an immutable state ladder:
+$$\text{Harvested} \longrightarrow \text{Lab Tested} \longrightarrow \text{Transferred to Processor} \longrightarrow \text{Packaged} \longrightarrow \text{Consumer Distributed}$$
+* Handover between beekeepers and processors requires dual-party confirmation on Polygon Amoy.
+* Batch metadata, including chemical analysis (Fructose/Glucose ratio, HMF, Moisture %, NMR spectral report), is permanently pinned to IPFS via Pinata.
 
 ---
 
