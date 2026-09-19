@@ -14,17 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pollinator — Cryptographic Honey Supply Chain & Provenance",
+  title: "Pollinators — Cryptographic Honey Supply Chain & Provenance",
   description: "Next-generation honey supply chain verification powered by Polygon Amoy smart contracts, IPFS metadata anchoring, ESP32 IoT hive monitoring, and AWS Bedrock multilingual AI.",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.png", type: "image/png", sizes: "512x512" },
-      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+      { url: "/favicon.svg?v=3", type: "image/svg+xml" },
+      { url: "/favicon-32x32.png?v=3", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16.png?v=3", type: "image/png", sizes: "16x16" },
+      { url: "/favicon.ico?v=3" },
     ],
+    shortcut: "/favicon.ico?v=3",
     apple: [
-      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-icon.png?v=3", sizes: "180x180", type: "image/png" },
     ],
   },
 };
@@ -41,6 +42,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Explicit Favicon Links with Cache-Busting Query */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=3" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png?v=3" />
+        <link rel="shortcut icon" href="/favicon.ico?v=3" />
+
         {/* Prevent flash of wrong theme */}
         <script
           dangerouslySetInnerHTML={{
