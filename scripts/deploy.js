@@ -26,6 +26,19 @@ async function main() {
   const contractAddress = await honeyChain.getAddress();
 
   console.log("✅ HoneyChain deployed to:", contractAddress);
+  
+  // Grant all operational roles to deployer so backend relayer can sign on-chain events
+  console.log("⚙️  Granting supply chain roles to deployer relayer...");
+  const tx1 = await honeyChain.grantBeekeeperRole(deployer.address);
+  await tx1.wait();
+  const tx2 = await honeyChain.grantLabRole(deployer.address);
+  await tx2.wait();
+  const tx3 = await honeyChain.grantProcessorRole(deployer.address);
+  await tx3.wait();
+  const tx4 = await honeyChain.grantDistributorRole(deployer.address);
+  await tx4.wait();
+  console.log("✅ Supply chain roles successfully granted to deployer:", deployer.address);
+
   if (!isLocal) {
     console.log("📡 Polygonscan:", `https://amoy.polygonscan.com/address/${contractAddress}`);
   } else {

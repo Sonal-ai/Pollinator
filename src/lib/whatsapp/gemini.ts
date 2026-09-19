@@ -148,11 +148,30 @@ User message: "${text.replace(/"/g, '\\"')}"
       requested_language_code: parsed.requested_language_code || '',
     };
   } catch (err) {
-    console.error('[gemini] analyzeIncomingText error:', err);
+    console.warn('[ai] API call unavailable or unverified, switching to local heuristic fallback:', err);
+    const lower = text.toLowerCase().trim();
+    let fallbackIntent: MessageIntent = 'ASK_DOUBT';
+
+    if (/^(hi|hello|namaste|start|menu|options|help|\?)$/i.test(lower)) {
+      fallbackIntent = 'MAIN_MENU';
+    } else if (/(register|sign up|join|panjikaran)/i.test(lower)) {
+      fallbackIntent = 'REGISTRATION';
+    } else if (/(harvest|fasal|honey|shahad|kg|grams|weight|rate|price|mandi|market)/i.test(lower)) {
+      fallbackIntent = 'HARVEST_MARKET';
+    } else if (/(hive|sensor|temp|humidity|battery|chhatta)/i.test(lower)) {
+      fallbackIntent = 'HIVE_STATUS';
+    } else if (/(health|disease|mite|varroa|queen|makkhi)/i.test(lower)) {
+      fallbackIntent = 'HEALTH_CHECK';
+    } else if (/(transfer|bhejna|handover)/i.test(lower)) {
+      fallbackIntent = 'TRANSFER';
+    } else if (/(verify|check|code|batch)/i.test(lower)) {
+      fallbackIntent = 'VERIFY_BATCH';
+    }
+
     return {
       detected_language: 'en',
       translated_english_text: text,
-      intent: 'UNKNOWN',
+      intent: fallbackIntent,
     };
   }
 }
