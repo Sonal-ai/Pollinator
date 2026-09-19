@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import Link from 'next/link';
+import Image from 'next/image';
 import { verifyMetadataIntegrity } from '@/lib/ipfs';
 import { getBatchFromChain } from '@/lib/blockchain';
 import { processQRScan } from '@/lib/qr';
@@ -122,8 +123,32 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
       };
 
       return (
-        <div className="min-h-screen bg-[#07090e] text-slate-100 py-12 px-4 relative overflow-hidden">
+        <div className="min-h-screen bg-[#07090e] text-slate-100 py-10 px-4 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/10 blur-[130px] pointer-events-none -z-10" />
+          
+          <header className="max-w-2xl mx-auto mb-6 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-xl overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 shadow-md shadow-yellow-500/25 group-hover:scale-105 transition-transform duration-300 p-1">
+                <Image
+                  src="/logo-mark.png"
+                  alt="Pollinators Logo"
+                  width={26}
+                  height={26}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <span className="font-extrabold text-white text-sm tracking-tight group-hover:text-yellow-300 transition-colors">
+                Pollinators <span className="text-yellow-400 text-xs font-mono font-bold">VERIFY</span>
+              </span>
+            </Link>
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+            </Link>
+          </header>
+
           <VerifyClient
             batch={demoBatch as any}
             chainData={{
@@ -160,8 +185,32 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-100 py-12 px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#07090e] text-slate-100 py-10 px-4 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/10 blur-[130px] pointer-events-none -z-10" />
+      
+      <header className="max-w-2xl mx-auto mb-6 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="relative flex items-center justify-center w-8 h-8 rounded-xl overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 shadow-md shadow-yellow-500/25 group-hover:scale-105 transition-transform duration-300 p-1">
+            <Image
+              src="/logo-mark.png"
+              alt="Pollinators Logo"
+              width={26}
+              height={26}
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span className="font-extrabold text-white text-sm tracking-tight group-hover:text-yellow-300 transition-colors">
+            Pollinators <span className="text-yellow-400 text-xs font-mono font-bold">VERIFY</span>
+          </span>
+        </Link>
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Home
+        </Link>
+      </header>
+
       <VerifyClient
         batch={batch as any}
         chainData={chain}

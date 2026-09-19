@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 import { 
@@ -52,14 +53,20 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         {/* Brand Logo */}
         <div className="px-6 py-6 border-b border-white/5">
           <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30 group-hover:scale-105 transition-transform duration-300">
-              <Hexagon className="w-6 h-6 fill-white/20" />
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 shadow-lg shadow-yellow-500/25 group-hover:scale-105 transition-transform duration-300 p-1.5">
+              <Image
+                src="/logo-mark.png"
+                alt="Pollinators Logo"
+                width={32}
+                height={32}
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
-              <p className="font-extrabold text-white text-base tracking-tight group-hover:text-amber-400 transition-colors">
-                Pollinator
+              <p className="font-extrabold text-white text-base tracking-tight group-hover:text-yellow-400 transition-colors">
+                Pollinators
               </p>
-              <p className="text-[10px] font-mono font-bold text-amber-400/80 uppercase tracking-widest">
+              <p className="text-[10px] font-mono font-bold text-yellow-400/80 uppercase tracking-widest">
                 SUPPLY CHAIN
               </p>
             </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Hexagon, Menu, X, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RollButton } from './roll-button';
@@ -86,14 +87,20 @@ export function Navbar({ contractAddress }: { contractAddress: string }) {
       >
         {/* Left: Brand Identity (Strictly Single-Line) */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 text-black shadow-md shadow-yellow-500/30 group-hover:scale-105 transition-transform duration-300 shrink-0">
-            <Hexagon className="w-5 h-5 fill-black/25" />
+          <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 shadow-md shadow-yellow-500/30 group-hover:scale-105 transition-transform duration-300 shrink-0 p-1">
+            <Image
+              src="/logo-mark.png"
+              alt="Pollinators Logo"
+              width={28}
+              height={28}
+              className="w-full h-full object-contain"
+              priority
+            />
           </div>
           <div className="flex items-center gap-1.5 whitespace-nowrap">
             <span className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base tracking-tight group-hover:text-amber-500 dark:group-hover:text-yellow-300 transition-colors">
-              Pollinator
+              Pollinators
             </span>
-            <span className="text-yellow-500 text-sm">🐝</span>
             <span className="hidden sm:inline-block ml-1 px-2 py-0.5 rounded-full text-[9px] font-mono font-extrabold uppercase tracking-widest bg-yellow-400/15 text-yellow-700 dark:text-yellow-300 border border-yellow-400/30">
               HONEYCHAIN
             </span>

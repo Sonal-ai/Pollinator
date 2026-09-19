@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   ShieldCheck, 
   ShieldAlert, 
@@ -155,8 +156,10 @@ export function VerifyClient({ batch, chainData, integrity }: VerifyClientProps)
           {/* Certificate Header */}
           <div className="flex items-start justify-between pb-6 border-b border-yellow-400/20 relative z-10">
             <div>
-              <div className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest uppercase text-yellow-400 font-extrabold">
-                <Hexagon className="w-3 h-3 fill-yellow-400/30" />
+              <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest uppercase text-yellow-400 font-extrabold">
+                <div className="w-4 h-4 relative shrink-0">
+                  <Image src="/logo-mark-gold.png" alt="Pollinators Logo" width={16} height={16} className="object-contain" />
+                </div>
                 <span>CERTIFICATE OF PURITY & PROVENANCE</span>
               </div>
               <h2 className="text-xl font-extrabold text-white mt-1">{batch.honey_type}</h2>
@@ -337,7 +340,9 @@ export function VerifyClient({ batch, chainData, integrity }: VerifyClientProps)
         >
           <div className="flex items-center justify-between pb-4 border-b border-white/10">
             <h3 className="text-sm sm:text-base font-extrabold text-white font-sans flex items-center gap-2">
-              <Hexagon className="w-4 h-4 fill-yellow-400/20 text-yellow-400" />
+              <div className="w-5 h-5 relative shrink-0">
+                <Image src="/logo-mark-gold.png" alt="Pollinators Logo" width={20} height={20} className="object-contain" />
+              </div>
               <span>HoneyChain Blockchain & IPFS Ledger</span>
             </h3>
             <span className="px-2.5 py-0.5 rounded-full bg-yellow-400/10 text-yellow-300 text-[10px] font-extrabold border border-yellow-400/30">

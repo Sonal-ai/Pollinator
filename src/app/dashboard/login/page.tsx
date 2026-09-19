@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Hexagon, ShieldCheck, ArrowRight, Zap, Key } from 'lucide-react';
 
 const ROLES = [
@@ -76,11 +77,18 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-xl shadow-amber-500/30 mb-2">
-            <Hexagon className="w-7 h-7 fill-white/20" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 shadow-xl shadow-yellow-500/25 mb-2 p-2">
+            <Image
+              src="/logo-mark.png"
+              alt="Pollinators Logo"
+              width={48}
+              height={48}
+              className="w-full h-full object-contain"
+              priority
+            />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Pollinator Portal
+            Pollinators Portal
           </h1>
           <p className="text-xs text-slate-400">
             Supply Chain Actor Authentication · Polygon Amoy

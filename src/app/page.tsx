@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   ShieldCheck, 
   Layers, 
@@ -387,12 +388,18 @@ export default function HomePage() {
       <footer className="border-t border-amber-200/60 dark:border-yellow-400/15 bg-[#f5efe4] dark:bg-[#06070a] py-12 px-6 relative z-10 transition-colors duration-300">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 text-black font-bold shadow-md shadow-yellow-500/20">
-              <Hexagon className="w-4 h-4 fill-black/20" />
+            <div className="relative flex items-center justify-center w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 shadow-md shadow-yellow-500/20 p-1">
+              <Image
+                src="/logo-mark.png"
+                alt="Pollinators Logo"
+                width={28}
+                height={28}
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <p className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-1">
-                Pollinator HoneyChain <span>🐝</span>
+                Pollinators HoneyChain
               </p>
               <p className="text-xs text-slate-600 dark:text-slate-400">Decentralized Honey Provenance & Hive Intelligence</p>
             </div>
