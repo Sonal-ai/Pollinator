@@ -1,5 +1,7 @@
 'use client';
+
 import { useState } from 'react';
+import { Package, QrCode, Printer, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 
 type ProcessableBatch = {
   batchCode: string;
@@ -24,7 +26,8 @@ export function PackagingForm({ processableBatches }: { processableBatches: Proc
     e.preventDefault();
     if (!batchCode || !jarCount || !jarSizeGrams) return;
 
-    setLoading(true); setResult(null);
+    setLoading(true);
+    setResult(null);
 
     try {
       // 1. Hit the Packaging API
@@ -65,9 +68,11 @@ export function PackagingForm({ processableBatches }: { processableBatches: Proc
       });
 
       // Clear form
-      setBatchCode(''); setJarCount(''); setJarSizeGrams('');
+      setBatchCode('');
+      setJarCount('');
+      setJarSizeGrams('');
     } catch {
-      setResult({ error: 'Network error. Please check your connection.' });
+      setResult({ error: 'Network communication failure. Please check connection.' });
     } finally {
       setLoading(false);
     }
@@ -75,89 +80,148 @@ export function PackagingForm({ processableBatches }: { processableBatches: Proc
 
   if (processableBatches.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-        <p className="text-3xl mb-3">🏭</p>
-        <h3 className="text-lg font-medium text-gray-900">No Batches Ready</h3>
-        <p className="text-gray-500 mt-1">You do not currently possess any LAB_VERIFIED batches ready for packaging.</p>
+      <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-12 text-center text-slate-400 space-y-3 shadow-xl">
+        <Package className="w-12 h-12 text-slate-600 mx-auto" />
+        <h3 className="text-base font-bold text-white">No Batches Ready for Packaging</h3>
+        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          Batches must be in custody and have their QA laboratory test verified on-chain before packaging.
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 sm:p-8 space-y-5 shadow-xl"
+      >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Batch for Packaging</label>
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+            Select Lab-Verified Batch
+          </label>
           <select
-            value={batchCode} onChange={e => setBatchCode(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+            value={batchCode}
+            onChange={(e) => setBatchCode(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-400 transition-colors"
             required
           >
-            <option value="" disabled>-- Choose a batch --</option>
-            {processableBatches.map(b => (
-              <option key={b.batchCode} value={b.batchCode}>
+            <option value="" disabled className="bg-[#0d111a] text-slate-500">
+              -- Choose a verified batch --
+            </option>
+            {processableBatches.map((b) => (
+              <option key={b.batchCode} value={b.batchCode} className="bg-[#0d111a] text-white">
                 {b.batchCode} — {b.honey_type} ({(b.quantity_grams / 1000).toFixed(1)} kg available)
               </option>
             ))}
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Number of Jars</label>
-            <input type="number" min="1" max="10000" required
-              value={jarCount} onChange={e => setJarCount(e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-              placeholder="e.g. 100" />
+            <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+              Number of Jars
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="10000"
+              required
+              value={jarCount}
+              onChange={(e) => setJarCount(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-white focus:outline-none focus:border-amber-400 transition-colors"
+              placeholder="e.g. 100"
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Jar Size (Grams)</label>
-            <input type="number" min="1" max="5000" required
-              value={jarSizeGrams} onChange={e => setJarSizeGrams(e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-              placeholder="e.g. 500" />
+            <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+              Jar Size (Grams)
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="5000"
+              required
+              value={jarSizeGrams}
+              onChange={(e) => setJarSizeGrams(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-white focus:outline-none focus:border-amber-400 transition-colors"
+              placeholder="e.g. 500"
+            />
           </div>
         </div>
 
-        <button type="submit" disabled={loading || !batchCode}
-          className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 text-white font-medium rounded-lg transition text-sm">
-          {loading ? '⏳ Processing & Minting QRs...' : '🏭 Package Batch & Generate QRs'}
+        <button
+          type="submit"
+          disabled={loading || !batchCode}
+          className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all active:scale-95 disabled:opacity-40"
+        >
+          {loading ? 'Processing & Minting Anti-Clone QRs...' : 'Package Batch & Mint Serialized QRs'}
         </button>
       </form>
 
       {/* Result View */}
       {result && (
-        <div className={`p-6 rounded-xl border ${result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+        <div
+          className={`p-6 sm:p-8 rounded-3xl border ${
+            result.success
+              ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300'
+              : 'bg-red-950/20 border-red-500/40 text-red-400'
+          } shadow-2xl space-y-4`}
+        >
           {result.success ? (
-            <div>
-              <h3 className="font-semibold text-green-800 text-lg mb-2">✅ Packaging Successful!</h3>
-              <p className="text-sm text-green-700 mb-4">
-                The batch was securely packaged on the Polygon blockchain. 
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-white font-bold text-base">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                Batch Successfully Packaged On-Chain!
+              </div>
+              <p className="text-xs text-slate-300">
+                Packaging state updated on Polygon Amoy.
                 {result.polygonscanUrl && (
-                  <a href={result.polygonscanUrl} target="_blank" rel="noopener noreferrer" className="ml-1 underline">
-                    View Transaction ↗
+                  <a
+                    href={result.polygonscanUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 text-amber-400 hover:underline font-mono inline-flex items-center gap-1"
+                  >
+                    View Tx on Polygonscan <ExternalLink className="w-3 h-3" />
                   </a>
                 )}
               </p>
-              
-              <h4 className="font-medium text-gray-900 mb-3">Generated QR Labels ({result.qrs?.length})</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto p-2">
-                {result.qrs?.map(qr => (
-                  <div key={qr.jarIndex} className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm">
-                    <img src={qr.qrImageBase64} alt={`QR for Jar ${qr.jarIndex}`} className="w-full h-auto mb-2 rounded" />
-                    <span className="text-xs font-mono text-gray-500">Jar #{qr.jarIndex}</span>
-                  </div>
-                ))}
+
+              <div>
+                <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-3">
+                  HMAC-Signed Jar Labels ({result.qrs?.length})
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-96 overflow-y-auto p-1">
+                  {result.qrs?.map((qr) => (
+                    <div
+                      key={qr.jarIndex}
+                      className="bg-black/60 border border-white/10 rounded-2xl p-3 text-center space-y-2"
+                    >
+                      <img
+                        src={qr.qrImageBase64}
+                        alt={`QR for Jar ${qr.jarIndex}`}
+                        className="w-full h-auto rounded-lg bg-white p-1"
+                      />
+                      <p className="text-[11px] font-mono text-amber-400 font-bold">Jar #{qr.jarIndex}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <button 
+
+              <button
+                type="button"
                 onClick={() => window.print()}
-                className="mt-6 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition"
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-semibold text-white transition-colors flex items-center gap-2"
               >
-                🖨️ Print Labels
+                <Printer className="w-4 h-4" /> Print Tamper-Proof Labels
               </button>
             </div>
           ) : (
-            <p className="text-red-700 font-medium">{result.error}</p>
+            <div className="flex items-center gap-2 text-xs">
+              <AlertCircle className="w-4 h-4 text-red-400" />
+              <span>{result.error}</span>
+            </div>
           )}
         </div>
       )}

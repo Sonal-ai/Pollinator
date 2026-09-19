@@ -10,13 +10,12 @@ import {
   LineChart, 
   AlertOctagon, 
   LogOut,
-  Hexagon
+  Hexagon,
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
 import PageTransition from './PageTransition';
-
-// ============================================================
-// Dashboard Layout — Premium Glassmorphic Navigation
-// ============================================================
+import { NetworkBadge } from '@/components/ui/network-badge';
 
 const NAV_ITEMS = [
   { href: '/dashboard',           label: 'Batch Registry',       icon: LayoutDashboard, roles: ['admin', 'processor', 'lab', 'distributor', 'retailer'] },
@@ -29,91 +28,109 @@ const NAV_ITEMS = [
 ];
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  // Auth guard: check for session cookie
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('pollinator_session');
 
   if (!sessionCookie) {
-    return <div className="min-h-screen bg-gray-50">{children}</div>;
+    return <div className="min-h-screen bg-[#07090e] text-slate-100">{children}</div>;
   }
 
-  // Parse session
   let session: { walletAddress?: string; role?: string; name?: string } = {};
   try {
     session = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString());
   } catch {
-    return <div className="min-h-screen bg-gray-50">{children}</div>;
+    return <div className="min-h-screen bg-[#07090e] text-slate-100">{children}</div>;
   }
 
   const role = session.role ?? 'admin';
   const visibleNav = NAV_ITEMS.filter((item) => item.roles.includes(role));
+  const shortWallet = session.walletAddress
+    ? `${session.walletAddress.slice(0, 6)}...${session.walletAddress.slice(-4)}`
+    : '0x06a7...4607';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 font-sans selection:bg-amber-200">
-      
-      {/* Background ambient gradient */}
-      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-br from-amber-100/40 via-orange-50/20 to-transparent -z-10" />
+    <div className="flex h-screen overflow-hidden bg-[#07090e] text-slate-100 font-sans selection:bg-amber-500 selection:text-white">
+      {/* Ambient background glows */}
+      <div className="absolute top-0 left-64 w-[600px] h-[300px] bg-amber-500/10 blur-[130px] pointer-events-none -z-10" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-orange-600/5 blur-[150px] pointer-events-none -z-10" />
 
       {/* Floating Glass Sidebar */}
-      <aside className="w-[280px] m-4 mr-0 rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col z-10">
-        {/* Logo */}
-        <div className="px-8 py-8">
+      <aside className="w-[280px] m-4 mr-0 rounded-3xl bg-[#0d111a]/85 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex flex-col z-20">
+        {/* Brand Logo */}
+        <div className="px-6 py-6 border-b border-white/5">
           <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30 group-hover:shadow-amber-500/50 transition-all duration-300">
+            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg shadow-amber-500/30 group-hover:scale-105 transition-transform duration-300">
               <Hexagon className="w-6 h-6 fill-white/20" />
             </div>
             <div>
-              <p className="font-bold text-slate-800 text-lg leading-tight tracking-tight">Pollinator</p>
-              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Supply Chain</p>
+              <p className="font-extrabold text-white text-base tracking-tight group-hover:text-amber-400 transition-colors">
+                Pollinator
+              </p>
+              <p className="text-[10px] font-mono font-bold text-amber-400/80 uppercase tracking-widest">
+                SUPPLY CHAIN
+              </p>
             </div>
           </Link>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-4 py-2 space-y-1.5 overflow-y-auto">
+        {/* Navigation Items */}
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
           {visibleNav.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-white hover:text-amber-600 hover:shadow-sm border border-transparent hover:border-slate-100 transition-all duration-200 group"
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10 transition-all duration-200 group"
               >
-                <Icon className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors" />
-                {item.label}
+                <Icon className="w-4 h-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
+                <span>{item.label}</span>
               </Link>
-            )
+            );
           })}
         </nav>
 
-        {/* User Info & Logout (Bottom Pinned) */}
-        <div className="p-4 mt-auto">
-          <div className="p-4 rounded-xl bg-white/80 border border-slate-100 shadow-sm backdrop-blur-md">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-100 to-slate-200 flex items-center justify-center text-slate-600 font-bold border border-slate-200 shadow-inner">
-                {role.slice(0, 1).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-800 truncate">
-                  {session.walletAddress?.slice(0, 6)}...{session.walletAddress?.slice(-4)}
-                </p>
-                <p className="text-[11px] text-amber-600 uppercase tracking-wider font-bold">{role}</p>
-              </div>
+        {/* User Info & Web3 Wallet Badge */}
+        <div className="p-4 border-t border-white/5 space-y-3">
+          <div className="p-3.5 rounded-2xl bg-black/40 border border-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase font-mono font-bold text-slate-500">Connected Wallet</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                {role}
+              </span>
             </div>
-            
-            <form action="/api/auth/logout" method="POST">
-              <button type="submit" className="flex items-center justify-center gap-2 w-full px-4 py-2 text-xs font-semibold text-slate-500 bg-slate-100 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors">
-                <LogOut className="w-3.5 h-3.5" />
-                Sign Out
-              </button>
-            </form>
+            <p className="font-mono text-xs text-white font-semibold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+              {shortWallet}
+            </p>
           </div>
+
+          <form action="/api/auth/logout" method="POST">
+            <button
+              type="submit"
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 text-xs font-semibold text-slate-400 hover:text-red-400 bg-white/5 hover:bg-red-500/10 border border-white/5 hover:border-red-500/20 rounded-xl transition-all"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </form>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto relative z-0">
-        <div className="p-8 max-w-6xl mx-auto h-full">
+      <main className="flex-1 overflow-auto relative z-10 flex flex-col">
+        {/* Top Floating Utility Bar */}
+        <header className="px-8 pt-6 pb-2 flex items-center justify-between">
+          <NetworkBadge />
+          <Link
+            href="/"
+            className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+          >
+            Public Gateway <ExternalLink className="w-3 h-3" />
+          </Link>
+        </header>
+
+        <div className="p-8 max-w-6xl w-full mx-auto flex-1">
           <PageTransition>
             {children}
           </PageTransition>

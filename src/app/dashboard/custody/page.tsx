@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { CustodyTransferForm } from './custody-form';
+import { Truck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,6 @@ export default async function CustodyPage() {
     } catch { /* ignore */ }
   }
 
-  // Fetch batches in possession of the logged-in user
-  // If admin, fetch all active batches for oversight
   const myBatches = await prisma.honeyBatch.findMany({
     where: {
       recalled: false,
@@ -37,15 +36,20 @@ export default async function CustodyPage() {
   });
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">🔄 Custody Transfer</h1>
-      <p className="text-gray-500 text-sm mb-8">
-        Transfer custody of a honey batch to the next supply chain actor. Each multi-hop transfer is permanently logged on the Polygon blockchain.
-      </p>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <Truck className="w-7 h-7 text-amber-400" />
+          Custody Transfer Protocol
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          Transfer custody of honey batches to the next supply chain actor. Each handover triggers a cryptographic state transition signed on Polygon Amoy.
+        </p>
+      </div>
 
-      {(!walletAddress && !isAdmin) ? (
-        <div className="bg-red-50 p-4 rounded-xl text-red-700">
-          Please log in to manage custody.
+      {!walletAddress && !isAdmin ? (
+        <div className="p-4 rounded-2xl bg-red-950/30 border border-red-500/40 text-red-300 text-xs">
+          Please log in to manage batch custody.
         </div>
       ) : (
         <CustodyTransferForm myBatches={myBatches} />

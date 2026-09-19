@@ -1,5 +1,7 @@
 'use client';
+
 import { useState } from 'react';
+import { Upload, FileText, CheckCircle2, AlertCircle, ExternalLink, ShieldCheck } from 'lucide-react';
 
 type PendingBatch = {
   id: string;
@@ -25,7 +27,6 @@ export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch
 
     const formData = new FormData();
     formData.append('batchId', batchId);
-    // labActorId is now automatically pulled from the session cookie in the backend!
     formData.append('file', file);
 
     try {
@@ -37,41 +38,49 @@ export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch
       if (response.ok) {
         setStatus('success');
         setResult(data);
-        setBatchId(''); setFile(null);
+        setBatchId('');
+        setFile(null);
       } else {
         setStatus('error');
         setResult(data);
       }
     } catch {
       setStatus('error');
-      setResult({ error: 'Network error. Please try again.' });
+      setResult({ error: 'Network communication failure. Please retry.' });
     }
   }
 
   if (pendingBatches.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-        <p className="text-3xl mb-3">🍯</p>
-        <h3 className="text-lg font-medium text-gray-900">No Pending Batches</h3>
-        <p className="text-gray-500 mt-1">There are currently no batches awaiting lab verification.</p>
+      <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-12 text-center text-slate-400 space-y-3 shadow-xl">
+        <p className="text-3xl">🍯</p>
+        <h3 className="text-base font-bold text-white">All Batches Verified</h3>
+        <p className="text-xs text-slate-500">There are currently no raw harvest batches awaiting lab certification.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-5">
+    <div className="space-y-5">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 sm:p-8 space-y-5 shadow-xl"
+      >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Batch for Analysis</label>
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+            Select Harvest Batch
+          </label>
           <select
             value={batchId}
-            onChange={e => setBatchId(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+            onChange={(e) => setBatchId(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-400 transition-colors"
             required
           >
-            <option value="" disabled>-- Choose a batch --</option>
-            {pendingBatches.map(b => (
-              <option key={b.id} value={b.id}>
+            <option value="" disabled className="bg-[#0d111a] text-slate-500">
+              -- Choose a pending batch --
+            </option>
+            {pendingBatches.map((b) => (
+              <option key={b.id} value={b.id} className="bg-[#0d111a] text-white">
                 {b.batchCode} — {b.honey_type} ({(b.quantity_grams / 1000).toFixed(1)} kg)
               </option>
             ))}
@@ -79,24 +88,29 @@ export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Certificate PDF</label>
-          <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-amber-300 transition-colors">
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+            Laboratory Certificate PDF
+          </label>
+          <div className="border-2 border-dashed border-white/15 rounded-2xl p-8 text-center hover:border-amber-400/50 transition-colors bg-black/30">
             <input
-              type="file" accept=".pdf,application/pdf"
-              onChange={e => setFile(e.target.files?.[0] ?? null)}
-              className="hidden" id="pdf-upload"
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="hidden"
+              id="pdf-upload"
             />
-            <label htmlFor="pdf-upload" className="cursor-pointer block">
+            <label htmlFor="pdf-upload" className="cursor-pointer block space-y-2">
               {file ? (
                 <div>
-                  <p className="text-sm font-medium text-gray-700">{file.name}</p>
-                  <p className="text-xs text-gray-400">{(file.size / 1024).toFixed(0)} KB</p>
+                  <FileText className="w-8 h-8 text-amber-400 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-white font-mono">{file.name}</p>
+                  <p className="text-[10px] text-slate-400">{(file.size / 1024).toFixed(0)} KB · Ready to hash</p>
                 </div>
               ) : (
                 <div>
-                  <p className="text-3xl mb-2">📄</p>
-                  <p className="text-sm text-gray-500">Click to select PDF</p>
-                  <p className="text-xs text-gray-400 mt-1">Max 10MB</p>
+                  <Upload className="w-8 h-8 text-slate-500 mx-auto mb-1" />
+                  <p className="text-xs font-semibold text-slate-300">Click to select lab certificate PDF</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Maximum size: 10MB</p>
                 </div>
               )}
             </label>
@@ -106,30 +120,62 @@ export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch
         <button
           type="submit"
           disabled={status === 'uploading' || !batchId || !file}
-          className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 text-white font-medium rounded-lg transition text-sm"
+          className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all active:scale-95 disabled:opacity-40"
         >
-          {status === 'uploading' ? '⏳ Uploading & committing on blockchain...' : '📤 Upload & Commit to Blockchain'}
+          {status === 'uploading'
+            ? 'Anchoring to IPFS & Committing On-Chain...'
+            : 'Commit Certificate to Blockchain'}
         </button>
       </form>
 
-      {/* Result */}
+      {/* Result feedback */}
       {result && (
-        <div className={`mt-5 p-5 rounded-xl border ${status === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+        <div
+          className={`p-5 rounded-3xl border ${
+            status === 'success'
+              ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300'
+              : 'bg-red-950/20 border-red-500/40 text-red-400'
+          } shadow-xl`}
+        >
           {status === 'success' ? (
-            <div className="space-y-2 text-sm">
-              <p className="font-semibold text-green-700">✅ Certificate committed to blockchain!</p>
-              <p className="text-gray-600">Hash: <span className="font-mono text-xs">{result.certificateHash}</span></p>
-              <p className="text-gray-600">IPFS:
-                <a href={`https://gateway.pinata.cloud/ipfs/${result.ipfsCID}`} target="_blank" rel="noopener noreferrer"
-                  className="text-blue-600 ml-1 hover:underline">{result.ipfsCID?.slice(0, 20)}... ↗</a>
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-2 font-bold text-sm text-white">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                Certificate successfully anchored on Polygon Amoy!
+              </div>
+              <p className="text-slate-300">
+                SHA-256 Hash:{' '}
+                <span className="font-mono text-amber-300 break-all">{result.certificateHash}</span>
               </p>
+              {result.ipfsCID && (
+                <p className="text-slate-300">
+                  IPFS CID:{' '}
+                  <a
+                    href={`https://gateway.pinata.cloud/ipfs/${result.ipfsCID}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:underline font-mono inline-flex items-center gap-1 ml-1"
+                  >
+                    {result.ipfsCID.slice(0, 16)}... <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </p>
+              )}
               {result.polygonscanUrl && (
-                <a href={result.polygonscanUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-block mt-1 text-amber-600 hover:underline">View on Polygonscan ↗</a>
+                <a
+                  href={result.polygonscanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-amber-400 hover:underline font-semibold mt-1"
+                >
+                  View on Polygonscan Amoy <ExternalLink className="w-3 h-3" />
+                </a>
               )}
             </div>
           ) : (
-            <p className="text-red-700 text-sm font-medium">{result.error}</p>
+            <div className="flex items-center gap-2 text-xs">
+              <AlertCircle className="w-4 h-4 text-red-400" />
+              <span>{result.error}</span>
+            </div>
           )}
         </div>
       )}

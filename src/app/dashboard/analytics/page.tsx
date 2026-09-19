@@ -1,4 +1,15 @@
 import { prisma } from '@/lib/db';
+import Link from 'next/link';
+import { 
+  Radar, 
+  ShieldAlert, 
+  Smartphone, 
+  Globe2, 
+  Calendar, 
+  TrendingUp, 
+  AlertTriangle,
+  ArrowRight
+} from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +24,6 @@ export default async function AnalyticsPage() {
         batch: { select: { batchCode: true, honey_type: true } },
       },
     }),
-    // Top 10 most-scanned QR tokens
     prisma.qRToken.findMany({
       orderBy: { scans: { _count: 'desc' } },
       take: 10,
@@ -24,14 +34,12 @@ export default async function AnalyticsPage() {
     }),
   ]);
 
-  // Today's scan count
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayScans = await prisma.qRScan.count({
     where: { timestamp: { gte: todayStart } },
   });
 
-  // Geographic scan distribution
   const geoDistribution = await prisma.qRScan.groupBy({
     by: ['ipCountry', 'ipRegion'],
     _count: { id: true },
@@ -43,125 +51,180 @@ export default async function AnalyticsPage() {
   const unresolvedCount = recentAlerts.length;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">🔍 Scan Analytics</h1>
-        <p className="text-sm text-gray-500 mt-0.5">QR scan patterns and anti-clone anomaly detection</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+            <Radar className="w-7 h-7 text-amber-400" />
+            Anti-Clone QR Radar & Analytics
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Real-time duplicate scan anomaly detection and consumer engagement telemetry
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono text-emerald-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>Anti-Clone Engine: Guard Active</span>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Scans', value: totalScans, icon: '📱', color: 'text-blue-600' },
-          { label: 'Scans Today', value: todayScans, icon: '📅', color: 'text-green-600' },
-          { label: 'Unresolved Alerts', value: unresolvedCount, icon: '🚨', color: 'text-red-600' },
-          { label: 'Monitored Regions', value: geoDistribution.length, icon: '🌍', color: 'text-purple-600' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <p className="text-2xl mb-1">{stat.icon}</p>
-            <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
-            <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
-          </div>
-        ))}
+          { label: 'Total Verified Scans', value: totalScans, icon: Smartphone, color: 'text-amber-400', glow: 'border-amber-500/30' },
+          { label: 'Scans Today', value: todayScans, icon: Calendar, color: 'text-cyan-400', glow: 'border-cyan-500/30' },
+          { label: 'Unresolved Alerts', value: unresolvedCount, icon: ShieldAlert, color: 'text-red-400', glow: 'border-red-500/30' },
+          { label: 'Monitored Regions', value: geoDistribution.length, icon: Globe2, color: 'text-emerald-400', glow: 'border-emerald-500/30' },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.label}
+              className={`rounded-3xl border ${stat.glow} bg-[#0d111a]/80 backdrop-blur-2xl p-5 space-y-2 shadow-xl`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400 font-medium">{stat.label}</span>
+                <Icon className={`w-4 h-4 ${stat.color}`} />
+              </div>
+              <p className={`text-2xl sm:text-3xl font-extrabold font-mono ${stat.color}`}>{stat.value}</p>
+            </div>
+          );
+        })}
       </div>
 
+      {/* 2 Column Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* Unresolved Alerts */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h2 className="font-semibold text-gray-800 mb-4 text-sm uppercase tracking-wide flex items-center gap-2">
-            🚨 Anomaly Alerts
-            {unresolvedCount > 0 && (
-              <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">{unresolvedCount} unresolved</span>
-            )}
-          </h2>
+        <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4" /> Anomaly Alerts ({unresolvedCount})
+            </h2>
+            <Link
+              href="/dashboard/recall"
+              className="text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              Manage Recalls →
+            </Link>
+          </div>
+
           {recentAlerts.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-400">
-              <p className="text-2xl mb-2">✅</p>
-              No anomalies detected
+            <div className="p-12 text-center text-xs text-slate-500 space-y-2">
+              <p className="text-2xl">🛡️</p>
+              <p className="font-semibold text-slate-300">No duplicate scan anomalies detected</p>
+              <p className="text-slate-500">Every scanned QR is geographically coherent.</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-80 overflow-y-auto">
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {recentAlerts.map((alert) => (
-                <div key={alert.id} className="border border-red-100 bg-red-50 rounded-lg p-3 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-red-800 text-xs">{alert.alertType.replace(/_/g, ' ')}</p>
-                      <p className="text-gray-600 text-xs mt-0.5">
-                        Batch: <span className="font-mono">{alert.batch?.batchCode ?? '—'}</span>
-                      </p>
-                      <p className="text-gray-400 text-xs">{new Date(alert.createdAt).toLocaleString('en-IN')}</p>
-                    </div>
-                    <a href={`/dashboard/recall`}
-                      className="shrink-0 text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">
-                      Review
-                    </a>
+                <div
+                  key={alert.id}
+                  className="p-3.5 rounded-2xl bg-red-950/20 border border-red-500/30 flex items-start justify-between gap-3 text-xs"
+                >
+                  <div className="space-y-1">
+                    <p className="font-bold text-red-300 uppercase font-mono text-[11px]">
+                      {alert.alertType.replace(/_/g, ' ')}
+                    </p>
+                    <p className="text-slate-400">
+                      Batch: <span className="font-mono text-white">{alert.batch?.batchCode}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-mono">
+                      {new Date(alert.createdAt).toLocaleString('en-IN')}
+                    </p>
                   </div>
+                  <Link
+                    href="/dashboard/recall"
+                    className="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 text-[11px] font-semibold transition-colors shrink-0"
+                  >
+                    Review
+                  </Link>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Geographic Distribution */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h2 className="font-semibold text-gray-800 mb-4 text-sm uppercase tracking-wide">🌍 Scan Geography</h2>
+        {/* Scan Geography */}
+        <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+              <Globe2 className="w-4 h-4" /> Scan Distribution by Region
+            </h2>
+            <span className="text-[10px] font-mono text-slate-500">IP Geolocation</span>
+          </div>
+
           {geoDistribution.length === 0 ? (
-            <p className="text-center py-8 text-sm text-gray-400">No geographic data yet</p>
+            <div className="p-12 text-center text-xs text-slate-500">
+              Awaiting consumer QR scan events...
+            </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {geoDistribution.map((row, i) => {
                 const maxCount = geoDistribution[0]._count.id;
                 const pct = Math.round((row._count.id / maxCount) * 100);
                 return (
-                  <div key={i}>
-                    <div className="flex items-center justify-between text-xs mb-0.5">
-                      <span className="text-gray-600">{row.ipRegion ?? '—'}, {row.ipCountry}</span>
-                      <span className="text-gray-500 font-medium">{row._count.id}</span>
+                  <div key={i} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-300">{row.ipRegion ?? 'Unknown'}, {row.ipCountry}</span>
+                      <span className="font-mono text-slate-400 font-bold">{row._count.id} scans</span>
                     </div>
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                    <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-          <p className="text-xs text-gray-400 mt-3 italic">
-            Geolocation accuracy: ~50km. VPNs may show incorrect locations.
-          </p>
         </div>
 
-        {/* Most Scanned QRs */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 lg:col-span-2">
-          <h2 className="font-semibold text-gray-800 mb-4 text-sm uppercase tracking-wide">📊 Most Scanned QR Tokens</h2>
-          <table className="w-full text-sm">
-            <thead className="text-xs text-gray-500 uppercase border-b border-gray-100">
-              <tr>
-                <th className="pb-2 text-left">Batch Code</th>
-                <th className="pb-2 text-left">Honey Type</th>
-                <th className="pb-2 text-right">Scan Count</th>
-                <th className="pb-2 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {topScannedBatches.map((token) => (
-                <tr key={token.id} className="hover:bg-gray-50">
-                  <td className="py-2.5 font-mono text-xs">{token.batch.batchCode}</td>
-                  <td className="py-2.5 text-gray-600">{token.batch.honey_type}</td>
-                  <td className={`py-2.5 text-right font-bold ${token._count.scans > 30 ? 'text-red-600' : 'text-gray-700'}`}>
-                    {token._count.scans}
-                    {token._count.scans > 30 && ' ⚠'}
-                  </td>
-                  <td className="py-2.5 text-right">
-                    {token.batch.recalled
-                      ? <span className="text-red-600 text-xs font-bold">RECALLED</span>
-                      : <span className="text-green-600 text-xs">Active</span>}
-                  </td>
+        {/* Top Scanned Tokens */}
+        <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 space-y-4 shadow-xl">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-amber-400" /> High-Velocity QR Tokens
+          </h2>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="text-[10px] uppercase text-slate-500 border-b border-white/5">
+                <tr>
+                  <th className="py-2.5 px-3">Batch Code</th>
+                  <th className="py-2.5 px-3">Type</th>
+                  <th className="py-2.5 px-3 text-center">Lifetime Scans</th>
+                  <th className="py-2.5 px-3 text-right">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {topScannedBatches.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-slate-500">No token activity recorded yet.</td>
+                  </tr>
+                ) : (
+                  topScannedBatches.map((token) => (
+                    <tr key={token.id} className="hover:bg-white/[0.02]">
+                      <td className="py-2.5 px-3 font-bold text-white">{token.batch.batchCode}</td>
+                      <td className="py-2.5 px-3 text-slate-400 font-sans">{token.batch.honey_type}</td>
+                      <td className="py-2.5 px-3 text-center font-bold text-amber-300">
+                        {token._count.scans}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        {token.batch.recalled ? (
+                          <span className="text-red-400 font-bold text-[10px]">RECALLED</span>
+                        ) : (
+                          <span className="text-emerald-400 text-[10px]">ACTIVE</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

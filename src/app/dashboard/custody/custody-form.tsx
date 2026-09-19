@@ -1,5 +1,7 @@
 'use client';
+
 import { useState } from 'react';
+import { Truck, ArrowRight, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 
 const STATUS_OPTIONS = [
   { value: 'PROCESSED',       label: '⚙️ Processed' },
@@ -21,11 +23,20 @@ export function CustodyTransferForm({ myBatches }: { myBatches: OwnedBatch[] }) 
   const [toAddress, setToAddress] = useState('');
   const [newStatus, setNewStatus] = useState('IN_DISTRIBUTION');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ success?: boolean; txHash?: string; polygonscanUrl?: string; from?: string; to?: string; newStatus?: string; error?: string } | null>(null);
+  const [result, setResult] = useState<{
+    success?: boolean;
+    txHash?: string;
+    polygonscanUrl?: string;
+    from?: string;
+    to?: string;
+    newStatus?: string;
+    error?: string;
+  } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true); setResult(null);
+    setLoading(true);
+    setResult(null);
 
     try {
       const res = await fetch('/api/custody', {
@@ -35,9 +46,12 @@ export function CustodyTransferForm({ myBatches }: { myBatches: OwnedBatch[] }) 
       });
       const data = await res.json() as typeof result;
       setResult(data);
-      if (res.ok) { setBatchId(''); setToAddress(''); }
+      if (res.ok) {
+        setBatchId('');
+        setToAddress('');
+      }
     } catch {
-      setResult({ error: 'Network error' });
+      setResult({ error: 'Network communication error. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -45,73 +59,124 @@ export function CustodyTransferForm({ myBatches }: { myBatches: OwnedBatch[] }) 
 
   if (myBatches.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
-        <p className="text-3xl mb-3">🚚</p>
-        <h3 className="text-lg font-medium text-gray-900">No Batches in Custody</h3>
-        <p className="text-gray-500 mt-1">You do not currently possess any honey batches that need transferring.</p>
+      <div className="rounded-3xl border border-white/10 bg-[#0d1017]/80 backdrop-blur-2xl p-12 text-center text-slate-400 space-y-3 shadow-xl">
+        <Truck className="w-12 h-12 text-slate-600 mx-auto" />
+        <h3 className="text-base font-bold text-white">No Batches in Custody</h3>
+        <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          You do not currently hold custody of any honey batches requiring transfer.
+        </p>
       </div>
     );
   }
 
   return (
-    <div>
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-5">
+    <div className="space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-3xl border border-yellow-400/20 bg-[#0d1017]/85 backdrop-blur-2xl p-6 sm:p-8 space-y-5 shadow-xl"
+      >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Batch in your Possession</label>
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+            Select Batch in Possession
+          </label>
           <select
-            value={batchId} onChange={e => setBatchId(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+            value={batchId}
+            onChange={(e) => setBatchId(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-yellow-400 transition-colors"
             required
           >
-            <option value="" disabled>-- Choose a batch --</option>
-            {myBatches.map(b => (
-              <option key={b.id} value={b.id}>
-                {b.batchCode} — {b.honey_type} ({(b.quantity_grams / 1000).toFixed(1)} kg) - Current: {b.status}
+            <option value="" disabled className="bg-[#0d1017] text-slate-500">
+              -- Choose a batch --
+            </option>
+            {myBatches.map((b) => (
+              <option key={b.id} value={b.id} className="bg-[#0d1017] text-white">
+                {b.batchCode} — {b.honey_type} ({(b.quantity_grams / 1000).toFixed(1)} kg) · Stage: {b.status}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Recipient Wallet Address (Next Custodian)</label>
-          <input value={toAddress} onChange={e => setToAddress(e.target.value)}
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+            Recipient EVM Wallet Address
+          </label>
+          <input
+            type="text"
+            value={toAddress}
+            onChange={(e) => setToAddress(e.target.value)}
             placeholder="0x..."
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400"
-            required />
+            className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs font-mono text-yellow-300 placeholder-slate-600 focus:outline-none focus:border-yellow-400 transition-colors"
+            required
+          />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">New Supply Chain Status</label>
-          <select value={newStatus} onChange={e => setNewStatus(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+            Next Supply Chain Stage
+          </label>
+          <select
+            value={newStatus}
+            onChange={(e) => setNewStatus(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-yellow-400 transition-colors"
           >
-            {STATUS_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-[#0d1017] text-white">
+                {opt.label}
+              </option>
             ))}
           </select>
         </div>
 
-        <button type="submit" disabled={loading || !batchId || !toAddress}
-          className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-200 text-white font-medium rounded-lg transition text-sm">
-          {loading ? '⏳ Processing...' : '📤 Transfer Custody'}
+        <button
+          type="submit"
+          disabled={loading || !batchId || !toAddress}
+          className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-black text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            'Committing Transfer to Polygon Amoy...'
+          ) : (
+            <>
+              Transfer Custody On-Chain
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
         </button>
       </form>
 
+      {/* Result */}
       {result && (
-        <div className={`mt-5 p-5 rounded-xl border ${result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+        <div
+          className={`p-6 rounded-3xl border ${
+            result.success
+              ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300'
+              : 'bg-red-950/20 border-red-500/40 text-red-400'
+          } shadow-2xl space-y-2 text-xs`}
+        >
           {result.success ? (
-            <div className="space-y-2 text-sm">
-              <p className="font-semibold text-green-700">✅ Custody Transferred!</p>
-              <p className="text-gray-600">From: <span className="font-mono text-xs">{result.from}</span></p>
-              <p className="text-gray-600">To: <span className="font-mono text-xs">{result.to}</span></p>
-              <p className="text-gray-600">Status updated to: <span className="font-medium">{result.newStatus}</span></p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-white font-bold text-sm">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                Custody Handover Confirmed on Polygon Amoy!
+              </div>
+              <p className="text-slate-300 font-mono">
+                From: {result.from?.slice(0, 10)}... → To: {result.to?.slice(0, 10)}...
+              </p>
               {result.polygonscanUrl && (
-                <a href={result.polygonscanUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-block mt-1 text-amber-600 hover:underline">View on Polygonscan ↗</a>
+                <a
+                  href={result.polygonscanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-yellow-400 hover:underline font-mono inline-flex items-center gap-1 font-bold pt-1"
+                >
+                  View Transaction on Polygonscan <ExternalLink className="w-3 h-3" />
+                </a>
               )}
             </div>
           ) : (
-            <p className="text-red-700 text-sm font-medium">{result.error}</p>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400" />
+              <span>{result.error}</span>
+            </div>
           )}
         </div>
       )}

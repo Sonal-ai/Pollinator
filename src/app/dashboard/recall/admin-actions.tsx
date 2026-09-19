@@ -1,6 +1,8 @@
 'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertOctagon, CheckCircle } from 'lucide-react';
 
 export function RecallButton({ batchCode }: { batchCode: string }) {
   const [loading, setLoading] = useState(false);
@@ -16,15 +18,15 @@ export function RecallButton({ batchCode }: { batchCode: string }) {
       const res = await fetch(`/api/batch/${batchCode}/recall`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'Recalled due to scan anomaly' })
+        body: JSON.stringify({ reason: 'Recalled due to scan anomaly' }),
       });
       if (res.ok) {
         router.refresh();
       } else {
         alert('Failed to recall batch.');
       }
-    } catch (e) {
-      alert('Network error');
+    } catch {
+      alert('Network communication error.');
     } finally {
       setLoading(false);
     }
@@ -34,9 +36,10 @@ export function RecallButton({ batchCode }: { batchCode: string }) {
     <button 
       onClick={handleRecall}
       disabled={loading}
-      className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 transition whitespace-nowrap"
+      className="px-3 py-1.5 bg-red-600/90 hover:bg-red-500 text-white text-xs font-bold rounded-xl disabled:opacity-50 transition shadow-lg shadow-red-600/20 whitespace-nowrap flex items-center justify-center gap-1.5"
     >
-      {loading ? '⏳ Recalling...' : '🚨 Recall Batch'}
+      <AlertOctagon className="w-3.5 h-3.5" />
+      {loading ? 'Recalling On-Chain...' : 'Recall Batch'}
     </button>
   );
 }
@@ -54,20 +57,21 @@ export function ResolveButton({ alertId }: { alertId: string }) {
       } else {
         alert('Failed to resolve alert.');
       }
-    } catch (e) {
-      alert('Network error');
+    } catch {
+      alert('Network communication error.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <button 
+    <button
       onClick={handleResolve}
       disabled={loading}
-      className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50 transition whitespace-nowrap"
+      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white text-xs font-semibold rounded-xl border border-white/10 disabled:opacity-50 transition whitespace-nowrap flex items-center justify-center gap-1.5"
     >
-      {loading ? '⏳ Resolving...' : '✓ Resolve'}
+      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+      {loading ? 'Resolving...' : 'Dismiss Alert'}
     </button>
   );
 }

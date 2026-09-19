@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/db';
 import { LabUploadForm } from './upload-form';
+import { FileCheck, ShieldCheck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LabPage() {
-  // Fetch batches that are HARVESTED or PROCESSED and NOT YET lab verified
   const pendingBatches = await prisma.honeyBatch.findMany({
     where: {
       lab_verified: false,
@@ -21,11 +21,16 @@ export default async function LabPage() {
   });
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">🧪 Lab Certificate Analysis</h1>
-      <p className="text-gray-500 text-sm mb-8">
-        Upload a PDF lab certificate for pending honey batches. The certificate hash will be committed immutably on the Polygon blockchain.
-      </p>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <FileCheck className="w-7 h-7 text-amber-400" />
+          QA Laboratory Portal
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          Upload certified PDF purity reports. The certificate hash is anchored to IPFS and signed permanently on Polygon Amoy.
+        </p>
+      </div>
 
       <LabUploadForm pendingBatches={pendingBatches} />
     </div>

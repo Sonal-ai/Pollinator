@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { PackagingForm } from './packaging-form';
+import { Package, ShieldCheck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,11 +20,10 @@ export default async function ProcessorPage() {
     } catch { /* ignore */ }
   }
 
-  // Processors can only package batches they possess and that are LAB_VERIFIED
   const processableBatches = await prisma.honeyBatch.findMany({
     where: {
       recalled: false,
-      status: 'LAB_VERIFIED', // Must be lab verified to be safely packaged
+      status: 'LAB_VERIFIED',
       ...(isAdmin ? {} : { current_custodian: walletAddress }),
     },
     select: {
@@ -35,15 +35,20 @@ export default async function ProcessorPage() {
   });
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">🏭 Processor Packaging</h1>
-      <p className="text-gray-500 text-sm mb-8">
-        Convert bulk honey batches into individual retail jars. This will immutably log the packaging details on the Polygon blockchain and generate cryptographically signed anti-clone QR codes for each jar.
-      </p>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <Package className="w-7 h-7 text-amber-400" />
+          Packaging & QR Serialization
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          Convert verified bulk batches into retail jars. This emits a packaging transaction on Polygon Amoy and mints unique HMAC-signed anti-clone QR codes.
+        </p>
+      </div>
 
-      {(!walletAddress && !isAdmin) ? (
-        <div className="bg-red-50 p-4 rounded-xl text-red-700">
-          Please log in as a Processor or Admin to package batches.
+      {!walletAddress && !isAdmin ? (
+        <div className="p-4 rounded-2xl bg-red-950/30 border border-red-500/40 text-red-300 text-xs">
+          Please log in as a Processor or Admin to package honey batches.
         </div>
       ) : (
         <PackagingForm processableBatches={processableBatches} />

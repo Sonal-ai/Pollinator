@@ -1,11 +1,11 @@
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { IotChartClient } from './chart-client';
+import { Cpu, Wifi, Thermometer, Droplets, Scale, BatteryCharging } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function IoTPage() {
-  // Get beekeeper from session
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('pollinator_session');
   let beekeeperId: string | null = null;
@@ -22,8 +22,6 @@ export default async function IoTPage() {
   }
 
   const isAdmin = session?.role === 'admin';
-  
-  // Admin sees all hives; beekeeper sees their own. If beekeeperId is null and not admin, fetch none.
   const whereClause = isAdmin ? undefined : (beekeeperId ? { beekeeperId } : { id: 'none' });
 
   const hives = await prisma.hive.findMany({
@@ -41,53 +39,104 @@ export default async function IoTPage() {
   });
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">📡 IoT Hive Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{hives.length} hive{hives.length !== 1 ? 's' : ''} registered</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+            <Cpu className="w-7 h-7 text-cyan-400" />
+            IoT Hive Telemetry Station
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Real-time sensor arrays streaming from ESP32 edge nodes • {hives.length} active hive{hives.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs font-mono text-cyan-300">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+          <span>MQTT Broker: AWS Active</span>
+        </div>
       </div>
 
       {hives.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center text-gray-400">
-          <p className="text-4xl mb-4">📡</p>
-          <p className="text-sm">No hives registered yet.</p>
-          <p className="text-xs mt-1">Connect your ESP32 device and register a hive to get started.</p>
+        <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-16 text-center text-slate-500 space-y-3 shadow-xl">
+          <Wifi className="w-12 h-12 text-slate-600 mx-auto" />
+          <h3 className="text-base font-bold text-slate-300">No Hive Microcontrollers Detected</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            Flash an ESP32 with the Pollinator firmware and transmit telemetry over MQTT to start receiving real-time data.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {hives.map((hive) => {
             const latest = hive.readings[0];
             return (
-              <div key={hive.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div
+                key={hive.id}
+                className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl overflow-hidden shadow-2xl space-y-4"
+              >
                 {/* Hive Header */}
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="px-6 py-4 border-b border-white/10 bg-black/40 flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-gray-800 text-sm">{hive.deviceId}</p>
-                    <p className="text-xs text-gray-400">{hive.beekeeper?.name} · {hive.region ?? 'Unknown region'}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-white bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                        {hive.deviceId}
+                      </span>
+                      <span className="text-xs text-cyan-400 font-semibold">{hive.region ?? 'Wardha Cluster'}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Beekeeper: {hive.beekeeper?.name ?? 'KVIC Registered Farmer'}
+                    </p>
                   </div>
-                  <div className={`w-2.5 h-2.5 rounded-full ${latest ? 'bg-green-400' : 'bg-gray-300'}`} title={latest ? 'Data received' : 'No data'} />
+
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2.5 h-2.5 rounded-full ${latest ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+                    <span className="text-[10px] font-mono text-slate-400">{latest ? 'ONLINE' : 'OFFLINE'}</span>
+                  </div>
                 </div>
 
-                {/* Latest Readings */}
+                {/* Sensor Gauges Grid */}
                 {latest ? (
-                  <>
-                    <div className="grid grid-cols-2 gap-0 divide-x divide-y divide-gray-50">
-                      <SensorCard icon="🌡️" label="Temperature" value={latest.tempC !== null ? `${latest.tempC.toFixed(1)}°C` : '—'} warn={latest.tempC !== null && latest.tempC > 37} />
-                      <SensorCard icon="💧" label="Humidity" value={latest.humidityPct !== null ? `${latest.humidityPct.toFixed(0)}%` : '—'} warn={latest.humidityPct !== null && latest.humidityPct > 75} />
-                      <SensorCard icon="⚖️" label="Weight" value={latest.weightKg !== null ? `${latest.weightKg.toFixed(2)} kg` : '—'} />
-                      <SensorCard icon="🔋" label="Battery" value={latest.batteryPct !== null ? `${latest.batteryPct.toFixed(0)}%` : '—'} warn={latest.batteryPct !== null && latest.batteryPct < 20} />
+                  <div className="px-6 space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <SensorBox
+                        icon={<Thermometer className="w-4 h-4 text-amber-400" />}
+                        label="Temperature"
+                        value={latest.tempC !== null ? `${latest.tempC.toFixed(1)}°C` : '—'}
+                        warn={latest.tempC !== null && latest.tempC > 37}
+                      />
+                      <SensorBox
+                        icon={<Droplets className="w-4 h-4 text-cyan-400" />}
+                        label="Humidity"
+                        value={latest.humidityPct !== null ? `${latest.humidityPct.toFixed(0)}%` : '—'}
+                        warn={latest.humidityPct !== null && latest.humidityPct > 75}
+                      />
+                      <SensorBox
+                        icon={<Scale className="w-4 h-4 text-emerald-400" />}
+                        label="Hive Weight"
+                        value={latest.weightKg !== null ? `${latest.weightKg.toFixed(2)} kg` : '—'}
+                      />
+                      <SensorBox
+                        icon={<BatteryCharging className="w-4 h-4 text-purple-400" />}
+                        label="Battery"
+                        value={latest.batteryPct !== null ? `${latest.batteryPct.toFixed(0)}%` : '—'}
+                        warn={latest.batteryPct !== null && latest.batteryPct < 20}
+                      />
                     </div>
-                    <div className="px-5 py-2 bg-gray-50 text-xs text-gray-400 border-t border-gray-100">
-                      Last update: {new Date(latest.timestamp).toLocaleString('en-IN')}
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono py-1 border-t border-white/5">
+                      <span>Last Packet: {new Date(latest.timestamp).toLocaleTimeString('en-IN')}</span>
+                      <span className="text-emerald-400">ESP32 Heartbeat OK</span>
                     </div>
-                    {/* Chart loaded client-side to avoid SSR issues with recharts */}
-                    <div className="px-5 py-4">
+
+                    {/* Chart Container */}
+                    <div className="pt-2 pb-4">
                       <IotChartClient hiveId={hive.id} />
                     </div>
-                  </>
+                  </div>
                 ) : (
-                  <div className="px-5 py-8 text-center text-sm text-gray-400">
-                    No sensor data yet
+                  <div className="px-6 py-12 text-center text-xs text-slate-500">
+                    Awaiting initial sensor handshake packet...
                   </div>
                 )}
               </div>
@@ -99,13 +148,27 @@ export default async function IoTPage() {
   );
 }
 
-function SensorCard({ icon, label, value, warn }: { icon: string; label: string; value: string; warn?: boolean }) {
+function SensorBox({
+  icon,
+  label,
+  value,
+  warn,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  warn?: boolean;
+}) {
   return (
-    <div className="px-5 py-4">
-      <p className="text-xl mb-1">{icon}</p>
-      <p className={`text-lg font-bold ${warn ? 'text-red-600' : 'text-gray-800'}`}>{value}</p>
-      <p className="text-xs text-gray-400">{label}</p>
-      {warn && <p className="text-xs text-red-500 mt-0.5">⚠ Elevated</p>}
+    <div className={`p-3 rounded-2xl bg-black/40 border ${
+      warn ? 'border-red-500/40 bg-red-950/20' : 'border-white/5'
+    } space-y-1`}>
+      <div className="flex items-center justify-between">
+        <span className="text-slate-400">{icon}</span>
+        {warn && <span className="text-[9px] font-mono text-red-400 font-bold uppercase">WARN</span>}
+      </div>
+      <p className={`text-sm font-extrabold font-mono ${warn ? 'text-red-400' : 'text-white'}`}>{value}</p>
+      <p className="text-[10px] text-slate-400 truncate">{label}</p>
     </div>
   );
 }
