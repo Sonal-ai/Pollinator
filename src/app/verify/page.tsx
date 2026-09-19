@@ -35,7 +35,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
 
   // Get IP and User-Agent from request headers
   const headerStore = await headers();
-  const forwardedFor = headerStore.get('x-forwarded-for');
+  const forwardedFor = headerStore.get('x-forwarded-for') || headerStore.get('x-real-ip') || headerStore.get('cf-connecting-ip');
   const ipAddress = forwardedFor ? forwardedFor.split(',')[0].trim() : null;
   const userAgent = headerStore.get('user-agent');
 
