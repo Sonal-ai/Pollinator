@@ -88,17 +88,17 @@ export function Navbar({
   };
 
   return (
-    <header className="sticky top-4 z-50 max-w-6xl mx-auto px-3 sm:px-4">
+    <header className="sticky top-4 z-50 max-w-7xl mx-auto px-3 sm:px-4">
       {/* Floating Pill Container */}
       <div
-        className={`flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border transition-all duration-300 ${
+        className={`flex items-center justify-between px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full border transition-all duration-300 ${
           scrolled
             ? 'border-amber-400/40 dark:border-yellow-400/35 bg-white/95 dark:bg-[#0c0e14]/95 shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_45px_rgba(0,0,0,0.8)] backdrop-blur-2xl'
             : 'border-amber-300/40 dark:border-yellow-400/25 bg-white/80 dark:bg-[#0c0e14]/85 shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] backdrop-blur-xl'
         }`}
       >
         {/* Left: Brand Identity (Strictly Single-Line) */}
-        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+        <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group">
           <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 shadow-md shadow-yellow-500/30 group-hover:scale-105 transition-transform duration-300 shrink-0 p-1">
             <Image
               src="/logo-mark.png"
@@ -122,7 +122,7 @@ export function Navbar({
         {/* Center: Planned Creative Navigation Capsule (Strictly Single-Line, Never Wraps) */}
         <nav
           aria-label="Main Navigation"
-          className="hidden md:flex items-center p-1 rounded-full bg-amber-100/60 dark:bg-black/40 border border-amber-200/60 dark:border-white/5 backdrop-blur-xl shrink-0 mx-2"
+          className="hidden md:flex items-center p-1 rounded-full bg-amber-100/60 dark:bg-black/40 border border-amber-200/60 dark:border-white/5 backdrop-blur-xl shrink-0 mx-1 lg:mx-2"
         >
           {NAV_ITEMS.map((item) => {
             const isActive = activeSection === item.id;
@@ -136,7 +136,7 @@ export function Navbar({
                 onMouseEnter={() => setHoveredSection(item.id)}
                 onMouseLeave={() => setHoveredSection(null)}
                 whileTap={{ scale: 0.94 }}
-                className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors duration-200 select-none ${
+                className={`relative px-2.5 lg:px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors duration-200 select-none ${
                   isActive
                     ? 'text-black dark:text-black font-extrabold'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -172,7 +172,7 @@ export function Navbar({
         </nav>
 
         {/* Right: Network, Theme Toggle, Launch CTA */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <NetworkBadge
             contractAddress={contractAddress}
             networkName={networkName}
@@ -182,7 +182,7 @@ export function Navbar({
           />
           <ThemeToggle />
           
-          <RollButton href="/dashboard" size="sm" variant="primary" className="hidden sm:inline-flex">
+          <RollButton href="/dashboard" size="sm" variant="primary" className="hidden sm:inline-flex shrink-0">
             Launch Hive
           </RollButton>
 

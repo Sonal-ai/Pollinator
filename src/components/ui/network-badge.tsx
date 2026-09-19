@@ -70,12 +70,12 @@ export function NetworkBadge({
         <span className="font-extrabold text-[11px] sm:text-xs tracking-tight">{label}</span>
       </span>
 
-      <span className="hidden xl:inline-block h-3 w-px bg-amber-300/60 dark:bg-yellow-400/25" />
+      <span className="hidden 2xl:inline-block h-3 w-px bg-amber-300/60 dark:bg-yellow-400/25" />
 
       <button
         type="button"
         onClick={copyToClipboard}
-        className="hidden xl:inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+        className="hidden 2xl:inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
         title="Click to copy contract address"
       >
         <span className="tracking-tight">{shortAddress}</span>

@@ -91,9 +91,8 @@ export default function HomePage() {
                 variant="whatsapp"
                 icon={<WhatsAppIcon className="w-4 h-4 text-[#25D366]" />}
               >
-                <span className="flex items-center gap-1.5">
-                  <span className="text-emerald-800 dark:text-emerald-300 font-extrabold">Forager Bot</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30 font-mono">WhatsApp</span>
+                <span className="text-emerald-900 dark:text-emerald-200 font-extrabold">
+                  Forager WhatsApp Bot
                 </span>
               </RollButton>
             </div>
@@ -108,11 +107,13 @@ export default function HomePage() {
                 <p className="text-2xl font-extrabold text-amber-600 dark:text-yellow-400 font-mono">Zero</p>
                 <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Adulteration Risk</p>
               </div>
-              <div className="p-3 rounded-2xl bg-emerald-500/[0.08] dark:bg-emerald-950/25 border border-emerald-300/60 dark:border-emerald-500/30">
-                <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono flex items-center gap-1.5">
+              <div className="p-3 rounded-2xl bg-emerald-500/[0.08] dark:bg-emerald-950/25 border border-emerald-300/60 dark:border-emerald-500/30 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono whitespace-nowrap">
+                    6 Langs
+                  </p>
                   <WhatsAppIcon className="w-4 h-4 text-[#25D366] shrink-0" />
-                  6 Langs
-                </p>
+                </div>
                 <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Forager Bot AI</p>
               </div>
               <div className="p-3 rounded-2xl bg-amber-500/[0.05] dark:bg-transparent border border-amber-200/60 dark:border-transparent">
