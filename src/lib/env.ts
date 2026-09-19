@@ -24,6 +24,7 @@ const EnvSchema = z.object({
   PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'PRIVATE_KEY must be a 32-byte hex string').optional(),
 
   // IPFS / Pinata
+  AMB_ENDPOINT: z.string().url().optional(),
   IPFS_GATEWAY: z.string().min(1, 'IPFS_GATEWAY is required'),
   PINATA_JWT: z.string().min(1, 'PINATA_JWT is required'),
 

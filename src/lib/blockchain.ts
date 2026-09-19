@@ -11,7 +11,10 @@ let contract: ethers.Contract | null = null;
 
 function getProvider(): ethers.JsonRpcProvider {
   if (!provider) {
-    provider = new ethers.JsonRpcProvider(env.POLYGON_RPC_URL);
+    // Upgraded to use Amazon Managed Blockchain (AMB) Access if AMB_ENDPOINT is provided
+    const rpcUrl = env.AMB_ENDPOINT || env.POLYGON_RPC_URL;
+    provider = new ethers.JsonRpcProvider(rpcUrl);
+    console.log(`[blockchain] Connected to network via: ${env.AMB_ENDPOINT ? 'AWS AMB' : 'Public RPC'}`);
   }
   return provider;
 }

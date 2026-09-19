@@ -49,10 +49,11 @@ export interface TextAnalysisResult {
 // Invoke Bedrock Helper
 // ============================================================
 
-async function invokeModel(prompt: string, maxTokens = 300): Promise<string> {
+async function invokeModel(prompt: string, maxTokens = 500): Promise<string> {
+  // Upgraded to Claude 3.5 Sonnet for the aws-bedrock-ai branch for maximum intelligence
   const response = await getBedrockClient().send(
     new InvokeModelCommand({
-      modelId: 'anthropic.claude-3-haiku-20240307-v1:0',
+      modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
       contentType: 'application/json',
       accept: 'application/json',
       body: JSON.stringify({
