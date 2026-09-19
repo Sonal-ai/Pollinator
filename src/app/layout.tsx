@@ -17,7 +17,15 @@ export const metadata: Metadata = {
   title: "Pollinator — Cryptographic Honey Supply Chain & Provenance",
   description: "Next-generation honey supply chain verification powered by Polygon Amoy smart contracts, IPFS metadata anchoring, ESP32 IoT hive monitoring, and AWS Bedrock multilingual AI.",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
