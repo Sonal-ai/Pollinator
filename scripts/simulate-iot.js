@@ -100,7 +100,7 @@ async function main() {
         weightKg: currentWeight,
         batteryPct: battery,
       }, 'Streaming Telemetry');
-    }, 5000);
+    }, 2000);
   } else {
     const selected = PRESETS[arg] || PRESETS.healthy;
     await sendPacket(selected, `Preset: ${arg}`);

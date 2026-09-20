@@ -16,10 +16,10 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'how-it-works', label: 'Honeycomb Trail' },
-  { id: 'features', label: 'Hive Spec' },
-  { id: 'sandbox', label: 'Live Sandbox', badge: 'Interactive' },
-  { id: 'verify-demo', label: 'Verify Nectar' },
+  { id: 'how-it-works', label: 'Traceability Flow' },
+  { id: 'features', label: 'Architecture' },
+  { id: 'pipeline', label: 'Live Protocol', badge: '5-Stage' },
+  { id: 'verify-demo', label: 'Verify Honey' },
 ];
 
 interface NavbarProps {
@@ -45,7 +45,7 @@ export function Navbar({
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
 
-      const sectionIds = ['how-it-works', 'features', 'sandbox', 'verify-demo'];
+      const sectionIds = ['how-it-works', 'features', 'pipeline', 'verify-demo'];
       const scrollPosition = window.scrollY + 140;
 
       for (let i = sectionIds.length - 1; i >= 0; i--) {

@@ -77,7 +77,7 @@ export function ProvenanceSandbox() {
     {
       id: 'lab',
       stepNum: '03',
-      title: 'Nectar Lab Verification',
+      title: 'NABL Laboratory Certification',
       tag: 'Decentralized IPFS Anchor',
       icon: FileCheck2,
       accent: '#ffd21e',
@@ -99,7 +99,7 @@ await contract.verifyLab(batchIdHash, certHash);
     {
       id: 'packaging',
       stepNum: '04',
-      title: 'Hive Packaging & Tamper Seal',
+      title: 'Serialized Packaging & Tamper Seal',
       tag: 'HMAC Cryptographic Serialization',
       icon: PackageCheck,
       accent: '#ffb800',
@@ -123,7 +123,7 @@ const qrUrl = "https://pollinator.app/verify"
     {
       id: 'consumer',
       stepNum: '05',
-      title: 'Consumer Nectar Authenticity',
+      title: 'Consumer Verification & Anti-Clone Radar',
       tag: 'Instant Trust Proof',
       icon: QrCode,
       accent: '#ffd21e',
@@ -160,13 +160,13 @@ const qrUrl = "https://pollinator.app/verify"
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/15 dark:bg-yellow-400/10 border border-amber-400/30 dark:border-yellow-400/30 text-xs font-extrabold text-amber-800 dark:text-yellow-300 mb-2">
             <Hexagon className="w-3.5 h-3.5 fill-amber-400/20 dark:fill-yellow-400/20" />
-            <span>Interactive Blockchain Bee Sandbox</span>
+            <span>Interactive Provenance Protocol</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            How Honey Moves From Honeycomb to Consumer Table
+            Interactive 5-Stage Custody & Provenance Engine
           </h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Explore how IoT sensors, WhatsApp AI, IPFS, and Polygon Amoy seal the purity of every jar.
+            Step through each cryptographic checkpoint that secures pure honey from rural apiary harvest to consumer verification.
           </p>
         </div>
 
