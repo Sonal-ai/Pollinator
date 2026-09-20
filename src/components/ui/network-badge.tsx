@@ -26,7 +26,7 @@ export function NetworkBadge({
       : (process.env.NEXT_PUBLIC_BLOCKCHAIN_NETWORK === 'local' ||
          process.env.NEXT_PUBLIC_BLOCKCHAIN_NETWORK === 'localhost');
 
-  const label = networkName || (isLocalNetwork ? 'Local Hive' : 'HoneyChain Amoy');
+  const label = networkName || (isLocalNetwork ? 'Local Hive' : 'Polygon Amoy');
   const targetExplorerUrl =
     explorerUrl !== undefined
       ? explorerUrl
@@ -46,16 +46,20 @@ export function NetworkBadge({
     <div
       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold backdrop-blur-md transition-all shadow-sm shrink-0 ${
         isLocalNetwork
-          ? 'border-emerald-400/40 dark:border-emerald-500/30 bg-emerald-50/85 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300'
-          : 'border-amber-300/60 dark:border-yellow-400/25 bg-amber-50/90 dark:bg-[#12151f]/85 text-amber-950 dark:text-yellow-300'
+          ? 'border-emerald-400/40 bg-emerald-950/40 text-emerald-300'
+          : 'border-purple-500/30 bg-[#161226]/85 text-purple-200'
       } ${className}`}
     >
       <span className="relative flex h-2 w-2 shrink-0">
         <span
-          className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 bg-emerald-500"
+          className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${
+            isLocalNetwork ? 'bg-emerald-500' : 'bg-purple-400'
+          }`}
         />
         <span
-          className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"
+          className={`relative inline-flex h-2 w-2 rounded-full ${
+            isLocalNetwork ? 'bg-emerald-500' : 'bg-purple-400'
+          }`}
         />
       </span>
 
@@ -63,24 +67,24 @@ export function NetworkBadge({
         <Hexagon
           className={`h-3.5 w-3.5 shrink-0 ${
             isLocalNetwork
-              ? 'text-emerald-600 dark:text-emerald-400 fill-emerald-500/20'
-              : 'text-amber-500 dark:text-yellow-400 fill-yellow-400/20'
+              ? 'text-emerald-400 fill-emerald-500/20'
+              : 'text-purple-400 fill-purple-500/20'
           }`}
         />
         <span className="font-extrabold text-[11px] sm:text-xs tracking-tight">{label}</span>
       </span>
 
-      <span className="hidden 2xl:inline-block h-3 w-px bg-amber-300/60 dark:bg-yellow-400/25" />
+      <span className="hidden md:inline-block h-3 w-px bg-white/10" />
 
       <button
         type="button"
         onClick={copyToClipboard}
-        className="hidden 2xl:inline-flex items-center gap-1 font-mono text-[11px] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+        className="hidden md:inline-flex items-center gap-1 font-mono text-[11px] text-slate-400 hover:text-white transition-colors"
         title="Click to copy contract address"
       >
         <span className="tracking-tight">{shortAddress}</span>
         {copied ? (
-          <Check className="h-3 w-3 text-emerald-500 dark:text-yellow-400" />
+          <Check className="h-3 w-3 text-emerald-400" />
         ) : (
           <Copy className="h-3 w-3 opacity-60 hover:opacity-100" />
         )}
@@ -91,9 +95,10 @@ export function NetworkBadge({
           href={targetExplorerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-amber-600 dark:text-yellow-400/80 hover:text-amber-700 dark:hover:text-yellow-300 transition-colors ml-0.5 shrink-0"
+          className="text-purple-400 hover:text-purple-200 transition-colors ml-0.5 shrink-0 inline-flex items-center gap-1"
           title="View on Polygonscan Amoy Explorer"
         >
+          <span className="text-[10px] font-mono hidden lg:inline font-bold">Polygonscan</span>
           <ExternalLink className="h-3 w-3" />
         </a>
       )}

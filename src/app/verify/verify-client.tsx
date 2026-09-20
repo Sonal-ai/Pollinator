@@ -537,10 +537,16 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                   {batch.beekeeper?.name} ({batch.beekeeper?.region ?? batch.region}) · {batch.harvest_timestamp ? new Date(batch.harvest_timestamp).toLocaleDateString('en-IN') : 'Confirmed'}
                 </p>
                 {batch.txHash && (
-                  <p className="text-[10px] font-mono text-purple-300/80 flex items-center gap-1">
+                  <a
+                    href={`https://amoy.polygonscan.com/tx/${batch.txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] font-mono text-purple-300/90 hover:text-purple-200 hover:underline flex items-center gap-1 w-fit transition-colors"
+                  >
                     <span>⛓️ On-Chain Record:</span>
-                    <span className="text-slate-400">{batch.txHash.slice(0, 10)}...{batch.txHash.slice(-6)}</span>
-                  </p>
+                    <span className="text-slate-300 font-semibold">{batch.txHash.slice(0, 10)}...{batch.txHash.slice(-6)}</span>
+                    <ExternalLink className="w-2.5 h-2.5 text-purple-400" />
+                  </a>
                 )}
               </div>
             </div>
@@ -557,10 +563,16 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                     C4 sugar isotope ratio test passed. Certificate committed on-chain.
                   </p>
                   {batch.certificates?.[0]?.txHash && (
-                    <p className="text-[10px] font-mono text-purple-300/80 flex items-center gap-1">
+                    <a
+                      href={`https://amoy.polygonscan.com/tx/${batch.certificates[0].txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-mono text-purple-300/90 hover:text-purple-200 hover:underline flex items-center gap-1 w-fit transition-colors"
+                    >
                       <span>⛓️ On-Chain Record:</span>
-                      <span className="text-slate-400">{batch.certificates[0].txHash.slice(0, 10)}...{batch.certificates[0].txHash.slice(-6)}</span>
-                    </p>
+                      <span className="text-slate-300 font-semibold">{batch.certificates[0].txHash.slice(0, 10)}...{batch.certificates[0].txHash.slice(-6)}</span>
+                      <ExternalLink className="w-2.5 h-2.5 text-purple-400" />
+                    </a>
                   )}
                 </div>
               </div>
@@ -580,10 +592,16 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                     Logged on Polygon Amoy · {new Date(evt.createdAt).toLocaleDateString('en-IN')}
                   </p>
                   {evt.txHash && (
-                    <p className="text-[10px] font-mono text-purple-300/80 flex items-center gap-1">
+                    <a
+                      href={`https://amoy.polygonscan.com/tx/${evt.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-mono text-purple-300/90 hover:text-purple-200 hover:underline flex items-center gap-1 w-fit transition-colors"
+                    >
                       <span>⛓️ On-Chain Record:</span>
-                      <span className="text-slate-400">{evt.txHash.slice(0, 10)}...{evt.txHash.slice(-6)}</span>
-                    </p>
+                      <span className="text-slate-300 font-semibold">{evt.txHash.slice(0, 10)}...{evt.txHash.slice(-6)}</span>
+                      <ExternalLink className="w-2.5 h-2.5 text-purple-400" />
+                    </a>
                   )}
                 </div>
               </div>
