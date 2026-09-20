@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
-import { getBatchFromChain } from '@/lib/blockchain';
+import { getBatchFromChain, isLocalChain } from '@/lib/blockchain';
 import { verifyMetadataIntegrity } from '@/lib/ipfs';
 import { notFound } from 'next/navigation';
 import { 
@@ -31,6 +31,7 @@ export default async function BatchDetailPage({
   params: Promise<{ batchCode: string }>;
 }) {
   const { batchCode } = await params;
+  const isLocal = isLocalChain();
 
   const batch = await prisma.honeyBatch.findUnique({
     where: { batchCode },
@@ -166,14 +167,25 @@ export default async function BatchDetailPage({
           )}
 
           {batch.txHash && (
-            <a
-              href={`https://amoy.polygonscan.com/tx/${batch.txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-mono"
-            >
-              View on Polygonscan <ExternalLink className="w-3 h-3" />
-            </a>
+            isLocal ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span className="font-bold">Mined on Local Hive Node</span>
+                <span className="text-[10px] text-slate-400">({batch.txHash.slice(0, 10)}...)</span>
+              </div>
+            ) : (
+              <a
+                href={`https://amoy.polygonscan.com/tx/${batch.txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-mono"
+              >
+                View on Polygonscan <ExternalLink className="w-3 h-3" />
+              </a>
+            )
           )}
         </div>
       </div>
@@ -199,14 +211,21 @@ export default async function BatchDetailPage({
                   From: {evt.from.slice(0, 8)}... → To: {evt.to.slice(0, 8)}...
                 </p>
                 {evt.txHash && (
-                  <a
-                    href={`https://amoy.polygonscan.com/tx/${evt.txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] font-mono text-amber-400 hover:underline inline-flex items-center gap-1"
-                  >
-                    Tx: {evt.txHash.slice(0, 12)}... <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
+                  isLocal ? (
+                    <span className="text-[10px] font-mono text-emerald-400/80 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      Local Tx: {evt.txHash.slice(0, 12)}...
+                    </span>
+                  ) : (
+                    <a
+                      href={`https://amoy.polygonscan.com/tx/${evt.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-mono text-amber-400 hover:underline inline-flex items-center gap-1"
+                    >
+                      Tx: {evt.txHash.slice(0, 12)}... <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  )
                 )}
               </div>
             ))}
