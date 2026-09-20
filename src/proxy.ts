@@ -45,6 +45,17 @@ export async function proxy(request: NextRequest) {
     ?? request.headers.get('x-real-ip')
     ?? '127.0.0.1';
 
+  // ── Redirect authenticated users away from login page ──
+  if (pathname === '/dashboard/login') {
+    const sessionCookie = request.cookies.get('pollinator_session');
+    if (sessionCookie?.value) {
+      const session = await verifySessionToken(sessionCookie.value);
+      if (session) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+    }
+  }
+
   // ── Auth guard: protect all /dashboard/* except /dashboard/login ──
   if (pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/login')) {
     const sessionCookie = request.cookies.get('pollinator_session');

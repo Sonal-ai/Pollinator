@@ -59,8 +59,7 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        router.push('/dashboard');
-        router.refresh();
+        window.location.href = '/dashboard';
       } else {
         const data = await response.json() as { error?: string };
         setError(data.error ?? 'Authentication failed');
