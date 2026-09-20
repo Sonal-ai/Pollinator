@@ -11,7 +11,7 @@ export default function HomePage() {
   const networkName = getActiveNetworkName();
   const isLocal = isLocalChain();
   const explorerUrl = getExplorerAddressUrl(contractAddress);
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918882218036';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918882291014';
 
   return (
     <HomeView

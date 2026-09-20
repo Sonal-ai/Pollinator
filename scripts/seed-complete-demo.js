@@ -62,7 +62,7 @@ async function main() {
   await prisma.beekeeper.deleteMany({});
   await prisma.whatsAppUser.deleteMany({});
 
-  console.log('👤 Seeding Beekeeper Sonal (Phone: 8882218036)...');
+  console.log('👤 Seeding Beekeeper Sonal (Phones: 8882218036 & 8882291014)...');
   const sonalWallet = deriveWallet('8882218036');
   const sonal = await prisma.beekeeper.create({
     data: {
@@ -73,6 +73,19 @@ async function main() {
       practices: 'Apis cerana indica, 100% Organic Floral Nectar',
       kvicId: 'KVIC-MH-2026-888',
       wallet: sonalWallet,
+    },
+  });
+
+  // Seed alias for 8882291014 (Meta Business Bot / Active Demo Number)
+  await prisma.beekeeper.create({
+    data: {
+      phone: '8882291014',
+      name: 'Sonal',
+      region: 'Wardha, Maharashtra',
+      hivesCount: 15,
+      practices: 'Apis cerana indica, 100% Organic Floral Nectar',
+      kvicId: 'KVIC-MH-2026-888',
+      wallet: deriveWallet('8882291014'),
     },
   });
 

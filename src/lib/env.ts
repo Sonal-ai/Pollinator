@@ -46,6 +46,9 @@ const EnvSchema = z.object({
   // Public App URL (used for QR code generation)
   NEXT_PUBLIC_APP_URL: z.string().min(1).default('http://localhost:3000'),
 
+  // WhatsApp bot display number for public wa.me links
+  NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().optional(),
+
   // Optional: IoT device shared secret
   IOT_DEVICE_SECRET: z.string().optional(),
 

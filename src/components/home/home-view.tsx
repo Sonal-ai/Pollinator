@@ -62,7 +62,7 @@ export function HomeView({
   networkName,
   explorerUrl,
   isLocal,
-  whatsappNumber = '918882218036',
+  whatsappNumber = '918882291014',
 }: HomeViewProps) {
   const [sampleBatch, setSampleBatch] = useState('HC-2026-MH01-000123');
 
