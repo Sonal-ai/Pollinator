@@ -22,7 +22,7 @@ type OwnedBatch = {
 const ACTOR_PRESETS = [
   { label: '🚚 Transporter / Logistics (transporter@pollinator.com)', address: '0x0933DF252895D16c12d86601c4C45A4188Dc97ae', status: 'PROCESSED' },
   { label: '🧪 QA Testing Laboratory (lab@pollinator.com)', address: '0x6A00e9769e3a32D5708126DA98A30c01B6Cae948', status: 'PROCESSED' },
-  { label: '🏭 Processor / Production Facility (processor@pollinator.com)', address: '0x08c0Bcf80E05A5eB2771925409Aff4198496E60b', status: 'PACKAGED' },
+  { label: '🏭 Processor / Production Facility (processor@pollinator.com)', address: '0x08c0Bcf80E05A5eB2771925409Aff4198496E60b', status: 'LAB_VERIFIED' },
   { label: '🏪 Retail Shelf Store (retailer@pollinator.com)', address: '0x3Fc7ef2AC2B097d771B8adC406F469c204332061', status: 'AT_RETAIL' },
   { label: 'Custom Address / Manual Input', address: '', status: 'IN_DISTRIBUTION' },
 ];

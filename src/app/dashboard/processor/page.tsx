@@ -15,8 +15,26 @@ export default async function ProcessorPage() {
   const processableBatches = await prisma.honeyBatch.findMany({
     where: {
       recalled: false,
-      status: 'LAB_VERIFIED',
-      ...(isAdmin ? {} : { current_custodian: walletAddress }),
+      OR: [
+        { lab_verified: true },
+        { status: 'LAB_VERIFIED' },
+        { certificates: { some: {} } },
+      ],
+      qrTokens: { none: {} },
+      ...(isAdmin
+        ? {}
+        : walletAddress
+        ? {
+            AND: [
+              {
+                OR: [
+                  { current_custodian: walletAddress },
+                  { current_custodian: walletAddress.toLowerCase() },
+                ],
+              },
+            ],
+          }
+        : {}),
     },
     select: {
       batchCode: true,
