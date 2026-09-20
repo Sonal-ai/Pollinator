@@ -62,7 +62,7 @@ async function main() {
   await prisma.beekeeper.deleteMany({});
   await prisma.whatsAppUser.deleteMany({});
 
-  console.log('👤 Seeding Beekeeper Sonal (Phones: 8882218036 & 8882291014)...');
+  console.log('👤 Seeding Beekeeper Sonal (Phone: 8882218036)...');
   const sonalWallet = deriveWallet('8882218036');
   const sonal = await prisma.beekeeper.create({
     data: {
@@ -82,7 +82,6 @@ async function main() {
       { wa_id: '918882218036', language: 'en' },
       { wa_id: '8882218036', language: 'en' },
     ],
-    skipDuplicates: true,
   });
 
   console.log('🐝 Seeding Smart Hive ESP32-001 (Apiary 1 - Brood Hub)...');
@@ -184,7 +183,7 @@ async function main() {
       labActorId: labWallet,
       certificateHash: '0x8f2d119ec845a7bb9104c4b650a3d926a8f777f96422d790b0e36eb29b47a',
       ipfsCID: 'bafkreia5c7skwphyracbq5pwqsptsheleeact2r37bus4bgrq6rbi3ydoq',
-      txHash: '0x321ab0e36eb29b47a98210ddb6ed7cc7e460712345678901234567890123456',
+      txHash: '0x68b0d454c89364ea5727d191a0cbd1ad84cc45eed7f5c9df5b795e29b6108d55',
     },
   });
 
@@ -195,7 +194,7 @@ async function main() {
         from: sonalWallet,
         to: transporterWallet,
         stage: 'PROCESSED',
-        txHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
+        txHash: '0x73ea08b3c049f3067628cceb1e259b4676fc6874fe952223f30c2022aeb9eac0',
         createdAt: new Date(now - 86400000 * 2),
       },
       {
@@ -203,7 +202,7 @@ async function main() {
         from: transporterWallet,
         to: labWallet,
         stage: 'LAB_VERIFIED',
-        txHash: '0x2222222222222222222222222222222222222222222222222222222222222222',
+        txHash: '0xecc293d775ec366cbcb032b3858f54781e5aac41fb3c1f768baa5ddbe68afd2b',
         createdAt: new Date(now - 86400000 * 1.5),
       },
       {
@@ -211,7 +210,7 @@ async function main() {
         from: labWallet,
         to: processorWallet,
         stage: 'PACKAGED',
-        txHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+        txHash: '0x18f372154f084b090250f34b8c4d8482c4cc7911536289f77a9cdb7d7d6df8d8',
         createdAt: new Date(now - 86400000 * 1),
       },
     ],
@@ -369,7 +368,7 @@ async function main() {
       labActorId: labWallet,
       certificateHash: '0x8f2d119ec845a7bb9104c4b650a3d926a8f777f96422d790b0e36eb29b47a',
       ipfsCID: 'bafkreia5c7skwphyracbq5pwqsptsheleeact2r37bus4bgrq6rbi3ydoq',
-      txHash: '0x321ab0e36eb29b47a98210ddb6ed7cc7e460712345678901234567890123456',
+      txHash: '0x68b0d454c89364ea5727d191a0cbd1ad84cc45eed7f5c9df5b795e29b6108d55',
     },
   });
 
