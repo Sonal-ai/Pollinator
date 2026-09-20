@@ -19,7 +19,6 @@ export default async function IoTPage() {
         OR: [
           { wallet: session.walletAddress },
           { wallet: session.walletAddress.toLowerCase() },
-          { phone: '8882291014' },
           { phone: '8882218036' },
           { name: 'Sonal' },
         ],

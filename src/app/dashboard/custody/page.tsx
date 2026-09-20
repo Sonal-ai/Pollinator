@@ -22,7 +22,6 @@ export default async function CustodyPage() {
           OR: [
             ...(walletAddress ? [{ wallet: walletAddress }, { wallet: walletAddress.toLowerCase() }] : []),
             { phone: '8882218036' },
-            { phone: '8882291014' },
             { name: 'Sonal' },
           ],
         },

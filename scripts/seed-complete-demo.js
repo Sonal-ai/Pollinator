@@ -76,36 +76,20 @@ async function main() {
     },
   });
 
-  // Seed alias for 8882291014 (Meta Business Bot / Active Demo Number)
-  // Seed alias for 8882291014 (Meta Business Bot / Active Demo Number)
-  const sonal2 = await prisma.beekeeper.create({
-    data: {
-      phone: '8882291014',
-      name: 'Sonal',
-      region: 'Wardha, Maharashtra',
-      hivesCount: 15,
-      practices: 'Apis cerana indica, 100% Organic Floral Nectar',
-      kvicId: 'KVIC-MH-2026-888',
-      wallet: sonalWallet,
-    },
-  });
-
-  // Ensure WhatsApp users are registered
+  // Ensure WhatsApp users are registered (Farmer Sonal texting the bot)
   await prisma.whatsAppUser.createMany({
     data: [
-      { wa_id: '918882291014', language: 'en' },
-      { wa_id: '8882291014', language: 'en' },
       { wa_id: '918882218036', language: 'en' },
       { wa_id: '8882218036', language: 'en' },
     ],
     skipDuplicates: true,
   });
 
-  console.log('🐝 Seeding Smart Hive ESP32-001 (WhatsApp Bot Beekeeper 8882291014)...');
+  console.log('🐝 Seeding Smart Hive ESP32-001 (Apiary 1 - Brood Hub)...');
   const hive = await prisma.hive.create({
     data: {
       deviceId: 'ESP32-001',
-      beekeeperId: sonal2.id,
+      beekeeperId: sonal.id,
       region: 'Wardha, Maharashtra (Apiary 1 - Brood Hub)',
       latitude: 20.7453,
       longitude: 78.6022,

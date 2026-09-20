@@ -308,7 +308,7 @@ async function route(
   const buttonId = getButtonId(message);
   const normalizedText = text.trim().toLowerCase();
 
-  // Check if beekeeper is already registered in DB (flexible phone match for 8882218036, 8882291014, +91...)
+  // Check if beekeeper is already registered in DB (flexible phone match for 8882218036, +91...)
   const cleanWaId = waId.replace(/[\s-]/g, '');
   const digitsOnly = cleanWaId.replace(/[^0-9]/g, '');
   const last10 = digitsOnly.slice(-10);
@@ -321,7 +321,6 @@ async function route(
         { phone: `+91${last10}` },
         { phone: `91${last10}` },
         { phone: '8882218036' },
-        { phone: '8882291014' },
       ],
     },
   });
@@ -752,7 +751,6 @@ async function handleHiveStatus(
         { phone: last10 },
         { phone: `+91${last10}` },
         { phone: `91${last10}` },
-        { phone: '8882291014' },
         { phone: '8882218036' },
         { name: 'Sonal' },
       ],

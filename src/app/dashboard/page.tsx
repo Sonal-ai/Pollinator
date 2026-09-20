@@ -61,7 +61,6 @@ export default async function DashboardPage({
             { wallet: walletAddress.toLowerCase() },
           ] : []),
           { phone: '8882218036' },
-          { phone: '8882291014' },
           { name: 'Sonal' },
         ],
       },
