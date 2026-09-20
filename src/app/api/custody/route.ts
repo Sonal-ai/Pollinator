@@ -98,7 +98,9 @@ export async function POST(request: NextRequest) {
   }
 
   const fromAddress = batch.current_custodian ?? 'unknown';
-  const statusIndex = BATCH_STATUS_MAP[newStatus] ?? 1;
+  const requestedStatusIndex = BATCH_STATUS_MAP[newStatus] ?? 1;
+  const currentStatusIndex = BATCH_STATUS_MAP[batch.status] ?? 1;
+  const statusIndex = Math.max(requestedStatusIndex, currentStatusIndex);
 
   // Commit on-chain
   let txHash: string | null = null;

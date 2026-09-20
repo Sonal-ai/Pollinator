@@ -45,6 +45,7 @@ interface VerifyClientProps {
       id: string;
       certificateHash: string;
       ipfsCID: string;
+      txHash?: string | null;
       createdAt: Date;
     }>;
     custodyEvents?: Array<{
@@ -535,6 +536,12 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                 <p className="text-xs text-slate-400">
                   {batch.beekeeper?.name} ({batch.beekeeper?.region ?? batch.region}) · {batch.harvest_timestamp ? new Date(batch.harvest_timestamp).toLocaleDateString('en-IN') : 'Confirmed'}
                 </p>
+                {batch.txHash && (
+                  <p className="text-[10px] font-mono text-purple-300/80 flex items-center gap-1">
+                    <span>⛓️ On-Chain Record:</span>
+                    <span className="text-slate-400">{batch.txHash.slice(0, 10)}...{batch.txHash.slice(-6)}</span>
+                  </p>
+                )}
               </div>
             </div>
 
@@ -549,6 +556,12 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                   <p className="text-xs text-slate-400">
                     C4 sugar isotope ratio test passed. Certificate committed on-chain.
                   </p>
+                  {batch.certificates?.[0]?.txHash && (
+                    <p className="text-[10px] font-mono text-purple-300/80 flex items-center gap-1">
+                      <span>⛓️ On-Chain Record:</span>
+                      <span className="text-slate-400">{batch.certificates[0].txHash.slice(0, 10)}...{batch.certificates[0].txHash.slice(-6)}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             )}
