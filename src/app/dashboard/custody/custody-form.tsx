@@ -114,6 +114,29 @@ export function CustodyTransferForm({ myBatches }: { myBatches: OwnedBatch[] }) 
           </select>
         </div>
 
+        {(() => {
+          const selectedBatch = myBatches.find((b) => b.id === batchId);
+          if (!selectedBatch) return null;
+          return (
+            <div className="p-3.5 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-between text-xs">
+              <div className="space-y-0.5">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-amber-400/80">
+                  Physical Custody Handover Weight
+                </span>
+                <p className="font-mono text-sm font-extrabold text-amber-300">
+                  ⚖️ {(selectedBatch.quantity_grams / 1000).toFixed(1)} kg Honey
+                </p>
+              </div>
+              <div className="text-right space-y-0.5">
+                <span className="text-[10px] uppercase font-mono text-slate-400">Integrity Check</span>
+                <p className="text-[11px] font-bold text-emerald-400 flex items-center gap-1 justify-end">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Immutable Lock
+                </p>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Next Recipient Actor Selection */}
         <div>
           <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { ShieldCheck, AlertTriangle, Layers, QrCode, ArrowRight, Filter, Search } from 'lucide-react';
+import { NewHarvestModal } from './batch/new-harvest-modal';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,7 @@ export default async function DashboardPage({
     where.beekeeper = { wallet: walletAddress };
   }
 
-  const [batches, total, verifiedCount, alertCount] = await Promise.all([
+  const [batches, total, verifiedCount, alertCount, beekeepersRaw] = await Promise.all([
     prisma.honeyBatch.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -54,7 +55,17 @@ export default async function DashboardPage({
     prisma.honeyBatch.count({ where }),
     prisma.honeyBatch.count({ where: { lab_verified: true } }),
     prisma.scanAlert.count({ where: { resolved: false } }),
+    prisma.beekeeper.findMany({
+      select: { id: true, name: true, region: true },
+      orderBy: { createdAt: 'desc' },
+    }),
   ]);
+
+  const beekeepers = beekeepersRaw.map((b) => ({
+    id: b.id,
+    name: b.name ?? 'Beekeeper',
+    region: b.region ?? 'Wardha, Maharashtra',
+  }));
 
   const pages = Math.ceil(total / limit);
 
@@ -71,8 +82,12 @@ export default async function DashboardPage({
           </p>
         </div>
 
-        {/* Filter Badges */}
+        {/* Actions & Filter Badges */}
         <div className="flex items-center gap-2 flex-wrap">
+          <NewHarvestModal beekeepers={beekeepers} />
+
+          <div className="h-4 w-px bg-white/10 hidden sm:block" />
+
           <Link
             href="/dashboard"
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
