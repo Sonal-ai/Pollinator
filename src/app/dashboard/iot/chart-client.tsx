@@ -22,7 +22,8 @@ interface ApiResponse {
 export function IotChartClient({ hiveId }: { hiveId: string }) {
   const [data, setData] = useState<Reading[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<'24h' | '7d' | '30d'>('7d');
+  const [period, setPeriod] = useState<'24h' | '7d' | '30d'>('24h');
+  const [showTooltip, setShowTooltip] = useState(true);
   const [summary, setSummary] = useState<ApiResponse['summary'] | null>(null);
 
   useEffect(() => {
@@ -37,31 +38,55 @@ export function IotChartClient({ hiveId }: { hiveId: string }) {
       .finally(() => setLoading(false));
   }, [hiveId, period]);
 
-  const chartData = data.map((r) => ({
-    time: new Date(r.timestamp).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
-    'Temp °C': r.tempC,
-    'Humidity %': r.humidityPct,
-    'Weight kg': r.weightKg,
-  }));
+  const chartData = data.map((r) => {
+    const d = new Date(r.timestamp);
+    const timeLabel =
+      period === '24h'
+        ? d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+        : `${d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+
+    return {
+      time: timeLabel,
+      'Temp °C': r.tempC !== null ? Number(r.tempC.toFixed(1)) : null,
+      'Humidity %': r.humidityPct !== null ? Number(r.humidityPct.toFixed(1)) : null,
+      'Weight kg': r.weightKg !== null ? Number(r.weightKg.toFixed(2)) : null,
+    };
+  });
 
   return (
     <div className="space-y-3">
-      {/* Period Selector */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-1.5 p-1 rounded-xl bg-black/50 border border-white/5">
-          {(['24h', '7d', '30d'] as const).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`text-[11px] font-mono font-bold px-3 py-1 rounded-lg transition-all ${
-                period === p
-                  ? 'bg-yellow-400 text-black shadow-md shadow-yellow-500/20'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {p.toUpperCase()}
-            </button>
-          ))}
+      {/* Period Selector & Controls */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5 p-1 rounded-xl bg-black/50 border border-white/5">
+            {(['24h', '7d', '30d'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`text-[11px] font-mono font-bold px-3 py-1 rounded-lg transition-all ${
+                  period === p
+                    ? 'bg-yellow-400 text-black shadow-md shadow-yellow-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {p.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          {/* Toggle to easily show or remove floating hover card */}
+          <button
+            type="button"
+            onClick={() => setShowTooltip(!showTooltip)}
+            className={`text-[10px] font-mono font-bold px-2.5 py-1.5 rounded-xl border transition-all ${
+              showTooltip
+                ? 'bg-amber-400/10 text-amber-300 border-amber-400/30'
+                : 'bg-white/5 text-slate-400 border-white/10 hover:text-white'
+            }`}
+            title="Toggle floating hover board"
+          >
+            {showTooltip ? '📊 Tooltip: ON' : '🚫 Tooltip: OFF'}
+          </button>
         </div>
 
         {summary && (
@@ -89,6 +114,11 @@ export function IotChartClient({ hiveId }: { hiveId: string }) {
                   Avg Temp: {summary.avgTempC.toFixed(1)}°C
                 </span>
               )}
+              {summary.avgHumidityPct !== null && (
+                <span className="bg-sky-400/10 text-sky-300 border border-sky-400/20 px-2 py-0.5 rounded-md font-bold">
+                  Avg Humidity: {summary.avgHumidityPct.toFixed(1)}%
+                </span>
+              )}
               {summary.weightGainKg !== null && (
                 <span
                   className={`px-2 py-0.5 rounded-md font-bold border ${
@@ -110,16 +140,28 @@ export function IotChartClient({ hiveId }: { hiveId: string }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1c2233" />
                 <XAxis dataKey="time" tick={{ fontSize: 9, fill: '#64748b' }} stroke="#334155" />
                 <YAxis tick={{ fontSize: 9, fill: '#64748b' }} stroke="#334155" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0c0e14',
-                    borderColor: 'rgba(255, 210, 30, 0.3)',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    color: '#fff',
-                    fontFamily: 'monospace',
-                  }}
-                />
+                {showTooltip && (
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      return (
+                        <div className="rounded-xl border border-yellow-400/30 bg-[#0d1017]/95 backdrop-blur-md p-2.5 text-xs font-mono shadow-2xl space-y-1 min-w-[140px]">
+                          <p className="text-[10px] text-slate-400 font-bold border-b border-white/10 pb-1">
+                            ⏰ {label}
+                          </p>
+                          <div className="space-y-0.5 pt-0.5 text-[11px]">
+                            {payload.map((entry: any, index: number) => (
+                              <div key={index} className="flex items-center justify-between gap-3" style={{ color: entry.color }}>
+                                <span className="text-[10px] text-slate-400">{entry.name}:</span>
+                                <span className="font-extrabold">{entry.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
+                )}
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: '6px' }} />
                 <Line
                   type="monotone"

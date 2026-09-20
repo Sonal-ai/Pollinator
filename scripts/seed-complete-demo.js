@@ -100,36 +100,34 @@ async function main() {
     },
   });
 
-  // Seed recent sensor telemetry readings
+  // Seed realistic 24-hour progression of telemetry readings
   const now = Date.now();
-  await prisma.sensorReading.createMany({
-    data: [
-      {
-        hiveId: hive.id,
-        tempC: 34.9,
-        humidityPct: 56.5,
-        weightKg: 47.8,
-        batteryPct: 96,
-        timestamp: new Date(now - 120000), // 2 mins ago
-      },
-      {
-        hiveId: hive.id,
-        tempC: 35.1,
-        humidityPct: 57.0,
-        weightKg: 48.2,
-        batteryPct: 95,
-        timestamp: new Date(now - 60000), // 1 min ago
-      },
-      {
-        hiveId: hive.id,
-        tempC: 35.0,
-        humidityPct: 56.8,
-        weightKg: 48.5,
-        batteryPct: 95,
-        timestamp: new Date(now), // Just now
-      },
-    ],
-  });
+  const telemetryReadings = [];
+  let currentWeight = 46.4;
+  for (let i = 24; i >= 0; i--) {
+    const pointTime = new Date(now - i * 60 * 60 * 1000);
+    const hour = pointTime.getHours();
+    // Daily biological thermal curve (~34.6°C to 35.3°C)
+    const tempOffset = Math.sin((hour - 8) * (Math.PI / 12)) * 0.4;
+    const tempC = Number((35.0 + tempOffset + (Math.random() * 0.16 - 0.08)).toFixed(1));
+    const humidityPct = Number((57.5 - tempOffset * 4 + (Math.random() * 1.5 - 0.75)).toFixed(1));
+    // Steady daytime nectar flow (+0.08 kg/hr from 8 AM to 6 PM)
+    if (hour >= 8 && hour <= 18) {
+      currentWeight += 0.08 + (Math.random() * 0.03 - 0.015);
+    }
+    const weightKg = Number(currentWeight.toFixed(2));
+    const batteryPct = Math.round(92 + (hour >= 9 && hour <= 16 ? 5 : 0));
+
+    telemetryReadings.push({
+      hiveId: hive.id,
+      tempC,
+      humidityPct,
+      weightKg,
+      batteryPct,
+      timestamp: pointTime,
+    });
+  }
+  await prisma.sensorReading.createMany({ data: telemetryReadings });
 
   // Supply Chain Actor Wallets
   const transporterWallet = deriveWallet('distributor@pollinator.com');
