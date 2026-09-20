@@ -80,7 +80,13 @@ export async function POST(request: NextRequest) {
         ],
       },
     });
-    if (beekeeper && (batch.beekeeperId === beekeeper.id || batch.current_custodian === beekeeper.wallet || !batch.current_custodian)) {
+
+    const isCurrentHolder = 
+      (batch.current_custodian && beekeeper?.wallet && batch.current_custodian.toLowerCase() === beekeeper.wallet.toLowerCase()) ||
+      (session.walletAddress && batch.current_custodian && session.walletAddress.toLowerCase() === batch.current_custodian.toLowerCase()) ||
+      (!batch.current_custodian && (batch.status === 'HARVESTED' || batch.status === 'PENDING_CHAIN'));
+
+    if (beekeeper && isCurrentHolder && ['HARVESTED', 'PENDING_CHAIN'].includes(batch.status)) {
       isAuthorizedBeekeeper = true;
     }
   }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Truck, ArrowRight, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 
 const STATUS_OPTIONS = [
@@ -77,12 +78,20 @@ export function CustodyTransferForm({ myBatches }: { myBatches: OwnedBatch[] }) 
 
   if (myBatches.length === 0) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-[#0d1017]/80 backdrop-blur-2xl p-12 text-center text-slate-400 space-y-3 shadow-xl">
+      <div className="rounded-3xl border border-white/10 bg-[#0d1017]/80 backdrop-blur-2xl p-12 text-center text-slate-400 space-y-4 shadow-xl">
         <Truck className="w-12 h-12 text-slate-600 mx-auto" />
         <h3 className="text-base font-bold text-white">No Batches in Custody</h3>
         <p className="text-xs text-slate-500 max-w-sm mx-auto">
-          You do not currently hold custody of any honey batches requiring transfer.
+          All your harvested batches have been transferred, or you do not currently hold custody of any honey batches.
         </p>
+        <div className="pt-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-black text-xs font-extrabold hover:from-yellow-300 hover:to-amber-400 transition-all shadow-md shadow-yellow-500/20"
+          >
+            🌾 Log New Harvest in Batch Registry
+          </Link>
+        </div>
       </div>
     );
   }
