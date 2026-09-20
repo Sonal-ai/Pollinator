@@ -85,7 +85,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
         lab_verified: true,
         recalled: false,
         txHash: '0x18f372154f084b090250f34b8c4d8482c4cc7911536289f77a9cdb7d7d6df8d8',
-        metadataCID: 'QmZ4tDuPp599Zghq43a41zH2X8cK9xP145yW5N7tQ',
+        metadataCID: 'bafkreihfsinsxmxudhtd7bdsifdohpn7pgi6us7rwu4l72yx4wot4hf24m',
         metadataHash: '0xabc123789fedcba4567890123456789012345678901234567890123456789012',
         beekeeper: {
           name: 'Sunil Patil (KVIC Wardha Cluster CL-01)',
@@ -96,7 +96,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
           {
             id: 'cert-1',
             certificateHash: '0x8f2d119ec845a7bb9104c4b650a3d926a8f777f96422d790b0e36eb29b47a',
-            ipfsCID: 'QmZ4tDuPp599Zghq43a41zH2X8cK9xP145yW5N7tQ',
+            ipfsCID: 'bafkreia5c7skwphyracbq5pwqsptsheleeact2r37bus4bgrq6rbi3ydoq',
             createdAt: new Date('2026-09-08'),
           },
         ],

@@ -115,6 +115,7 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
   const polygonJourneyUrl = isAmoyTxValid
     ? `https://amoy.polygonscan.com/tx/${batch.txHash}`
     : amoyContractUrl;
+  const ipfsGateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://tomato-odd-cuckoo-671.mypinata.cloud/ipfs/';
 
   // Dynamically resolve scanner's actual location and sync with server for Impossible Travel velocity check
   useEffect(() => {
@@ -494,7 +495,7 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
 
             {batch.certificates && batch.certificates.length > 0 && (
               <a
-                href={`https://gateway.pinata.cloud/ipfs/${batch.certificates[0].ipfsCID}`}
+                href={`${ipfsGateway}${batch.certificates[0].ipfsCID}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2 rounded-full bg-yellow-400/10 hover:bg-yellow-400/20 border border-yellow-400/30 text-xs font-bold text-yellow-300 flex items-center gap-1.5 transition-colors"
@@ -682,7 +683,7 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-slate-300 font-mono text-[11px]">{batch.metadataCID}</span>
                 <a
-                  href={`https://gateway.pinata.cloud/ipfs/${batch.metadataCID}`}
+                  href={`${ipfsGateway}${batch.metadataCID}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1 rounded hover:bg-white/10 text-yellow-400 hover:text-yellow-300 shrink-0"
