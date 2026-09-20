@@ -38,15 +38,23 @@ export function IotChartClient({ hiveId }: { hiveId: string }) {
       .finally(() => setLoading(false));
   }, [hiveId, period]);
 
-  const chartData = data.map((r) => {
+  const chartData = data.map((r, idx) => {
     const d = new Date(r.timestamp);
-    const timeLabel =
-      period === '24h'
-        ? d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
-        : `${d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
+    const timeFormatted = d.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    const dateFormatted = d.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+    });
 
     return {
-      time: timeLabel,
+      key: `${r.timestamp}_${idx}`,
+      time: timeFormatted,
+      fullLabel: `${dateFormatted} ${timeFormatted}`,
       'Temp °C': r.tempC !== null ? Number(r.tempC.toFixed(1)) : null,
       'Humidity %': r.humidityPct !== null ? Number(r.humidityPct.toFixed(1)) : null,
       'Weight kg': r.weightKg !== null ? Number(r.weightKg.toFixed(2)) : null,
@@ -80,12 +88,12 @@ export function IotChartClient({ hiveId }: { hiveId: string }) {
             onClick={() => setShowTooltip(!showTooltip)}
             className={`text-[10px] font-mono font-bold px-2.5 py-1.5 rounded-xl border transition-all ${
               showTooltip
-                ? 'bg-amber-400/10 text-amber-300 border-amber-400/30'
-                : 'bg-white/5 text-slate-400 border-white/10 hover:text-white'
+                ? 'bg-amber-400/20 text-amber-300 border-amber-400/40 hover:bg-amber-400/30'
+                : 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30'
             }`}
-            title="Toggle floating hover board"
+            title="Toggle floating board on or off"
           >
-            {showTooltip ? '📊 Tooltip: ON' : '🚫 Tooltip: OFF'}
+            {showTooltip ? 'Floating Board: ON' : 'Floating Board: HIDDEN'}
           </button>
         </div>
 
@@ -138,16 +146,28 @@ export function IotChartClient({ hiveId }: { hiveId: string }) {
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={chartData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1c2233" />
-                <XAxis dataKey="time" tick={{ fontSize: 9, fill: '#64748b' }} stroke="#334155" />
+                <XAxis
+                  dataKey="key"
+                  tickFormatter={(val) => {
+                    const item = chartData.find((d) => d.key === val);
+                    return item ? item.time : '';
+                  }}
+                  tick={{ fontSize: 9, fill: '#64748b' }}
+                  stroke="#334155"
+                  interval="preserveStartEnd"
+                  minTickGap={25}
+                />
                 <YAxis tick={{ fontSize: 9, fill: '#64748b' }} stroke="#334155" />
                 {showTooltip && (
                   <Tooltip
-                    content={({ active, payload, label }) => {
+                    content={({ active, payload }) => {
                       if (!active || !payload || !payload.length) return null;
+                      const item = payload[0]?.payload;
+                      if (!item) return null;
                       return (
-                        <div className="rounded-xl border border-yellow-400/30 bg-[#0d1017]/95 backdrop-blur-md p-2.5 text-xs font-mono shadow-2xl space-y-1 min-w-[140px]">
-                          <p className="text-[10px] text-slate-400 font-bold border-b border-white/10 pb-1">
-                            ⏰ {label}
+                        <div className="rounded-xl border border-yellow-400/40 bg-[#0d1017]/95 backdrop-blur-md p-2.5 text-xs font-mono shadow-2xl space-y-1.5 min-w-[150px]">
+                          <p className="text-[10px] text-yellow-300 font-bold border-b border-white/10 pb-1 flex items-center justify-between">
+                            <span>⏰ {item.fullLabel}</span>
                           </p>
                           <div className="space-y-0.5 pt-0.5 text-[11px]">
                             {payload.map((entry: any, index: number) => (
