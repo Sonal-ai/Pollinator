@@ -8,6 +8,7 @@ import { headers } from 'next/headers';
 import QRCode from 'qrcode';
 import { VerifyClient } from './verify-client';
 import { ShieldAlert, AlertTriangle, QrCode, ArrowLeft } from 'lucide-react';
+import type { AnomalyReport } from '@/lib/anti-clone';
 
 export const dynamic = 'force-dynamic';
 
@@ -222,6 +223,38 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
     } : null,
   } : null;
 
+  // Check for any active unresolved scan alerts (e.g. impossible travel / cloned QR)
+  let initialAnomaly: AnomalyReport | null = null;
+  if (tokenData) {
+    const alert = await prisma.scanAlert.findFirst({
+      where: {
+        qrTokenId: tokenData.id,
+        resolved: false,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (alert) {
+      try {
+        const details = JSON.parse(alert.details);
+        initialAnomaly = {
+          isAnomaly: true,
+          type: (alert.alertType as AnomalyReport['type']) || 'IMPOSSIBLE_TRAVEL',
+          severity: 'CRITICAL',
+          title: details.title || '🚨 IMPOSSIBLE TRAVEL · CLONED QR DETECTED',
+          message: details.message || details.note || 'This jar QR was scanned from two geographically impossible locations.',
+          distanceKm: details.distanceKm,
+          timeDeltaMinutes: details.timeDeltaMinutes,
+          speedKmh: details.speedKmh,
+          prevScanLocation: details.prevScanLocation || details.regions?.[0],
+          currentScanLocation: details.currentScanLocation || details.regions?.[1],
+          prevTimestamp: details.prevTimestamp,
+          currentTimestamp: details.currentTimestamp,
+        };
+      } catch {}
+    }
+  }
+
   // Generate scannable QR code data URL for this exact verification link
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const qrTargetUrl = nonce && signature
@@ -276,6 +309,7 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
         integrity={integrity}
         scanInfo={scanInfo}
         qrCodeDataUrl={qrCodeDataUrl}
+        initialAnomaly={initialAnomaly}
       />
     </div>
   );

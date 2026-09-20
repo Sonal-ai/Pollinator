@@ -22,6 +22,7 @@ import {
   Hexagon
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { AnomalyReport } from '@/lib/anti-clone';
 
 interface VerifyClientProps {
   batch: {
@@ -85,6 +86,7 @@ interface VerifyClientProps {
     } | null;
   } | null;
   qrCodeDataUrl?: string | null;
+  initialAnomaly?: AnomalyReport | null;
 }
 
 const BATCH_STATUS_LABELS: Record<number, string> = {
@@ -98,10 +100,11 @@ function isValidTxHash(hash: string | null | undefined): boolean {
   return !!hash && /^0x[a-fA-F0-9]{64}$/.test(hash);
 }
 
-export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeDataUrl }: VerifyClientProps) {
+export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeDataUrl, initialAnomaly }: VerifyClientProps) {
   const [activeTab, setActiveTab] = useState<'certificate' | 'journey' | 'crypto'>('certificate');
   const [copiedTx, setCopiedTx] = useState(false);
   const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
+  const [anomalyAlert, setAnomalyAlert] = useState<AnomalyReport | null>(initialAnomaly || null);
 
   const isRecalled = batch.recalled || chainData?.recalled;
   const isIntegrityFailed = integrity && !integrity.valid && !integrity.networkError;
@@ -112,7 +115,7 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
     ? `https://amoy.polygonscan.com/tx/${batch.txHash}`
     : amoyContractUrl;
 
-  // Dynamically resolve scanner's actual location (handles localhost/loopback gracefully)
+  // Dynamically resolve scanner's actual location and sync with server for Impossible Travel velocity check
   useEffect(() => {
     // 1. If server recorded a real location from external IP
     const serverParts = [
@@ -123,10 +126,9 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
 
     if (serverParts.length > 0) {
       setDetectedLocation(serverParts.join(', '));
-      return;
     }
 
-    // 2. Otherwise (localhost 127.0.0.1 or local Wi-Fi), query client's public IP geolocation
+    // 2. Query client's public IP geolocation
     let isMounted = true;
     fetch('https://ipwho.is/')
       .then((r) => r.json())
@@ -134,6 +136,29 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
         if (isMounted && data && data.success) {
           const loc = [data.city, data.region, data.country].filter(Boolean).join(', ');
           if (loc) setDetectedLocation(loc);
+
+          // Synchronize with server to evaluate impossible travel velocity
+          if (scanInfo?.nonce) {
+            fetch('/api/qr/sync-geo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                nonce: scanInfo.nonce,
+                city: data.city,
+                region: data.region,
+                country: data.country,
+                latitude: data.latitude,
+                longitude: data.longitude,
+              }),
+            })
+              .then((res) => res.json())
+              .then((resData) => {
+                if (isMounted && resData && resData.hasAnomaly) {
+                  setAnomalyAlert(resData.anomalyReport);
+                }
+              })
+              .catch(() => {});
+          }
         }
       })
       .catch(() => {
@@ -144,11 +169,31 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
             if (isMounted && data && (data.city || data.region)) {
               const loc = [data.city, data.region, data.country_name].filter(Boolean).join(', ');
               if (loc) setDetectedLocation(loc);
+
+              if (scanInfo?.nonce) {
+                fetch('/api/qr/sync-geo', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    nonce: scanInfo.nonce,
+                    city: data.city,
+                    region: data.region,
+                    country: data.country_name,
+                    latitude: data.latitude,
+                    longitude: data.longitude,
+                  }),
+                })
+                  .then((res) => res.json())
+                  .then((resData) => {
+                    if (isMounted && resData && resData.hasAnomaly) {
+                      setAnomalyAlert(resData.anomalyReport);
+                    }
+                  })
+                  .catch(() => {});
+              }
             }
           })
-          .catch(() => {
-            // Fallback default
-          });
+          .catch(() => {});
       });
 
     return () => {
@@ -176,6 +221,11 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
             <ShieldAlert className="w-5 h-5 animate-pulse" />
             DO NOT CONSUME · HIVE BATCH RECALLED
           </div>
+        ) : anomalyAlert?.isAnomaly ? (
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border-2 border-red-500 text-red-300 text-xs sm:text-sm font-black shadow-lg shadow-red-500/30 animate-pulse">
+            <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
+            <span>SUSPECTED CLONE · IMPOSSIBLE PHYSICAL TRAVEL DETECTED</span>
+          </div>
         ) : isIntegrityFailed ? (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-xs sm:text-sm font-bold">
             <AlertTriangle className="w-5 h-5" />
@@ -202,6 +252,60 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
         <p className="text-xs sm:text-sm text-slate-400">
           Batch <span className="font-mono text-yellow-400 font-bold">{batch.batchCode}</span> · KVIC Honey Mission Protocol
         </p>
+
+        {/* Impossible Travel / Clone Fraud Warning Banner */}
+        {anomalyAlert?.isAnomaly && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-red-950/90 via-[#26090c] to-red-950/90 border-2 border-red-500 shadow-2xl shadow-red-950/60 text-left space-y-3.5"
+          >
+            <div className="flex items-center justify-between border-b border-red-500/30 pb-2.5">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-red-400 animate-pulse shrink-0" />
+                <span className="text-xs font-black text-red-200 tracking-wider uppercase font-mono">
+                  Anti-Counterfeit Protection: Impossible Travel
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] font-mono font-bold">
+                CLONED QR DETECTED
+              </span>
+            </div>
+
+            <p className="text-xs text-red-200/90 leading-relaxed font-sans">
+              ⚠️ <strong>Physical Teleportation Anomaly:</strong> This unique serialized jar QR was scanned from two physically distant locations in an impossible timeframe.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs font-mono bg-black/60 p-3 rounded-2xl border border-red-500/20">
+              <div className="space-y-0.5">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">📍 Prior Scan Node</span>
+                <p className="text-white font-bold truncate">{anomalyAlert.prevScanLocation || 'Delhi, India'}</p>
+                <p className="text-[10px] text-slate-400">
+                  {anomalyAlert.prevTimestamp ? new Date(anomalyAlert.prevTimestamp).toLocaleTimeString() : 'Earlier'}
+                </p>
+              </div>
+
+              <div className="space-y-0.5">
+                <span className="text-red-400 block text-[10px] uppercase font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
+                  <span>🚩 Conflicting Current Node</span>
+                </span>
+                <p className="text-red-300 font-bold truncate">{anomalyAlert.currentScanLocation || detectedLocation || 'Melbourne, Australia'}</p>
+                <p className="text-[10px] text-red-400/80">Just now</p>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-mono text-red-200/90 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-[11px]">Distance: <strong>~{anomalyAlert.distanceKm?.toLocaleString() ?? '10,200'} km</strong></span>
+              <span className="text-[11px]">Time Gap: <strong>{anomalyAlert.timeDeltaMinutes ?? '< 5'} min</strong></span>
+              <span className="text-[11px] text-red-400 font-bold">Velocity: Physically Impossible</span>
+            </div>
+
+            <p className="text-[11px] text-red-300/80 leading-relaxed font-sans">
+              💡 <strong>Consumer Safety Verdict:</strong> A single genuine jar cannot exist in two continents simultaneously. This QR code signature has been duplicated onto counterfeit packaging. <strong>Do not purchase or consume.</strong>
+            </p>
+          </motion.div>
+        )}
 
         {/* Live Physical Jar & Scannable QR Code Banner */}
         <div className="mt-4 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 border border-yellow-400/30 text-left space-y-4 shadow-xl">
@@ -245,11 +349,14 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase flex items-center gap-1">
                     <span>Scan Node</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className={`w-1.5 h-1.5 rounded-full ${anomalyAlert?.isAnomaly ? 'bg-red-400 animate-ping' : 'bg-emerald-400 animate-pulse'}`} />
                   </span>
-                  <span className="text-white font-bold flex items-center gap-1 truncate" title={detectedLocation || 'Detecting live node...'}>
-                    <MapPin className="w-3 h-3 text-yellow-400 shrink-0" />
-                    <span className="truncate">{detectedLocation || scanInfo?.latestScan?.ipRegion || scanInfo?.latestScan?.ipCity || 'Resolving Node...'}</span>
+                  <span className={`font-bold flex items-center gap-1 truncate ${anomalyAlert?.isAnomaly ? 'text-red-300' : 'text-white'}`} title={detectedLocation || 'Detecting live node...'}>
+                    <MapPin className={`w-3 h-3 shrink-0 ${anomalyAlert?.isAnomaly ? 'text-red-400' : 'text-yellow-400'}`} />
+                    <span className="truncate">
+                      {detectedLocation || scanInfo?.latestScan?.ipRegion || scanInfo?.latestScan?.ipCity || 'Resolving Node...'}
+                      {anomalyAlert?.isAnomaly ? ' ⚠️ (Cloned)' : ''}
+                    </span>
                   </span>
                 </div>
                 <div>
