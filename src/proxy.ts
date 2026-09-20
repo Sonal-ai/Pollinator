@@ -39,11 +39,22 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
+function getBaseUrl(request: NextRequest): URL {
+  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || (request.url.startsWith('https') ? 'https' : 'http');
+  if (forwardedHost) {
+    return new URL(`${forwardedProto}://${forwardedHost}`);
+  }
+  return new URL(request.url);
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
     ?? request.headers.get('x-real-ip')
     ?? '127.0.0.1';
+
+  const baseUrl = getBaseUrl(request);
 
   // ── Redirect authenticated users away from login page ──
   if (pathname === '/dashboard/login') {
@@ -51,7 +62,7 @@ export async function proxy(request: NextRequest) {
     if (sessionCookie?.value) {
       const session = await verifySessionToken(sessionCookie.value);
       if (session) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL('/dashboard', baseUrl));
       }
     }
   }
@@ -60,11 +71,11 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/login')) {
     const sessionCookie = request.cookies.get('pollinator_session');
     if (!sessionCookie?.value) {
-      return NextResponse.redirect(new URL('/dashboard/login', request.url));
+      return NextResponse.redirect(new URL('/dashboard/login', baseUrl));
     }
     const session = await verifySessionToken(sessionCookie.value);
     if (!session) {
-      const response = NextResponse.redirect(new URL('/dashboard/login', request.url));
+      const response = NextResponse.redirect(new URL('/dashboard/login', baseUrl));
       response.cookies.delete('pollinator_session');
       return response;
     }
