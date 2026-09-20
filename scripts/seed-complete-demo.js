@@ -77,7 +77,8 @@ async function main() {
   });
 
   // Seed alias for 8882291014 (Meta Business Bot / Active Demo Number)
-  await prisma.beekeeper.create({
+  // Seed alias for 8882291014 (Meta Business Bot / Active Demo Number)
+  const sonal2 = await prisma.beekeeper.create({
     data: {
       phone: '8882291014',
       name: 'Sonal',
@@ -89,14 +90,36 @@ async function main() {
     },
   });
 
-  console.log('🐝 Seeding Smart Hive ESP32-001...');
+  // Ensure WhatsApp users are registered
+  await prisma.whatsAppUser.createMany({
+    data: [
+      { wa_id: '918882291014', language: 'en' },
+      { wa_id: '8882291014', language: 'en' },
+      { wa_id: '918882218036', language: 'en' },
+      { wa_id: '8882218036', language: 'en' },
+    ],
+    skipDuplicates: true,
+  });
+
+  console.log('🐝 Seeding Smart Hive ESP32-001 (WhatsApp Bot Beekeeper 8882291014)...');
   const hive = await prisma.hive.create({
     data: {
       deviceId: 'ESP32-001',
-      beekeeperId: sonal.id,
-      region: 'Wardha, Maharashtra',
+      beekeeperId: sonal2.id,
+      region: 'Wardha, Maharashtra (Apiary 1 - Brood Hub)',
       latitude: 20.7453,
       longitude: 78.6022,
+    },
+  });
+
+  console.log('🐝 Seeding Smart Hive ESP32-002 (Apiary 2)...');
+  const hive2 = await prisma.hive.create({
+    data: {
+      deviceId: 'ESP32-002',
+      beekeeperId: sonal.id,
+      region: 'Wardha, Maharashtra (Apiary 2 - Honey Super)',
+      latitude: 20.7480,
+      longitude: 78.6050,
     },
   });
 
@@ -107,25 +130,33 @@ async function main() {
   for (let i = 24; i >= 0; i--) {
     const pointTime = new Date(now - i * 60 * 60 * 1000);
     const hour = pointTime.getHours();
-    // Daily biological thermal curve (~34.6°C to 35.3°C)
     const tempOffset = Math.sin((hour - 8) * (Math.PI / 12)) * 0.4;
     const tempC = Number((35.0 + tempOffset + (Math.random() * 0.16 - 0.08)).toFixed(1));
     const humidityPct = Number((57.5 - tempOffset * 4 + (Math.random() * 1.5 - 0.75)).toFixed(1));
-    // Steady daytime nectar flow (+0.08 kg/hr from 8 AM to 6 PM)
     if (hour >= 8 && hour <= 18) {
       currentWeight += 0.08 + (Math.random() * 0.03 - 0.015);
     }
     const weightKg = Number(currentWeight.toFixed(2));
     const batteryPct = Math.round(92 + (hour >= 9 && hour <= 16 ? 5 : 0));
 
-    telemetryReadings.push({
-      hiveId: hive.id,
-      tempC,
-      humidityPct,
-      weightKg,
-      batteryPct,
-      timestamp: pointTime,
-    });
+    telemetryReadings.push(
+      {
+        hiveId: hive.id,
+        tempC,
+        humidityPct,
+        weightKg,
+        batteryPct,
+        timestamp: pointTime,
+      },
+      {
+        hiveId: hive2.id,
+        tempC: Number((tempC + 0.2).toFixed(1)),
+        humidityPct: Number((humidityPct - 1.0).toFixed(1)),
+        weightKg: Number((weightKg + 1.5).toFixed(2)),
+        batteryPct,
+        timestamp: pointTime,
+      }
+    );
   }
   await prisma.sensorReading.createMany({ data: telemetryReadings });
 

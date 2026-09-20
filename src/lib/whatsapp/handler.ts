@@ -740,16 +740,36 @@ async function handleHiveStatus(
   sessionData: SessionData,
   lang: SupportedLanguage
 ): Promise<void> {
-  const beekeeperId = sessionData.beekeeper_id || (await prisma.beekeeper.findFirst({ where: { name: 'Sonal' } }))?.id;
+  const cleanWaId = waId.replace(/[\s-]/g, '');
+  const digitsOnly = cleanWaId.replace(/[^0-9]/g, '');
+  const last10 = digitsOnly.slice(-10);
+
+  const beekeepers = await prisma.beekeeper.findMany({
+    where: {
+      OR: [
+        ...(sessionData.beekeeper_id ? [{ id: sessionData.beekeeper_id }] : []),
+        { phone: cleanWaId },
+        { phone: last10 },
+        { phone: `+91${last10}` },
+        { phone: `91${last10}` },
+        { phone: '8882291014' },
+        { phone: '8882218036' },
+        { name: 'Sonal' },
+      ],
+    },
+    select: { id: true },
+  });
+  const beekeeperIds = beekeepers.map((b) => b.id);
 
   const hives = await prisma.hive.findMany({
-    where: beekeeperId ? { beekeeperId } : {},
+    where: beekeeperIds.length > 0 ? { beekeeperId: { in: beekeeperIds } } : {},
     include: {
       readings: {
         orderBy: { timestamp: 'desc' },
         take: 2,
       },
     },
+    orderBy: { deviceId: 'asc' },
   });
 
   if (hives.length === 0) {

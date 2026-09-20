@@ -21,15 +21,20 @@ export async function GET(
   const ms = periodMap[period] ?? periodMap['7d'];
   const since = new Date(Date.now() - ms);
 
-  const hive = await prisma.hive.findUnique({
-    where: { id: hiveId },
+  const hive = await prisma.hive.findFirst({
+    where: {
+      OR: [
+        { id: hiveId },
+        { deviceId: hiveId },
+      ],
+    },
     include: { beekeeper: { select: { name: true } } },
   });
 
   if (!hive) return Response.json({ error: 'Hive not found' }, { status: 404 });
 
   const readings = await prisma.sensorReading.findMany({
-    where: { hiveId, timestamp: { gte: since } },
+    where: { hiveId: hive.id, timestamp: { gte: since } },
     orderBy: { timestamp: 'asc' },
     select: {
       timestamp: true,
