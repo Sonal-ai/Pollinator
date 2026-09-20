@@ -6,6 +6,7 @@ import { Truck, ArrowRight, CheckCircle2, AlertCircle, ExternalLink } from 'luci
 
 const STATUS_OPTIONS = [
   { value: 'PROCESSED',       label: '⚙️ Processed' },
+  { value: 'LAB_VERIFIED',    label: '🧪 Lab Verified' },
   { value: 'IN_DISTRIBUTION', label: '🚚 In Distribution' },
   { value: 'AT_RETAIL',       label: '🏪 At Retail' },
   { value: 'SOLD',            label: '✅ Sold' },

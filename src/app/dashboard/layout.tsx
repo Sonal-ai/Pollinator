@@ -21,7 +21,7 @@ import { NetworkBadge } from '@/components/ui/network-badge';
 
 const NAV_ITEMS = [
   { href: '/dashboard',           label: 'Harvest & Batches',    icon: LayoutDashboard, roles: ['admin', 'beekeeper', 'processor', 'lab', 'distributor', 'retailer'] },
-  { href: '/dashboard/custody',   label: 'Custody Transfer',     icon: Truck,           roles: ['admin', 'beekeeper', 'processor', 'distributor', 'retailer'] },
+  { href: '/dashboard/custody',   label: 'Custody Transfer',     icon: Truck,           roles: ['admin', 'beekeeper', 'processor', 'lab', 'distributor', 'retailer'] },
   { href: '/dashboard/iot',       label: 'IoT Telemetry',        icon: Wifi,            roles: ['admin', 'beekeeper'] },
   { href: '/dashboard/health',    label: 'Bee Health AI',        icon: ShieldAlert,     roles: ['admin', 'beekeeper'] },
   { href: '/dashboard/processor', label: 'Package & QR',         icon: Package,         roles: ['admin', 'processor'] },
