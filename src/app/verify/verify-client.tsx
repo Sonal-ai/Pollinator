@@ -111,7 +111,8 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
 
   const amoyContractUrl = `https://amoy.polygonscan.com/address/${AMOY_CONTRACT_ADDRESS}`;
   const isAmoyTxValid = isValidTxHash(batch.txHash);
-  const amoyExplorerTxUrl = isAmoyTxValid
+  // Single authoritative link displaying the full journey on Polygon Amoy
+  const polygonJourneyUrl = isAmoyTxValid
     ? `https://amoy.polygonscan.com/tx/${batch.txHash}`
     : amoyContractUrl;
 
@@ -213,43 +214,36 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
     : `${batch.honey_type} Honey`;
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6 relative z-10">
+    <div className="w-full max-w-2xl mx-auto space-y-4 relative z-10">
       {/* Top Status Header */}
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-2">
         {isRecalled ? (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-xs sm:text-sm font-bold shadow-lg shadow-red-500/20">
-            <ShieldAlert className="w-5 h-5 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-xs sm:text-sm font-bold shadow-lg shadow-red-500/20">
+            <ShieldAlert className="w-4 h-4 animate-pulse shrink-0" />
             DO NOT CONSUME · HIVE BATCH RECALLED
           </div>
         ) : anomalyAlert?.isAnomaly ? (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/20 border-2 border-red-500 text-red-300 text-xs sm:text-sm font-black shadow-lg shadow-red-500/30 animate-pulse">
-            <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/20 border-2 border-red-500 text-red-300 text-xs sm:text-sm font-black shadow-lg shadow-red-500/30 animate-pulse">
+            <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
             <span>SUSPECTED CLONE · IMPOSSIBLE PHYSICAL TRAVEL DETECTED</span>
           </div>
         ) : isIntegrityFailed ? (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-xs sm:text-sm font-bold">
-            <AlertTriangle className="w-5 h-5" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/15 border border-red-500/40 text-red-400 text-xs sm:text-sm font-bold">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
             FRAUD ALERT · METADATA HASH MISMATCH
           </div>
         ) : (
-          <a
-            href={amoyExplorerTxUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-400/15 hover:bg-yellow-400/25 border border-yellow-400/40 text-yellow-300 text-xs sm:text-sm font-extrabold shadow-lg shadow-yellow-500/20 transition-all group cursor-pointer"
-            title="Inspect Batch Proof on Polygonscan Amoy Testnet"
-          >
-            <ShieldCheck className="w-5 h-5 text-yellow-400 group-hover:scale-110 transition-transform" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-yellow-400/15 border border-yellow-400/30 text-yellow-300 text-xs sm:text-sm font-extrabold shadow-md shadow-yellow-500/10">
+            <ShieldCheck className="w-4 h-4 text-yellow-400 shrink-0" />
             <span>100% PURE HONEY · HONEYCHAIN AMOY VERIFIED</span>
-            <ExternalLink className="w-3.5 h-3.5 opacity-75 group-hover:opacity-100 transition-opacity" />
-          </a>
+          </div>
         )}
 
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center justify-center gap-2">
+        <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight flex items-center justify-center gap-2">
           <span>{formattedTitle}</span>
           <span className="text-yellow-400">🍯</span>
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400">
+        <p className="text-xs text-slate-400">
           Batch <span className="font-mono text-yellow-400 font-bold">{batch.batchCode}</span> · KVIC Honey Mission Protocol
         </p>
 
@@ -307,47 +301,47 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
           </motion.div>
         )}
 
-        {/* Live Physical Jar & Scannable QR Code Banner */}
-        <div className="mt-4 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 border border-yellow-400/30 text-left space-y-4 shadow-xl">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        {/* Physical Jar & Scannable QR Code Card */}
+        <div className="mt-2 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-[#121622] via-[#0e111a] to-[#0a0d14] border border-yellow-400/25 text-left space-y-3 shadow-xl">
+          <div className="flex items-center justify-between pb-2 border-b border-white/5">
             <div className="flex items-center gap-2">
-              <QrCode className="w-4 h-4 text-yellow-400 animate-pulse" />
+              <QrCode className="w-3.5 h-3.5 text-yellow-400" />
               <span className="text-xs font-bold text-white font-mono uppercase tracking-wider">
                 {scanInfo ? `Physical Jar #${scanInfo.jarIndex} (${scanInfo.jarSizeGrams}g Net)` : 'Retail Serialized Jar'}
               </span>
             </div>
             {scanInfo ? (
-              <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1.5">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                 Scan #{scanInfo.totalScans} Verified
               </span>
             ) : (
-              <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 font-bold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 font-bold">
                 Batch Verified
               </span>
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-5">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3.5">
             {/* Scannable QR Code Image */}
             {qrCodeDataUrl && (
-              <div className="flex flex-col items-center shrink-0 bg-white p-2.5 rounded-2xl shadow-2xl border-2 border-yellow-400/60 group">
+              <div className="flex flex-col items-center shrink-0 bg-white p-1.5 rounded-xl shadow-md border border-yellow-400/50">
                 <img
                   src={qrCodeDataUrl}
                   alt={`QR Code for ${batch.batchCode}`}
-                  className="w-32 h-32 sm:w-36 sm:h-36 object-contain rounded-lg"
+                  className="w-24 h-24 sm:w-28 sm:h-28 object-contain rounded"
                 />
-                <span className="text-[10px] text-slate-900 font-mono font-extrabold mt-1.5 flex items-center gap-1">
-                  <span>📱 Scan with Phone</span>
+                <span className="text-[9px] text-slate-800 font-mono font-bold mt-1">
+                  📱 Point Camera
                 </span>
               </div>
             )}
 
             {/* Scan Analytics & Details */}
-            <div className="flex-1 space-y-2.5 text-xs font-mono w-full">
-              <div className="grid grid-cols-2 gap-3 text-[11px] text-slate-300 bg-black/40 p-3 rounded-xl border border-white/5">
+            <div className="flex-1 space-y-2 text-xs font-mono w-full">
+              <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 bg-black/40 p-2.5 rounded-xl border border-white/5">
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase flex items-center gap-1">
+                  <span className="text-slate-400 block text-[9px] uppercase font-bold flex items-center gap-1">
                     <span>Scan Node</span>
                     <span className={`w-1.5 h-1.5 rounded-full ${anomalyAlert?.isAnomaly ? 'bg-red-400 animate-ping' : 'bg-emerald-400 animate-pulse'}`} />
                   </span>
@@ -360,46 +354,28 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block text-[10px] uppercase">Scanned At</span>
+                  <span className="text-slate-400 block text-[9px] uppercase font-bold">Scanned At</span>
                   <span className="text-yellow-300 font-bold">{new Date(scanInfo?.latestScan?.timestamp || Date.now()).toLocaleTimeString()}</span>
                 </div>
+                {scanInfo?.nonce && (
+                  <div className="col-span-2 pt-1.5 border-t border-white/5 flex items-center justify-between text-[10px]">
+                    <span className="text-slate-500">Jar Nonce:</span>
+                    <span className="text-amber-300 font-mono truncate max-w-[210px]" title={scanInfo.nonce}>{scanInfo.nonce}</span>
+                  </div>
+                )}
               </div>
 
-              {scanInfo?.nonce && (
-                <div className="text-[10px] text-slate-400 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 truncate">
-                  <span className="text-slate-500">Jar Nonce: </span>
-                  <span className="text-amber-300 font-mono">{scanInfo.nonce}</span>
-                </div>
-              )}
-
-              {/* Direct Polygonscan Amoy On-Chain Verification Actions */}
-              <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <a
-                  href={amoyExplorerTxUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-purple-900/70 via-indigo-900/60 to-purple-800/70 hover:from-purple-800 hover:to-indigo-800 border border-purple-400/40 text-purple-100 hover:text-white text-xs font-bold transition-all shadow-md shadow-purple-950/40 group"
-                  title="Open Transaction / Batch on Polygonscan Amoy"
-                >
-                  <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                  <span>🔗 View on Polygon Amoy Explorer ↗</span>
-                </a>
-
-                <a
-                  href={amoyContractUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-black/50 hover:bg-black/80 border border-white/10 hover:border-purple-400/40 text-[11px] font-mono text-slate-300 hover:text-purple-300 transition-all"
-                  title="View HoneyChain Smart Contract on Polygonscan"
-                >
-                  <span>Contract: 0x4B65...29b47a</span>
-                  <ExternalLink className="w-3 h-3 text-slate-400" />
-                </a>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-400/20 text-[11px] text-yellow-200/90 leading-relaxed">
-                💡 <strong>Judges / Evaluators:</strong> Point your mobile camera at the QR code to trigger a live scan. Your smartphone will open this page, and the scan counter will increment to <strong>#{(scanInfo?.totalScans ?? 1) + 1}</strong>!
-              </div>
+              {/* SINGLE UNIFIED POLYGON AMOY JOURNEY LINK */}
+              <a
+                href={polygonJourneyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-purple-900/80 via-indigo-900/70 to-purple-800/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-400/40 text-purple-100 hover:text-white text-xs font-bold transition-all shadow-md shadow-purple-950/30 group cursor-pointer"
+                title="Open Full Supply Chain Journey on Polygonscan Amoy Explorer"
+              >
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span>View Full Journey on Polygon Amoy Explorer ↗</span>
+              </a>
             </div>
           </div>
         </div>
@@ -590,14 +566,10 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                     Logged on Polygon Amoy · {new Date(evt.createdAt).toLocaleDateString('en-IN')}
                   </p>
                   {evt.txHash && (
-                    <a
-                      href={isValidTxHash(evt.txHash) ? `https://amoy.polygonscan.com/tx/${evt.txHash}` : amoyContractUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] font-mono text-yellow-400 hover:underline flex items-center gap-1 font-bold"
-                    >
-                      Tx: {evt.txHash.slice(0, 10)}... <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
+                    <p className="text-[10px] font-mono text-purple-300/80 flex items-center gap-1">
+                      <span>⛓️ On-Chain Record:</span>
+                      <span className="text-slate-400">{evt.txHash.slice(0, 10)}...{evt.txHash.slice(-6)}</span>
+                    </p>
                   )}
                 </div>
               </div>
@@ -667,7 +639,7 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
           </div>
 
           {/* Smart Contract on Polygon Amoy */}
-          <div className="p-4 rounded-2xl bg-black/60 border border-purple-500/20 space-y-1.5">
+          <div className="p-3.5 rounded-xl bg-black/60 border border-purple-500/20 space-y-1.5">
             <div className="flex items-center justify-between text-purple-300">
               <p className="text-[10px] uppercase font-bold tracking-wider">HoneyChain Smart Contract (Polygon Amoy)</p>
               <span className="text-[9px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 font-mono">
@@ -676,58 +648,36 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
             </div>
             <div className="flex items-center justify-between gap-2">
               <span className="truncate text-purple-200 font-mono text-[11px]">{AMOY_CONTRACT_ADDRESS}</span>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => copyTx(AMOY_CONTRACT_ADDRESS)}
-                  className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white"
-                  title="Copy Contract Address"
-                >
-                  {copiedTx ? <Check className="w-3.5 h-3.5 text-purple-400" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-                <a
-                  href={amoyContractUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1 rounded hover:bg-white/10 text-purple-400 hover:text-purple-300"
-                  title="Open Contract on Polygonscan"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
+              <button
+                onClick={() => copyTx(AMOY_CONTRACT_ADDRESS)}
+                className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white shrink-0"
+                title="Copy Contract Address"
+              >
+                {copiedTx ? <Check className="w-3.5 h-3.5 text-purple-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
             </div>
           </div>
 
           {/* Transaction Hash */}
           {batch.txHash && (
-            <div className="p-4 rounded-2xl bg-black/60 border border-yellow-400/10 space-y-1.5">
+            <div className="p-3.5 rounded-xl bg-black/60 border border-yellow-400/10 space-y-1.5">
               <p className="text-[10px] uppercase font-bold text-slate-500">Batch Creation Transaction</p>
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-yellow-300 font-mono text-[11px]">{batch.txHash}</span>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => copyTx(batch.txHash!)}
-                    className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white"
-                    title="Copy Transaction Hash"
-                  >
-                    {copiedTx ? <Check className="w-3.5 h-3.5 text-yellow-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                  <a
-                    href={isAmoyTxValid ? `https://amoy.polygonscan.com/tx/${batch.txHash}` : amoyContractUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1 rounded hover:bg-white/10 text-yellow-400 hover:text-yellow-300"
-                    title={isAmoyTxValid ? "Open in Polygonscan" : "Open Contract on Polygonscan"}
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
+                <button
+                  onClick={() => copyTx(batch.txHash!)}
+                  className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white shrink-0"
+                  title="Copy Transaction Hash"
+                >
+                  {copiedTx ? <Check className="w-3.5 h-3.5 text-yellow-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
               </div>
             </div>
           )}
 
           {/* IPFS CID */}
           {batch.metadataCID && (
-            <div className="p-4 rounded-2xl bg-black/60 border border-yellow-400/10 space-y-1.5">
+            <div className="p-3.5 rounded-xl bg-black/60 border border-yellow-400/10 space-y-1.5">
               <p className="text-[10px] uppercase font-bold text-slate-500">IPFS Metadata CID (Pinata)</p>
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-slate-300 font-mono text-[11px]">{batch.metadataCID}</span>
@@ -743,6 +693,11 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
               </div>
             </div>
           )}
+
+          <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/25 text-purple-200/90 font-mono text-[11px] flex items-center justify-between">
+            <span>Audit full block history:</span>
+            <span className="text-purple-300 font-bold">Use Polygon Amoy button above ↑</span>
+          </div>
 
           <div className="p-3.5 rounded-2xl bg-yellow-400/10 border border-yellow-400/25 text-slate-300 font-sans text-xs">
             🍯 <strong>The Hive Guarantee:</strong> Even if a central database were altered, the immutable Polygon blockchain record and cryptographic IPFS hash guarantee that this honey's floral source, origin, and lab purity tests cannot be altered.

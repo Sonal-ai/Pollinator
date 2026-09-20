@@ -277,10 +277,10 @@ export default async function VerifyPage({ searchParams }: VerifyPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-100 py-10 px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#07090e] text-slate-100 py-6 px-3 sm:px-4 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/10 blur-[130px] pointer-events-none -z-10" />
       
-      <header className="max-w-2xl mx-auto mb-6 flex items-center justify-between">
+      <header className="max-w-2xl mx-auto mb-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="relative flex items-center justify-center w-8 h-8 rounded-xl overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 shadow-md shadow-yellow-500/25 group-hover:scale-105 transition-transform duration-300 p-1">
             <Image
