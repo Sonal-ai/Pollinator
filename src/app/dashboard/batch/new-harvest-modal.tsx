@@ -10,15 +10,23 @@ interface BeekeeperOption {
   region: string;
 }
 
-export function NewHarvestModal({ beekeepers }: { beekeepers: BeekeeperOption[] }) {
+export function NewHarvestModal({
+  beekeepers,
+  defaultBeekeeperId,
+}: {
+  beekeepers: BeekeeperOption[];
+  defaultBeekeeperId?: string;
+}) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [beekeeperId, setBeekeeperId] = useState(beekeepers[0]?.id ?? '');
+  
+  const initialBeekeeper = (defaultBeekeeperId && beekeepers.find(b => b.id === defaultBeekeeperId)) || beekeepers[0];
+  const [beekeeperId, setBeekeeperId] = useState(initialBeekeeper?.id ?? '');
   const [honeyType, setHoneyType] = useState('Raw Multiflora Blossom Honey');
   const [quantityKg, setQuantityKg] = useState('50.0');
   const [hivesHarvested, setHivesHarvested] = useState('4');
-  const [region, setRegion] = useState(beekeepers[0]?.region ?? 'Wardha, Maharashtra');
+  const [region, setRegion] = useState(initialBeekeeper?.region ?? 'Wardha, Maharashtra');
   const [result, setResult] = useState<{ success?: boolean; batchCode?: string; txHash?: string; error?: string } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {

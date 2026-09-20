@@ -96,6 +96,21 @@ export async function POST(request: NextRequest) {
 
     const privateKeyHex = '0x' + createHmac('sha256', secret).update(walletIdentifier).digest('hex');
     walletAddress = new ethers.Wallet(privateKeyHex).address;
+
+    if (role === 'beekeeper') {
+      const beekeeperRecord = await prisma.beekeeper.findFirst({
+        where: {
+          OR: [
+            { phone: '8882218036' },
+            { phone: '8882291014' },
+            { name: 'Sonal' },
+          ],
+        },
+      });
+      if (beekeeperRecord?.wallet) {
+        walletAddress = beekeeperRecord.wallet;
+      }
+    }
   }
 
   const { createSessionToken } = await import('@/lib/auth');

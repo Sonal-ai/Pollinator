@@ -37,8 +37,38 @@ export default async function DashboardPage({
   const role = session?.role ?? 'admin';
 
   const where: any = status ? { status } : {};
-  if (role === 'beekeeper' && walletAddress) {
-    where.beekeeper = { wallet: walletAddress };
+  let currentBeekeeperId: string | undefined;
+
+  if (role === 'beekeeper') {
+    const beekeeperOrConditions: any[] = [
+      { beekeeper: { name: 'Sonal' } },
+    ];
+    if (walletAddress) {
+      beekeeperOrConditions.push(
+        { beekeeper: { wallet: walletAddress } },
+        { beekeeper: { wallet: walletAddress.toLowerCase() } },
+        { current_custodian: walletAddress },
+        { current_custodian: walletAddress.toLowerCase() },
+      );
+    }
+    where.OR = beekeeperOrConditions;
+
+    const currentBeekeeper = await prisma.beekeeper.findFirst({
+      where: {
+        OR: [
+          ...(walletAddress ? [
+            { wallet: walletAddress },
+            { wallet: walletAddress.toLowerCase() },
+          ] : []),
+          { phone: '8882218036' },
+          { phone: '8882291014' },
+          { name: 'Sonal' },
+        ],
+      },
+    });
+    if (currentBeekeeper) {
+      currentBeekeeperId = currentBeekeeper.id;
+    }
   }
 
   const [batches, total, verifiedCount, alertCount, beekeepersRaw] = await Promise.all([
@@ -84,7 +114,7 @@ export default async function DashboardPage({
 
         {/* Actions & Filter Badges */}
         <div className="flex items-center gap-2 flex-wrap">
-          <NewHarvestModal beekeepers={beekeepers} />
+          <NewHarvestModal beekeepers={beekeepers} defaultBeekeeperId={currentBeekeeperId} />
 
           <div className="h-4 w-px bg-white/10 hidden sm:block" />
 

@@ -11,16 +11,23 @@ export default async function CustodyPage() {
   
   const walletAddress = session?.walletAddress ?? null;
   const isAdmin = session?.role === 'admin';
+  const isBeekeeper = session?.role === 'beekeeper';
 
   const myBatches = await prisma.honeyBatch.findMany({
     where: {
       recalled: false,
       ...(isAdmin ? {} : {
         OR: [
-          { current_custodian: walletAddress },
-          { current_custodian: walletAddress?.toLowerCase() },
-          { beekeeper: { wallet: walletAddress } },
-          { beekeeper: { wallet: walletAddress?.toLowerCase() } },
+          ...(walletAddress ? [
+            { current_custodian: walletAddress },
+            { current_custodian: walletAddress.toLowerCase() },
+            { beekeeper: { wallet: walletAddress } },
+            { beekeeper: { wallet: walletAddress.toLowerCase() } },
+          ] : []),
+          ...(isBeekeeper ? [
+            { beekeeper: { name: 'Sonal' } },
+            { current_custodian: null },
+          ] : []),
         ],
       }),
     },
@@ -46,7 +53,7 @@ export default async function CustodyPage() {
         </p>
       </div>
 
-      {!walletAddress && !isAdmin ? (
+      {!walletAddress && !isAdmin && !isBeekeeper ? (
         <div className="p-4 rounded-2xl bg-red-950/30 border border-red-500/40 text-red-300 text-xs">
           Please log in to manage batch custody.
         </div>

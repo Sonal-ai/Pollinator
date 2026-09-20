@@ -85,7 +85,7 @@ async function main() {
       hivesCount: 15,
       practices: 'Apis cerana indica, 100% Organic Floral Nectar',
       kvicId: 'KVIC-MH-2026-888',
-      wallet: deriveWallet('8882291014'),
+      wallet: sonalWallet,
     },
   });
 
