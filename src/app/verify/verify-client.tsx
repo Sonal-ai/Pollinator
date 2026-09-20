@@ -365,16 +365,16 @@ export function VerifyClient({ batch, chainData, integrity, scanInfo, qrCodeData
                 )}
               </div>
 
-              {/* SINGLE UNIFIED POLYGON AMOY JOURNEY LINK */}
+              {/* SINGLE UNIFIED POLYGON AMOY PROOF LINK */}
               <a
                 href={polygonJourneyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-gradient-to-r from-purple-900/80 via-indigo-900/70 to-purple-800/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-400/40 text-purple-100 hover:text-white text-xs font-bold transition-all shadow-md shadow-purple-950/30 group cursor-pointer"
-                title="Open Full Supply Chain Journey on Polygonscan Amoy Explorer"
+                title="Inspect Immutable Batch Transaction on Polygonscan Amoy Explorer"
               >
                 <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                <span>View Full Journey on Polygon Amoy Explorer ↗</span>
+                <span>Inspect On-Chain Proof on Polygonscan ↗</span>
               </a>
             </div>
           </div>
