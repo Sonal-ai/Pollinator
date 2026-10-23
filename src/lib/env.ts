@@ -12,6 +12,7 @@ const EnvSchema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().min(1, 'WHATSAPP_ACCESS_TOKEN is required'),
   WHATSAPP_APP_SECRET: z.string().min(1, 'WHATSAPP_APP_SECRET is required'),
   WHATSAPP_VERIFY_TOKEN: z.string().min(1, 'WHATSAPP_VERIFY_TOKEN is required'),
+  WHATSAPP_GRAPH_VERSION: z.string().regex(/^v\d{2}\.\d$/).default('v26.0'),
 
   // AWS
   AWS_REGION: z.string().default('us-east-1'),
@@ -27,12 +28,13 @@ const EnvSchema = z.object({
   // Local Blockchain (Hardhat Node)
   LOCAL_RPC_URL: z.string().default('http://127.0.0.1:8545'),
   LOCAL_CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'LOCAL_CONTRACT_ADDRESS must be a valid EVM address').optional(),
-  LOCAL_PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'LOCAL_PRIVATE_KEY must be a 32-byte hex string').default('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'),
+  LOCAL_PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'LOCAL_PRIVATE_KEY must be a 32-byte hex string').optional(),
 
   // Polygon Amoy (Global / Testnet)
-  POLYGON_RPC_URL: z.string().default('https://rpc-amoy.polygon.technology'),
+  POLYGON_RPC_URL: z.string().url().default('https://polygon-amoy.drpc.org'),
   CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'CONTRACT_ADDRESS must be a valid EVM address').optional(),
   PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'PRIVATE_KEY must be a 32-byte hex string').optional(),
+  RELAYER_PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/).optional(),
   NEXT_PUBLIC_BLOCKCHAIN_NETWORK: z.string().optional(),
 
   // IPFS / Pinata
@@ -49,21 +51,14 @@ const EnvSchema = z.object({
   // WhatsApp bot display number for public wa.me links
   NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().optional(),
 
-  // Optional: IoT device shared secret
-  IOT_DEVICE_SECRET: z.string().optional(),
-
   // Optional: Admin API key for recall endpoint
   ADMIN_API_KEY: z.string().optional(),
 
-  // Optional: JWT secret for dashboard auth
-  JWT_SECRET: z.string().min(32).optional(),
+  // Required for signed dashboard sessions. Never fall back to a source-code secret.
+  JWT_SECRET: z.string().min(32),
 });
 
-/**
- * Parse and validate all environment variables at module load time.
- * The app will throw a clear error at startup if any required var is missing
- * rather than failing silently at runtime.
- */
+/** Optional eager validation for operators who want to validate every integration. */
 function validateEnv() {
   const result = EnvSchema.safeParse(process.env);
   if (!result.success) {
@@ -87,9 +82,17 @@ export function getEnv() {
   return _env;
 }
 
-// Named export for convenience — use this everywhere instead of process.env
+// Validate settings on first use, so an offline worker or disabled WhatsApp/AI
+// integration does not require unrelated cloud credentials just to start.
+const values = new Map<string, unknown>();
 export const env = new Proxy({} as z.infer<typeof EnvSchema>, {
   get(_target, key: string) {
-    return getEnv()[key as keyof z.infer<typeof EnvSchema>];
+    if (typeof key !== 'string' || !Object.hasOwn(EnvSchema.shape, key)) return undefined;
+    if (!values.has(key)) {
+      const result = EnvSchema.shape[key as keyof typeof EnvSchema.shape].safeParse(process.env[key]);
+      if (!result.success) throw new Error(`[Pollinator] ${key} is missing or invalid. Configure this integration before using it.`);
+      values.set(key, result.data);
+    }
+    return values.get(key);
   },
 });

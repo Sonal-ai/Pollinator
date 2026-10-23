@@ -1,86 +1,6 @@
 import { ethers } from 'ethers';
-import { env } from './env';
-
-import fs from 'fs';
-import path from 'path';
-
-// ============================================================
-// Network Helpers
-// ============================================================
-
-export function isLocalChain(): boolean {
-  const net = (env.BLOCKCHAIN_NETWORK || 'local').toLowerCase();
-  return net === 'local' || net === 'localhost';
-}
-
-export function getActiveNetworkName(): string {
-  return isLocalChain() ? 'Hardhat Localhost' : 'Polygon Amoy';
-}
-
-function getDeployedAddressFromFile(networkKey: 'localhost' | 'polygon-amoy'): string | null {
-  try {
-    const filePath = path.join(process.cwd(), 'deployed-address.json');
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      const data = JSON.parse(raw);
-      if (data.networks && data.networks[networkKey]?.address) {
-        return data.networks[networkKey].address;
-      }
-      if (data.network === networkKey && data.address) {
-        return data.address;
-      }
-    }
-  } catch {
-    // Ignore error
-  }
-  return null;
-}
-
-export function getActiveContractAddress(): string | null {
-  if (isLocalChain()) {
-    return (
-      env.LOCAL_CONTRACT_ADDRESS ||
-      getDeployedAddressFromFile('localhost') ||
-      env.CONTRACT_ADDRESS ||
-      null
-    );
-  }
-  return (
-    env.CONTRACT_ADDRESS ||
-    getDeployedAddressFromFile('polygon-amoy') ||
-    null
-  );
-}
-
-export function getActiveRpcUrl(): string {
-  if (isLocalChain()) {
-    return env.LOCAL_RPC_URL || 'http://127.0.0.1:8545';
-  }
-  return env.AMB_ENDPOINT || env.POLYGON_RPC_URL || 'https://rpc-amoy.polygon.technology';
-}
-
-export function getActivePrivateKey(): string | null {
-  if (isLocalChain()) {
-    return env.LOCAL_PRIVATE_KEY || env.PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
-  }
-  return env.PRIVATE_KEY || null;
-}
-
-export function getExplorerTxUrl(txHash: string | null | undefined): string | null {
-  if (!txHash) return null;
-  if (isLocalChain()) {
-    return null; // Local node transactions have no public Polygonscan link
-  }
-  return `https://amoy.polygonscan.com/tx/${txHash}`;
-}
-
-export function getExplorerAddressUrl(address: string | null | undefined): string | null {
-  if (!address) return null;
-  if (isLocalChain()) {
-    return null;
-  }
-  return `https://amoy.polygonscan.com/address/${address}`;
-}
+import { isLocalChain, getActiveNetworkName, getActiveContractAddress, getActiveRpcUrl, getActivePrivateKey, getExplorerTxUrl, getExplorerAddressUrl } from './chain/config';
+export { isLocalChain, getActiveNetworkName, getActiveContractAddress, getActiveRpcUrl, getActivePrivateKey, getExplorerTxUrl, getExplorerAddressUrl } from './chain/config';
 
 // ============================================================
 // Singleton provider/wallet/contract setup
@@ -94,7 +14,7 @@ function getProvider(): ethers.JsonRpcProvider {
   if (!provider) {
     const rpcUrl = getActiveRpcUrl();
     provider = new ethers.JsonRpcProvider(rpcUrl);
-    console.log(`[blockchain] Connected to ${getActiveNetworkName()} via: ${isLocalChain() ? 'Local Node' : (env.AMB_ENDPOINT ? 'AWS AMB' : 'Public RPC')} (${rpcUrl})`);
+    console.log(`[blockchain] Provider configured for ${getActiveNetworkName()}`);
   }
   return provider;
 }
@@ -124,13 +44,33 @@ async function getContract(): Promise<ethers.Contract | null> {
     const artifact = require('../../artifacts/contracts/HoneyChain.sol/HoneyChain.json') as {
       abi: ethers.InterfaceAbi;
     };
-    const signerOrProvider = getWallet() ?? getProvider();
-    contract = new ethers.Contract(contractAddress, artifact.abi, signerOrProvider);
+    const network = await getProvider().getNetwork();
+    if (network.chainId !== BigInt(isLocalChain() ? 31337 : 80002)) throw new Error('Unexpected chain ID');
+    const candidate = new ethers.Contract(contractAddress, artifact.abi, getProvider());
+    if (await candidate.registryVersion() !== BigInt(2)) throw new Error('Registry v2 deployment required');
+    contract = candidate;
     return contract;
   } catch {
-    console.warn("[blockchain] HoneyChain ABI not found. Run 'npx hardhat compile' first.");
+    console.warn('[blockchain] Registry v2 is unavailable. Check the compiled ABI, deployment address and network.');
     return null;
   }
+}
+
+async function getWriteContract(actorAddress: string): Promise<ethers.Contract> {
+  if (!ethers.isAddress(actorAddress) || actorAddress === ethers.ZeroAddress) throw new Error('An enrolled actor wallet is required');
+  const c = await getContract();
+  if (!c) throw new Error('Registry v2 is not available');
+  const signer = getWallet();
+  if (!signer || signer.address.toLowerCase() !== actorAddress.toLowerCase()) {
+    throw new Error('Actor authorization required. A relayer key cannot impersonate this actor.');
+  }
+  return c.connect(signer) as ethers.Contract;
+}
+
+async function confirmedHash(tx: ethers.ContractTransactionResponse): Promise<string> {
+  const receipt = await tx.wait(isLocalChain() ? 1 : 2, 120_000);
+  if (!receipt || receipt.status !== 1) throw new Error('A successful transaction receipt is required');
+  return receipt.hash;
 }
 
 // ============================================================
@@ -161,14 +101,14 @@ export function toBytes32(hexHash: string): string {
  * Called after IPFS upload — both CID and hash are known.
  */
 export async function createBatchOnChain(params: {
+  actorAddress: string;
   batchCode: string;
   harvestTimestamp: number;
   quantityGrams: number;
   metadataCID: string;
   metadataHash: string;
 }): Promise<string> {
-  const c = await getContract();
-  if (!c) throw new Error('[blockchain] Contract not initialized — cannot createBatch');
+  const c = await getWriteContract(params.actorAddress);
 
   const batchIdHash = hashBatchCode(params.batchCode);
   const metadataHashBytes = ethers.getBytes(params.metadataHash);
@@ -180,9 +120,7 @@ export async function createBatchOnChain(params: {
     params.metadataCID,
     metadataHashBytes
   );
-  const receipt = await tx.wait();
-  if (!receipt) throw new Error('[blockchain] Transaction receipt not received');
-  return receipt.hash as string;
+  return confirmedHash(tx);
 }
 
 /**
@@ -190,51 +128,47 @@ export async function createBatchOnChain(params: {
  * Called after the lab PDF is uploaded to IPFS.
  */
 export async function verifyLabOnChain(params: {
+  actorAddress: string;
   batchCode: string;
   labReportHash: string;
 }): Promise<string> {
-  const c = await getContract();
-  if (!c) throw new Error('[blockchain] Contract not initialized');
+  const c = await getWriteContract(params.actorAddress);
 
   const batchIdHash = hashBatchCode(params.batchCode);
   const labHashBytes = ethers.getBytes(params.labReportHash);
 
   const tx = await c.verifyLab(batchIdHash, labHashBytes);
-  const receipt = await tx.wait();
-  if (!receipt) throw new Error('[blockchain] Transaction receipt not received');
-  return receipt.hash as string;
+  return confirmedHash(tx);
 }
 
 /**
  * Transfer custody of a batch to the next supply chain actor.
  */
 export async function transferCustodyOnChain(params: {
+  actorAddress: string;
   batchCode: string;
   toAddress: string;
   newStatus: number; // BatchStatus enum value (0-8)
 }): Promise<string> {
-  const c = await getContract();
-  if (!c) throw new Error('[blockchain] Contract not initialized');
+  const c = await getWriteContract(params.actorAddress);
 
   const batchIdHash = hashBatchCode(params.batchCode);
   const tx = await c.transferCustody(batchIdHash, params.toAddress, params.newStatus);
-  const receipt = await tx.wait();
-  if (!receipt) throw new Error('[blockchain] Transaction receipt not received');
-  return receipt.hash as string;
+  return confirmedHash(tx);
 }
 
 /**
  * Package a batch — records jar count, jar size, and updated IPFS metadata.
  */
 export async function packageBatchOnChain(params: {
+  actorAddress: string;
   batchCode: string;
   jarCount: number;
   jarSizeGrams: number;
   newMetadataCID: string;
   newMetadataHash: string;
 }): Promise<string> {
-  const c = await getContract();
-  if (!c) throw new Error('[blockchain] Contract not initialized');
+  const c = await getWriteContract(params.actorAddress);
 
   const batchIdHash = hashBatchCode(params.batchCode);
   const metadataHashBytes = ethers.getBytes(params.newMetadataHash);
@@ -246,26 +180,22 @@ export async function packageBatchOnChain(params: {
     params.newMetadataCID,
     metadataHashBytes
   );
-  const receipt = await tx.wait();
-  if (!receipt) throw new Error('[blockchain] Transaction receipt not received');
-  return receipt.hash as string;
+  return confirmedHash(tx);
 }
 
 /**
  * Recall a batch. Admin-only. All subsequent QR scans will show red alert.
  */
 export async function recallBatchOnChain(params: {
+  actorAddress: string;
   batchCode: string;
   reasonCID: string;
 }): Promise<string> {
-  const c = await getContract();
-  if (!c) throw new Error('[blockchain] Contract not initialized');
+  const c = await getWriteContract(params.actorAddress);
 
   const batchIdHash = hashBatchCode(params.batchCode);
   const tx = await c.recallBatch(batchIdHash, params.reasonCID);
-  const receipt = await tx.wait();
-  if (!receipt) throw new Error('[blockchain] Transaction receipt not received');
-  return receipt.hash as string;
+  return confirmedHash(tx);
 }
 
 // ============================================================
@@ -285,6 +215,10 @@ export interface ChainBatchRecord {
   labReportHash: string;
   labVerified: boolean;
   recalled: boolean;
+  jarCount: number;
+  jarSizeGrams: number;
+  packagedGrams: number;
+  labVerifier: string;
 }
 
 /**
@@ -298,6 +232,8 @@ export async function getBatchFromChain(batchCode: string): Promise<ChainBatchRe
   try {
     const batchIdHash = hashBatchCode(batchCode);
     const raw = await c.getBatch(batchIdHash);
+
+    if (Number(raw.createdAt) === 0) return null;
 
     // ethers returns struct fields as array indices when ABI is not fully typed
     return {
@@ -313,6 +249,10 @@ export async function getBatchFromChain(batchCode: string): Promise<ChainBatchRe
       labReportHash:    raw.labReportHash as string,
       labVerified:      raw.labVerified as boolean,
       recalled:         raw.recalled as boolean,
+      jarCount:         Number(raw.jarCount),
+      jarSizeGrams:     Number(raw.jarSizeGrams),
+      packagedGrams:    Number(raw.packagedGrams),
+      labVerifier:      raw.labVerifier as string,
     };
   } catch (err) {
     console.error('[blockchain] getBatch error:', err);

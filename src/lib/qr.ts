@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual, randomUUID } from 'crypto';
 import { env } from './env';
+import { serverAppOrigin } from './app-origin';
 import { prisma } from './db';
 import { checkDuplicateScanAnomaly } from './anti-clone';
 
@@ -44,6 +45,7 @@ export function verifyQRSignature(
   signature: string
 ): boolean {
   try {
+    if (!/^[a-fA-F0-9]{64}$/.test(signature) || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(nonce)) return false;
     const expected = signQRPayload(batchCode, nonce);
     return timingSafeEqual(
       Buffer.from(signature, 'hex'),
@@ -61,8 +63,8 @@ export function verifyQRSignature(
 
 /**
  * Generate QR tokens for each jar in a batch.
- * Each jar gets a unique nonce + signature — cloning one jar's QR
- * cannot be used to authenticate any other jar.
+ * Each jar gets one stable serial record. Reprints reuse it; printed QR copying
+ * remains possible and is handled by advisory scan signals, not this signature.
  */
 export async function generateQRTokensForBatch(params: {
   batchId: string;
@@ -71,35 +73,27 @@ export async function generateQRTokensForBatch(params: {
   jarSizeGrams: number;
 }): Promise<QRGenerationResult[]> {
   const { batchId, batchCode, jarCount, jarSizeGrams } = params;
-  const results: QRGenerationResult[] = [];
-
-  // Deactivate any previously generated tokens for this batch
-  // (prevents stale tokens if QR is regenerated)
-  await prisma.qRToken.updateMany({
-    where: { batchId },
-    data: { active: false },
-  });
-
-  for (let i = 1; i <= jarCount; i++) {
-    const nonce = randomUUID();
-    const signature = signQRPayload(batchCode, nonce);
-    const verifyUrl = `${env.NEXT_PUBLIC_APP_URL}/verify?b=${encodeURIComponent(batchCode)}&n=${nonce}&sig=${signature}`;
-
-    await prisma.qRToken.create({
-      data: {
-        batchId,
-        nonce,
-        signature,
-        jarIndex: i,
-        jarSizeGrams,
-        active: true,
-      },
-    });
-
-    results.push({ jarIndex: i, nonce, verifyUrl, signature });
-  }
-
-  return results;
+  if (!Number.isInteger(jarCount) || jarCount < 1 || jarCount > 10_000 || !Number.isInteger(jarSizeGrams) || jarSizeGrams < 1) throw new Error('Invalid label inventory');
+  return prisma.$transaction(async tx => {
+    const batch = await tx.honeyBatch.findUnique({ where: { id: batchId } });
+    if (!batch || batch.batchCode !== batchCode || batch.recalled || batch.status !== 'PACKAGED' || !batch.packagingTxHash ||
+      batch.jarCount !== jarCount || batch.jarSizeGrams !== jarSizeGrams || jarCount * jarSizeGrams > batch.quantity_grams) {
+      throw new Error('Label request must match confirmed packaging inventory');
+    }
+    let tokens = await tx.qRToken.findMany({ where: { batchId }, orderBy: { jarIndex: 'asc' } });
+    if (!tokens.length) {
+      await tx.qRToken.createMany({ data: Array.from({ length: jarCount }, (_, index) => {
+        const nonce = randomUUID();
+        return { batchId, nonce, signature: signQRPayload(batchCode, nonce), jarIndex: index + 1, jarSizeGrams, active: true };
+      }) });
+      tokens = await tx.qRToken.findMany({ where: { batchId }, orderBy: { jarIndex: 'asc' } });
+    }
+    if (tokens.length !== jarCount || tokens.some((token, index) => !token.active || token.jarIndex !== index + 1 || token.jarSizeGrams !== jarSizeGrams)) {
+      throw new Error('Existing label inventory needs operator reconciliation');
+    }
+    return tokens.map(token => ({ jarIndex: token.jarIndex!, nonce: token.nonce, signature: token.signature,
+      verifyUrl: `${serverAppOrigin(env.NEXT_PUBLIC_APP_URL)}/verify?b=${encodeURIComponent(batchCode)}&n=${token.nonce}&sig=${token.signature}` }));
+  }, { isolationLevel: 'Serializable' });
 }
 
 // ============================================================
@@ -135,7 +129,7 @@ export async function processQRScan(params: {
     include: { batch: true },
   });
 
-  if (!token) {
+  if (!token || token.batch.batchCode !== batchCode) {
     return { valid: false, status: 'NOT_FOUND', reason: 'QR token not found in system.' };
   }
 
@@ -186,7 +180,7 @@ export async function processQRScan(params: {
     batchCode,
     newScanId: scan.id,
     ipRegion,
-  });
+  }).catch(() => { /* A failed advisory scan check must not become an unhandled rejection. */ });
 
   return { valid: true, status: 'OK' };
 }

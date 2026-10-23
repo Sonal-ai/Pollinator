@@ -1,69 +1,31 @@
-import { SignJWT, jwtVerify } from 'jose';
-import { env } from './env';
-
-export interface SessionPayload {
-  walletAddress: string;
-  role: string;
-}
-
-const DEFAULT_SECRET = 'pollinator_super_secure_jwt_secret_min_32_chars!';
-
-function getJwtSecretKey(): Uint8Array {
-  const secretStr = env.JWT_SECRET || process.env.JWT_SECRET || DEFAULT_SECRET;
-  return new TextEncoder().encode(secretStr);
-}
-
-/**
- * Sign a cryptographic JWT session token with 24-hour expiration.
- */
-export async function createSessionToken(payload: SessionPayload): Promise<string> {
-  const secret = getJwtSecretKey();
-  return new SignJWT({
-    walletAddress: payload.walletAddress,
-    role: payload.role,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('24h')
-    .sign(secret);
-}
-
-/**
- * Verify a JWT session token and extract the payload.
- * Returns null if invalid or expired.
- */
-export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
-  if (!token) return null;
-  try {
-    const secret = getJwtSecretKey();
-    const { payload } = await jwtVerify(token, secret, {
-      algorithms: ['HS256'],
-    });
-
-    if (!payload.walletAddress || !payload.role) {
-      return null;
-    }
-
-    return {
-      walletAddress: String(payload.walletAddress),
-      role: String(payload.role),
-    };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Helper to retrieve and verify the active session from server cookies.
- */
+import { verifySessionToken } from './session-token';
+import { resolveAccountSession } from './account-auth';
+import {dashboardLoginPath,DASHBOARD_RETURN_HEADER} from './login-return';
+import type { Role, SessionPayload } from './access-policy';
+export { createSessionToken, verifySessionToken } from './session-token';
+export type { SessionPayload } from './access-policy';
 export async function getSession(): Promise<SessionPayload | null> {
   try {
     const { cookies } = await import('next/headers');
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('pollinator_session');
-    if (!sessionCookie?.value) return null;
-    return await verifySessionToken(sessionCookie.value);
+    const token = (await cookies()).get('pollinator_session')?.value;
+    if (!token) return null;
+    const identity = await verifySessionToken(token);
+    if (!identity) return null;
+    const { prisma } = await import('./db');
+    return await resolveAccountSession(identity, (id) => prisma.dashboardAccount.findUnique({ where: { id } }));
   } catch {
+    // Invalid/revoked cookies, unavailable DB, or missing account schema fail closed.
     return null;
   }
+}
+export async function requireSession(roles?: readonly Role[]): Promise<SessionPayload> {
+  const session = await getSession();
+  const { redirect } = await import('next/navigation');
+  if (!session) {
+    let destination:string|null=null;
+    try { const {headers}=await import('next/headers');destination=(await headers()).get(DASHBOARD_RETURN_HEADER); } catch {}
+    return redirect(dashboardLoginPath(destination));
+  }
+  if (roles && !roles.includes(session.role)) redirect('/dashboard');
+  return session;
 }

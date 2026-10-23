@@ -1,228 +1,84 @@
-import crypto from 'crypto';
-import { env } from './env';
-
-// ============================================================
-// Types
-// ============================================================
-
-export interface IoTSummary {
-  period: string;
-  avgTempC: number;
-  avgHumidityPct: number;
-  weightGainKg: number;
-}
-
-export interface AISummary {
-  modelVersion: string;
-  result: string;
-  confidence: number;
-}
-
+import { canonicalJSON, hashEvidence, isEvidenceCID, checkEvidenceBytes, type EvidenceCheck } from './evidence';
+export interface IoTSummary { period: string; avgTempC: number; avgHumidityPct: number; weightGainKg: number; }
+export interface AISummary { modelVersion: string; result: string; confidence: number; }
 export interface BatchMetadata {
-  batchCode: string;
-  beekeeperPublicName: string;
-  region: string;
-  honeyType: string;
-  harvestDate: string;         // ISO 8601 date string
-  quantityGrams: number;
-  labReportHash?: string;      // Added after lab verification
-  iotSummary?: IoTSummary;     // Added if IoT data available
-  aiSummary?: AISummary;       // Added if disease detection was run
-  packagingDetails?: {
-    jarCount: number;
-    jarSizeGrams: number;
-    packagedAt: string;
-  };
-  version: string;             // Metadata schema version for future compatibility
+  batchCode: string; beekeeperPublicName: string; region: string; honeyType: string;
+  harvestDate: string; quantityGrams: number; labReportHash?: string;
+  iotSummary?: IoTSummary; aiSummary?: AISummary;
+  packagingDetails?: { jarCount: number; jarSizeGrams: number; packagedAt: string };
+  version: string;
 }
+export interface IPFSUploadResult { cid: string; hash: string; }
+export function computeMetadataHash(metadata: BatchMetadata): string { return hashEvidence(canonicalJSON(metadata)); }
+export function computeFileHash(bytes: Buffer): string { return hashEvidence(bytes); }
 
-export interface IPFSUploadResult {
-  cid: string;
-  hash: string; // SHA-256 of the exact JSON string uploaded — commit this on-chain
+async function uploadBytes(bytes: Uint8Array, fileName: string, contentType: string, batchCode: string): Promise<IPFSUploadResult> {
+  if (!process.env.PINATA_JWT || process.env.PINATA_JWT.startsWith('your_')) throw new Error('Evidence storage is not configured');
+  const data = new FormData();
+  data.append('file', new Blob([new Uint8Array(bytes)], { type: contentType }), fileName);
+  data.append('pinataMetadata', JSON.stringify({ name: fileName, keyvalues: { batchCode, schema: 'pollinator-json-v1' } }));
+  data.append('pinataOptions', JSON.stringify({ cidVersion: 1 }));
+  const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + process.env.PINATA_JWT },
+    body: data, signal: AbortSignal.timeout(15_000),
+  });
+  if (!response.ok) throw new Error('Evidence storage rejected the upload');
+  const result: unknown = await response.json();
+  const cid = result && typeof result === 'object' && 'IpfsHash' in result ? result.IpfsHash : null;
+  if (typeof cid !== 'string' || !isEvidenceCID(cid)) throw new Error('Storage returned an invalid CID');
+  return { cid, hash: hashEvidence(bytes) };
 }
-
-// ============================================================
-// Hash Utilities
-// ============================================================
-
-/**
- * Compute a deterministic SHA-256 hash of a BatchMetadata object.
- * The JSON is serialised with sorted keys to ensure determinism
- * regardless of object property insertion order.
- */
-export function computeMetadataHash(metadata: BatchMetadata): string {
-  const jsonStr = JSON.stringify(metadata, Object.keys(metadata).sort());
-  return '0x' + crypto.createHash('sha256').update(jsonStr, 'utf8').digest('hex');
+/** Serialize once and upload those exact UTF-8 bytes, including every nested field. */
+export async function uploadBatchMetadata(metadata: BatchMetadata): Promise<IPFSUploadResult> {
+  const bytes = Buffer.from(canonicalJSON(metadata), 'utf8');
+  return uploadBytes(bytes, 'pollinator-' + metadata.batchCode.replace(/[^a-zA-Z0-9-]/g, '') + '.json', 'application/json', metadata.batchCode);
 }
-
-/**
- * Compute SHA-256 of a Buffer (used for lab certificate PDFs).
- */
-export function computeFileHash(fileBuffer: Buffer): string {
-  return '0x' + crypto.createHash('sha256').update(fileBuffer).digest('hex');
+export async function uploadFileToPinata(fileBuffer: Buffer, fileName: string, batchCode: string): Promise<IPFSUploadResult> {
+  return uploadBytes(fileBuffer, fileName, 'application/pdf', batchCode);
 }
-
-// ============================================================
-// IPFS Upload via Pinata
-// ============================================================
-
-/**
- * Upload batch metadata JSON to Pinata (IPFS pinning service).
- * Returns the IPFS CID and the SHA-256 hash of the JSON string.
- *
- * Pattern: hash is computed BEFORE upload so it can be committed
- * on-chain simultaneously with the CID — both refer to the same file.
- */
-export async function uploadBatchMetadata(
-  metadata: BatchMetadata
-): Promise<IPFSUploadResult> {
-  const jsonStr = JSON.stringify(metadata, Object.keys(metadata).sort());
-  const hash = '0x' + crypto.createHash('sha256').update(jsonStr, 'utf8').digest('hex');
-
-  try {
-    const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${env.PINATA_JWT}`,
-      },
-      body: JSON.stringify({
-        pinataContent: metadata,
-        pinataMetadata: {
-          name: `pollinator-batch-${metadata.batchCode}`,
-          keyvalues: {
-            batchCode: metadata.batchCode,
-            version: metadata.version,
-          },
-        },
-        pinataOptions: {
-          cidVersion: 1,
-        },
-      }),
-      signal: AbortSignal.timeout(6000),
-    });
-
-    if (response.ok) {
-      const data = await response.json() as { IpfsHash: string };
-      return { cid: data.IpfsHash, hash };
-    }
-  } catch (err) {
-    console.warn('[ipfs] Pinata JSON upload failed, using deterministic CID fallback:', (err as Error).message);
-  }
-
-  // Resilient deterministic CID fallback
-  const fallbackCid = 'Qm' + crypto.createHash('sha256').update(jsonStr).digest('hex').slice(0, 44);
-  return { cid: fallbackCid, hash };
-}
-
-/**
- * Upload a file (Buffer) to Pinata IPFS.
- * Used for lab certificate PDFs.
- */
-export async function uploadFileToPinata(
-  fileBuffer: Buffer,
-  fileName: string,
-  batchCode: string
-): Promise<{ cid: string; hash: string }> {
-  const hash = computeFileHash(fileBuffer);
-
-  try {
-    const formData = new FormData();
-    const blob = new Blob([new Uint8Array(fileBuffer)], { type: 'application/pdf' });
-    formData.append('file', blob, fileName);
-    formData.append(
-      'pinataMetadata',
-      JSON.stringify({
-        name: `pollinator-cert-${batchCode}-${fileName}`,
-        keyvalues: { batchCode, type: 'lab_certificate' },
-      })
-    );
-    formData.append('pinataOptions', JSON.stringify({ cidVersion: 1 }));
-
-    const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.PINATA_JWT}`,
-      },
-      body: formData,
-      signal: AbortSignal.timeout(6000),
-    });
-
-    if (response.ok) {
-      const data = await response.json() as { IpfsHash: string };
-      return { cid: data.IpfsHash, hash };
-    }
-  } catch (err) {
-    console.warn('[ipfs] Pinata file upload failed, using deterministic CID fallback:', (err as Error).message);
-  }
-
-  const fallbackCid = 'Qm' + crypto.createHash('sha256').update(fileBuffer).digest('hex').slice(0, 44);
-  return { cid: fallbackCid, hash };
-}
-
-// ============================================================
-// IPFS Fetch & Verification
-// ============================================================
-
-/**
- * Fetch batch metadata from IPFS via the configured gateway.
- * Falls back to a public Cloudflare gateway if the primary is unavailable.
- */
-export async function fetchMetadata(cid: string): Promise<BatchMetadata> {
-  const primaryUrl = `${env.IPFS_GATEWAY}${cid}`;
-  const fallbackUrl = `https://cloudflare-ipfs.com/ipfs/${cid}`;
-
-  let lastError: Error | null = null;
-
-  for (const url of [primaryUrl, fallbackUrl]) {
+export async function fetchEvidenceBytes(cid: string): Promise<Uint8Array> {
+  if (!isEvidenceCID(cid)) throw new Error('A valid evidence CID is required');
+  const primary = process.env.IPFS_GATEWAY || 'https://gateway.pinata.cloud/ipfs/';
+  const gateways = [...new Set([primary, 'https://ipfs.io/ipfs/'])];
+  for (const gateway of gateways) {
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
-      if (response.ok) {
-        return await response.json() as BatchMetadata;
-      }
-    } catch (err) {
-      lastError = err as Error;
-    }
+      const url = new URL(gateway.endsWith('/') ? gateway + cid : gateway + '/' + cid);
+      if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) continue;
+      const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
+      if (!response.ok) continue;
+      const declared = Number(response.headers.get('content-length'));
+      if (declared > 12 * 1024 * 1024) throw new Error('Evidence exceeds retrieval limit');
+      const reader = response.body?.getReader();
+      if (!reader) continue;
+      const chunks: Uint8Array[] = [];
+      let length = 0;
+      try {
+        while (true) {
+          const part = await reader.read();
+          if (part.done) break;
+          length += part.value.byteLength;
+          if (length > 12 * 1024 * 1024) { await reader.cancel(); throw new Error('Evidence exceeds retrieval limit'); }
+          chunks.push(part.value);
+        }
+      } finally { reader.releaseLock(); }
+      return Buffer.concat(chunks);
+    } catch { /* Try the independent gateway; an outage never proves integrity. */ }
   }
-
-  throw new Error(`Failed to fetch IPFS metadata for CID ${cid}: ${lastError?.message}`);
+  throw new Error('Could not retrieve the evidence file');
 }
-
-/**
- * Verify that the on-chain stored hash matches the current IPFS content.
- * This is the tamper-detection check performed on the consumer verify page.
- *
- * @returns { valid: true } if hashes match, { valid: false, reason } otherwise
- */
-export async function verifyMetadataIntegrity(
-  cid: string,
-  expectedHash: string
-): Promise<{ valid: boolean; reason?: string; metadata?: BatchMetadata; networkError?: boolean }> {
-  // Gracefully recognize demo mock CIDs in development or demo presentation
-  if (!cid || cid.includes('QmZ4tDuPp599') || cid.startsWith('QmDemo') || cid.includes('QmZ4t')) {
-    return { valid: true };
-  }
-
-  let metadata: BatchMetadata;
+export async function fetchMetadata(cid: string): Promise<BatchMetadata> {
+  return JSON.parse(Buffer.from(await fetchEvidenceBytes(cid)).toString('utf8')) as BatchMetadata;
+}
+export async function verifyFileIntegrity(cid: string, expectedHash: string): Promise<EvidenceCheck> {
+  try { return checkEvidenceBytes(await fetchEvidenceBytes(cid), expectedHash); }
+  catch { return { valid: false, status: 'UNAVAILABLE', networkError: true, reason: 'The evidence file could not be retrieved.' }; }
+}
+export async function verifyMetadataIntegrity(cid: string, expectedHash: string): Promise<EvidenceCheck & { metadata?: BatchMetadata }> {
   try {
-    metadata = await fetchMetadata(cid);
-  } catch (err) {
-    // Network/gateway errors should not be flagged as tampering/fraud
-    return {
-      valid: true,
-      networkError: true,
-      reason: `Could not reach IPFS gateway: ${(err as Error).message}`,
-    };
-  }
-
-  const actualHash = computeMetadataHash(metadata);
-
-  if (actualHash.toLowerCase() !== expectedHash.toLowerCase()) {
-    return {
-      valid: false,
-      reason: 'Metadata hash mismatch — the IPFS file may have been tampered with.',
-    };
-  }
-
-  return { valid: true, metadata };
+    const bytes = await fetchEvidenceBytes(cid);
+    const check = checkEvidenceBytes(bytes, expectedHash);
+    if (!check.valid) return check;
+    const metadata = JSON.parse(Buffer.from(bytes).toString('utf8')) as BatchMetadata;
+    return { ...check, metadata };
+  } catch { return { valid: false, status: 'UNAVAILABLE', networkError: true, reason: 'Metadata could not be retrieved or parsed.' }; }
 }

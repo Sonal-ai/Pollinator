@@ -7,9 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// One independently deployed cooperative/cluster per database. Startup checks refuse a mismatched stack.
+model DeploymentIdentity {
+  id               String @id @default("primary")
+  clusterId        String @unique
+  chainId          Int
+  registryAddress  String
+  forwarderAddress String
+  genesisHash      String
+  createdAt        DateTime @default(now())
+}
+
+// Wallet-signed setup, separate from the immutable active-cluster binding.
+model RegistryDeployment {
+  id            String @id @default(cuid())
+  initiatedBy   String
+  administrator String
+  relayer       String
+  actors        Json
+  chainId       Int
+  genesisHash   String
+  templateHash  String
+  state         String @default("IN_PROGRESS")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  steps         RegistryDeploymentStep[]
+  @@index([administrator, createdAt])
+}
+
+model RegistryDeploymentStep {
+  id               String @id @default(cuid())
+  deploymentId     String
+  deployment       RegistryDeployment @relation(fields: [deploymentId], references: [id], onDelete: Restrict)
+  ordinal          Int
+  kind             String
+  state            String @default("PENDING")
+  nonce            Int?
+  target           String?
+  predictedAddress String?
+  data             String?
+  gasLimit         String?
+  maxFeePerGas     String?
+  priorityFee      String?
+  txHash           String? @unique
+  receiptBlock     Int?
+  receiptBlockHash String?
+  lastError        String?
+  failedAttempts   Json @default("[]")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  @@unique([deploymentId, ordinal])
+}
+
 // ============================================================
 // User / Identity Layer
 // ============================================================
+
+model DashboardAccount {
+  id             String    @id @default(cuid())
+  identifier     String    @unique // Normalized email or E.164 phone; provisioned by a trusted operator
+  passwordHash   String
+  role           String    // Server-managed application role
+  walletAddress  String    @unique
+  beekeeperId    String?
+  beekeeper      Beekeeper? @relation(fields: [beekeeperId], references: [id], onDelete: Restrict)
+  active         Boolean   @default(true)
+  sessionVersion Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
 
 model WhatsAppUser {
   id        String   @id @default(cuid())
@@ -17,6 +83,110 @@ model WhatsAppUser {
   language  String   @default("en")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model WhatsAppConversation {
+  waId      String @id
+  state     String
+  data      Json
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+}
+
+model WhatsAppInbox {
+  id            String @id
+  sequence      BigInt @unique @default(autoincrement())
+  waId          String
+  payload       Json
+  payloadHash   String
+  state         String @default("PENDING")
+  attempts      Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  leaseToken    String?
+  leaseUntil    DateTime?
+  lastError     String?
+  processedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  outgoing      WhatsAppOutbox[]
+
+  @@index([waId, sequence])
+  @@index([state, nextAttemptAt])
+}
+
+model WhatsAppOutbox {
+  id                String @id @default(cuid())
+  sequence          BigInt @unique @default(autoincrement())
+  inboxId           String
+  inbox             WhatsAppInbox @relation(fields: [inboxId], references: [id], onDelete: Restrict)
+  waId              String
+  payload           Json
+  payloadHash       String
+  state             String @default("PENDING")
+  attempts          Int @default(0)
+  nextAttemptAt     DateTime @default(now())
+  leaseToken        String?
+  leaseUntil        DateTime?
+  providerMessageId String? @unique
+  providerErrorCode Int?
+  lastError         String?
+  acceptedAt        DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  reviewedBy        String?
+  reviewReason      String?
+  reviewedAt        DateTime?
+  sendAttempts      WhatsAppSendAttempt[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([waId, sequence])
+  @@index([state, nextAttemptAt])
+}
+
+model WhatsAppDeliveryEvent {
+  id                String @id
+  providerMessageId String
+  waId              String
+  status            String
+  observedAt        DateTime
+  payload           Json
+  appliedAt         DateTime?
+  createdAt         DateTime @default(now())
+
+  @@index([providerMessageId, waId])
+  @@index([appliedAt, createdAt])
+}
+
+model WhatsAppSendAttempt {
+  id                String @id @default(cuid())
+  outboxId          String
+  outbox            WhatsAppOutbox @relation(fields: [outboxId], references: [id], onDelete: Restrict)
+  state             String @default("SENDING")
+  leaseUntil        DateTime
+  providerMessageId String? @unique
+  providerErrorCode Int?
+  lastError         String?
+  acceptedAt        DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([outboxId, createdAt])
+}
+
+model WhatsAppReviewEvent {
+  id           String @id @default(cuid())
+  targetKind   String
+  targetId     String
+  action       String
+  accountId    String
+  reason       String
+  previousState String
+  createdAt    DateTime @default(now())
+
+  @@index([targetKind, targetId, createdAt])
 }
 
 model Beekeeper {
@@ -27,6 +197,7 @@ model Beekeeper {
   hivesCount Int?
   practices  String?
   kvicId     String?
+  dashboardAccounts DashboardAccount[]
   wallet     String?      // Polygon wallet address
   hives      Hive[]
   batches    HoneyBatch[]
@@ -48,6 +219,7 @@ model Hive {
   latitude     Float?          // Encrypted at app layer before storage
   longitude    Float?          // Encrypted at app layer before storage
   readings     SensorReading[]
+  deviceCredential DeviceCredential?
   inferences   AIInference[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
@@ -63,8 +235,35 @@ model SensorReading {
   pressureHPa  Float?
   batteryPct   Float?
   timestamp    DateTime @default(now())
+  receivedAt   DateTime @default(now())
+  source       TelemetrySource @default(LEGACY)
+  credentialId String?
+  credential   DeviceCredential? @relation(fields: [credentialId], references: [id], onDelete: Restrict)
+  epoch        String?
+  sequence     Int?
+  packetHash   String?
 
   @@index([hiveId, timestamp])
+  @@unique([credentialId, epoch, sequence])
+}
+
+enum TelemetrySource {
+  DEVICE
+  SIMULATED
+  LEGACY
+}
+
+model DeviceCredential {
+  id              String @id @default(cuid())
+  hiveId          String @unique
+  hive            Hive @relation(fields: [hiveId], references: [id], onDelete: Restrict)
+  encryptedSecret String
+  epoch           String
+  source          TelemetrySource @default(SIMULATED)
+  active          Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  readings        SensorReading[]
 }
 
 // ============================================================
@@ -93,7 +292,7 @@ model AIInference {
 
 model HoneyBatch {
   id                String         @id @default(cuid())
-  batch_id_hash     String         @unique  // SHA-256 of batchCode (used on-chain)
+  batch_id_hash     String         @unique  // keccak256 of UTF-8 batchCode (used on-chain)
   batchCode         String         @unique  // Human-readable: "HC-2026-MH01-000123"
   beekeeperId       String?
   beekeeper         Beekeeper?     @relation(fields: [beekeeperId], references: [id])
@@ -111,6 +310,15 @@ model HoneyBatch {
   metadataCID       String?        // IPFS CID for batch metadata JSON
   metadataHash      String?        // SHA-256 of metadata JSON (for tamper detection)
   txHash            String?        // Blockchain tx hash of createBatch()
+  jarCount          Int            @default(0)
+  jarSizeGrams      Int            @default(0)
+  packagingTxHash   String?
+  version           Int            @default(0)
+  pendingOperationId String?       @unique
+  pendingOperation  ChainOperation? @relation("PendingOperation", fields: [pendingOperationId], references: [id], onDelete: SetNull)
+  chainOperations   ChainOperation[] @relation("BatchOperations")
+  recallReason      String?
+  recallTxHash      String?
   certificates      Certificate[]
   custodyEvents     CustodyEvent[]
   qrTokens          QRToken[]
@@ -130,6 +338,7 @@ model Certificate {
   certificateHash String     // SHA-256 of the PDF
   ipfsCID         String     // IPFS CID where PDF is stored
   txHash          String?    // Blockchain tx hash of verifyLab()
+  chainOperationId String?   @unique
   createdAt       DateTime   @default(now())
 
   @@index([batchId])
@@ -143,9 +352,67 @@ model CustodyEvent {
   to        String     // Wallet address
   stage     String     // The BatchStatus after this transfer
   txHash    String?    // Blockchain tx hash of transferCustody()
+  chainOperationId String? @unique
   createdAt DateTime   @default(now())
 
   @@index([batchId, createdAt])
+}
+
+enum ChainOperationState {
+  AWAITING_SIGNATURE
+  READY
+  SIGNED
+  SUBMITTED
+  CONFIRMED
+  FAILED
+  NEEDS_REVIEW
+}
+
+model ChainOperation {
+  id                    String @id @default(cuid())
+  batchId               String
+  batch                 HoneyBatch @relation("BatchOperations", fields: [batchId], references: [id], onDelete: Restrict)
+  pendingBatch          HoneyBatch? @relation("PendingOperation")
+  kind                  String
+  initiatedBy           String
+  actorAddress          String
+  requestKey            String @unique
+  requestHash           String
+  payload               Json
+  expectedVersion       Int
+  chainId               Int
+  registryAddress       String
+  forwarderAddress      String
+  genesisHash           String
+  calldata              String
+  state                 ChainOperationState @default(AWAITING_SIGNATURE)
+  actorLock             String? @unique
+  authorization         Json?
+  authorizationDeadline DateTime?
+  actorNonce            String?
+  signature             String?
+  signedTransaction     String?
+  signerNonce           Int?
+  signerAddress         String?
+  txHash                String? @unique
+  receiptBlock          Int?
+  receiptBlockHash      String?
+  attempts              Int @default(0)
+  nextAttemptAt         DateTime @default(now())
+  lastError             String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([state, nextAttemptAt])
+  @@index([actorAddress, createdAt])
+  @@index([batchId, createdAt])
+}
+
+model ChainWorkerLease {
+  id        String @id
+  token     String
+  expiresAt DateTime
+  nextNonce Int?
 }
 
 // ============================================================
@@ -165,6 +432,7 @@ model QRToken {
   createdAt    DateTime   @default(now())
 
   @@index([batchId])
+  @@unique([batchId, jarIndex])
 }
 
 model QRScan {

@@ -6,7 +6,7 @@ const path = require("path");
 async function main() {
   const networkName = hre.network.name;
   const isLocal = networkName === "localhost" || networkName === "hardhat";
-  const currencySymbol = isLocal ? "ETH" : "MATIC";
+  const currencySymbol = isLocal ? "ETH" : "POL";
 
   console.log(`🚀 Deploying HoneyChain to ${isLocal ? "Local Hardhat (" + networkName + ")" : "Polygon Amoy"}...\n`);
 
@@ -19,25 +19,37 @@ async function main() {
   const balance = await ethers.provider.getBalance(deployer.address);
   console.log(`Balance: ${ethers.formatEther(balance)} ${currencySymbol}\n`);
 
+  // Validate the complete enrollment plan before spending gas on any deployment.
+  const localActors = isLocal ? (await ethers.getSigners()).slice(1, 6) : [];
+  const roleNames = ["BEEKEEPER", "LAB", "PROCESSOR", "DISTRIBUTOR", "RETAILER"];
+  const actors = {};
+  for (const [index, name] of roleNames.entries()) {
+    const address = isLocal ? localActors[index]?.address : process.env[name + "_ACTOR_ADDRESS"];
+    if (!address) { console.log(`Pending ${name} enrollment: configure ${name}_ACTOR_ADDRESS.`); continue; }
+    if (!ethers.isAddress(address) || address === ethers.ZeroAddress || address.toLowerCase() === deployer.address.toLowerCase()) throw new Error(`Invalid or administrator-shared ${name} actor address`);
+    if (Object.values(actors).some(value => value.toLowerCase() === address.toLowerCase())) throw new Error("Actor roles must use distinct addresses");
+    actors[name.toLowerCase()] = address;
+  }
+
+  const Forwarder = await ethers.getContractFactory("HoneyChainForwarder");
+  const forwarder = await Forwarder.deploy();
+  await forwarder.waitForDeployment();
+  const forwarderAddress = await forwarder.getAddress();
   const HoneyChain = await ethers.getContractFactory("HoneyChain");
-  const honeyChain = await HoneyChain.deploy();
+  const honeyChain = await HoneyChain.deploy(forwarderAddress);
   await honeyChain.waitForDeployment();
 
   const contractAddress = await honeyChain.getAddress();
 
   console.log("✅ HoneyChain deployed to:", contractAddress);
   
-  // Grant all operational roles to deployer so backend relayer can sign on-chain events
-  console.log("⚙️  Granting supply chain roles to deployer relayer...");
-  const tx1 = await honeyChain.grantBeekeeperRole(deployer.address);
-  await tx1.wait();
-  const tx2 = await honeyChain.grantLabRole(deployer.address);
-  await tx2.wait();
-  const tx3 = await honeyChain.grantProcessorRole(deployer.address);
-  await tx3.wait();
-  const tx4 = await honeyChain.grantDistributorRole(deployer.address);
-  await tx4.wait();
-  console.log("✅ Supply chain roles successfully granted to deployer:", deployer.address);
+  // Local fixtures use distinct actors. Testnet actors must be explicitly configured.
+  // The deployer is an administrator, not the operational gas relayer.
+  for (const [name, address] of Object.entries(actors)) {
+    await (await honeyChain.grantRole(await honeyChain[name.toUpperCase() + "_ROLE"](), address)).wait();
+  }
+  console.log("Forwarder:", forwarderAddress);
+  console.log("Actor addresses:", actors);
 
   if (!isLocal) {
     console.log("📡 Polygonscan:", `https://amoy.polygonscan.com/address/${contractAddress}`);
@@ -70,12 +82,21 @@ async function main() {
 
   networks[currentNetworkKey] = {
     address: contractAddress,
+    forwarder: forwarderAddress,
+    registryVersion: 2,
+    chainId: Number((await ethers.provider.getNetwork()).chainId),
+    genesisHash: (await ethers.provider.getBlock(0)).hash,
+    actors,
     deployer: deployer.address,
     deployedAt: new Date().toISOString(),
   };
 
   const deployedInfo = {
     address: contractAddress,
+    forwarder: forwarderAddress,
+    registryVersion: 2,
+    chainId: Number((await ethers.provider.getNetwork()).chainId),
+    genesisHash: (await ethers.provider.getBlock(0)).hash,
     deployer: deployer.address,
     network: currentNetworkKey,
     deployedAt: new Date().toISOString(),
