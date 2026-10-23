@@ -1,8 +1,8 @@
 # Final local integration
 
-Updated 22 October 2026. Current user scope: finish the core application locally, excluding public deployment and IoT. Public-network blockers in documents 15–19 and `qa/main-goal-completion-audit.json` belong to the previous, broader scope.
+Updated 23 October 2026. Current user scope: finish the core application locally, excluding public deployment and IoT, and verify a real MetaMask approval through the local relayer and receipt. Public-network blockers in documents 15–19 and `qa/main-goal-completion-audit.json` belong to the previous, broader scope.
 
-**Current result:** the revised local software integration and browser acceptance are complete. The user-requested fresh HTTP tab enabled testing after the old encoded error page was rejected. The core browser lifecycle has ten confirmed local-chain operations, and the final recall-copy rebuild passed browser inspection. The app and compiled local chain worker are running. Public deployment, IoT and external validation below remain excluded or explicitly unverified.
+**Current result:** the revised local software integration and browser acceptance are complete. The earlier core browser lifecycle has ten confirmed local-chain operations. On 23 October, a real external MetaMask signature also completed one isolated synthetic processing operation through the production-mode web app, independent background relayer, successful local receipt, database projection and confirmed browser UI. Public deployment, IoT and the remaining external validation below stay excluded or explicitly unverified.
 
 ## Included flow
 
@@ -82,8 +82,18 @@ Production mode requires an external enrolled wallet for interactive approval. F
 
 The production browser pass instead prepared actions in the UI and used `node scripts/approve-local-ui-fixture.cjs OPERATION_ID` from the operator terminal. This helper refuses non-local chain/database contexts, unnamed demo actors and already-confirmed operations; it uses only the unlocked local fixture signer and saves actual receipts. It creates no production signing endpoint.
 
+## Combined external MetaMask verification, 23 October
+
+The owner signed from `0x06a7E556dA2e1e7C40d0C3a19DDB6ED7cC7e4607` in Chrome. The actual application prepared and accepted the EIP-712 approval; its independent compiled worker submitted it through the trusted forwarder using a distinct local relayer. The external actor was not an unlocked Hardhat account, and no fixture actor signature or impersonation was used for the tested approval. The web fixture-signing button remained disabled.
+
+The synthetic batch `MM-E2E-1792777305782` advanced from HARVESTED to PROCESSED while the processor retained custody. Transaction `0x475e950733154a4237f2e8f6321b21600cfcf2b7b4da4a467bd7a8c436791ed6` succeeded in local block 7 on chain 31337. All 18 backend/receipt checks passed, including signer recovery, separate relayer, canonical block, forwarder approval/action events, on-chain state, database version/custody-event projection and authenticated HTTP confirmation. Chrome visibly displayed “Confirmed on-chain and applied to the registry.” with the same transaction hash.
+
+The existing sealed Windows standalone bundle ran in production mode with a fresh PostgreSQL test schema and a password-protected loopback Redis 3.0.504 fixture. This fixture version is not a production Redis recommendation. The original demo environment, chain manifest and records were preserved. The actor's local balance and transaction count stayed unchanged. No public transaction was submitted and no POL was spent.
+
+Machine-readable evidence, build identity and exact check results: [combined application report](qa/metamask-local-e2e.json). The preceding isolated suites passed 32 contract, 10 chain integration, 7 wallet/API and 7 wallet-deployment integration tests. This combined pass proves one local application action with an external wallet; it does not establish public Amoy deployment or external signatures for every supply-chain role.
+
 ## Exclusions and remaining external validation
 
 Public hosting, public-chain deployment, IoT, sensor telemetry and physical hardware acceptance are excluded. Existing hardware/deployment pages remain separate work and are not needed for the core flow.
 
-Real Meta callback activation/delivery, external MetaMask acceptance, field interviews, team/institution details and a beneficiary pilot remain unverified. Local rehearsal must not be presented as proof of these activities.
+Real Meta callback activation/delivery, public-network wallet/deployment acceptance, field interviews, team/institution details and a beneficiary pilot remain unverified. Local rehearsal must not be presented as proof of these activities.

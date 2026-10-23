@@ -41,4 +41,4 @@ Historical lint reports originally embedded source snapshots, absolute machine p
 
 The four original submission-reference screenshots are retained locally and excluded from GitHub publication. Their form requirements are transcribed in the dossier documentation. Published application screenshots show the synthetic local acceptance flow.
 
-Real MetaMask approval is still pending. WhatsApp activation and real delivery remain deferred following the user's number removal. No public deployment or physical IoT completion is claimed by these pushes.
+At the initial phase publication, real MetaMask approval was still pending. The subsequent 23 October [combined local verification](qa/metamask-local-e2e.json) now proves an external MetaMask approval through the actual app, local relayer, receipt and confirmed browser UI for one synthetic processing action. Public-network approval/deployment remains unverified. WhatsApp activation and real delivery remain deferred following the user's number removal. No public deployment or physical IoT completion is claimed by these pushes.

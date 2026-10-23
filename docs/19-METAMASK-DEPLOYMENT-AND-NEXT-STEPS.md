@@ -1,5 +1,7 @@
 # MetaMask deployment and next implementation steps
 
+Follow-up, 23 October 2026: external MetaMask approval now passes through the actual production-mode app, separate local relayer, canonical local receipt and confirmed Chrome UI for one synthetic processing action. See [final local integration](20-FINAL-LOCAL-INTEGRATION.md#combined-external-metamask-verification-23-october) and [machine-readable evidence](qa/metamask-local-e2e.json). The public Amoy deployment and wallet-enrollment steps below remain unverified; this local result does not spend public funds or activate a public service.
+
 Updated 22 October 2026. IoT stays with the teammate and is outside this release sequence.
 
 ## Implemented and verified

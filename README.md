@@ -2,17 +2,17 @@
 
 Honey Chain is a prototype for beekeeper cooperatives: record a honey harvest, obtain an independent laboratory attestation, track custody, package a bounded jar inventory, and let consumers inspect evidence and recalls using a QR label. WhatsApp and smart-hive assistance support the farmer workflow.
 
-**Current status: 22 October 2026.** Local software integration is working for actor-approved batch operations and authenticated phone-to-MQTT delivery. No public chain deployment, completed field pilot, physical device validation or measured AI accuracy is claimed. Team, institution and beneficiary details are pending; fieldwork has not started.
+**Current status: 23 October 2026.** Local software integration is working for actor-approved batch operations and authenticated phone-to-MQTT delivery. A real MetaMask signature now completes one synthetic local processing operation through the production-mode web app, separate relayer, successful receipt and confirmed browser UI; see the [combined verification evidence](docs/qa/metamask-local-e2e.json). No public chain deployment, completed field pilot, physical device validation or measured AI accuracy is claimed. Team, institution and beneficiary details are pending; fieldwork has not started.
 
 ## Documentation
 
 **Current scope:** [final local integration](docs/20-FINAL-LOCAL-INTEGRATION.md), excluding public deployment and IoT at the user's request. Local rehearsal and browser acceptance are tracked separately there. The earlier [checklist](docs/15-MAIN-FLOW-VERIFICATION.md) includes public-network gates outside this revised scope. Main `.env` and isolated `.env.integration` remain separate.
 
-The [phased publication record](docs/21-PHASED-PUBLICATION.md) explains the separate commits/pushes, fresh validation, private-file exclusions and separate IoT publication approval. External MetaMask approval is still pending; WhatsApp activation remains deferred.
+The [phased publication record](docs/21-PHASED-PUBLICATION.md) explains the separate commits/pushes, fresh validation, private-file exclusions and separate IoT publication approval. External MetaMask approval has passed for the isolated local operation; public-network approval/deployment remains unverified and WhatsApp activation remains deferred.
 
 The [WhatsApp delivery runbook](docs/16-WHATSAPP-DELIVERY-RUNBOOK.md) covers the new durable inbox/outbox, worker activation and administrator review. Local recovery tests pass; public callback activation and real phone delivery remain pending.
 
-The [HTTP rehearsal and Amoy handoff](docs/17-HTTP-REHEARSAL-AND-AMOY-HANDOFF.md) records the current standalone app's full local lifecycle, signed-webhook integration, actual IPFS round trip and fail-closed Redis recovery, plus a seven-minute presentation sequence. Browser/wallet and public-network acceptance remain open.
+The [HTTP rehearsal and Amoy handoff](docs/17-HTTP-REHEARSAL-AND-AMOY-HANDOFF.md) records the standalone app's earlier full local lifecycle, signed-webhook integration, actual IPFS round trip and fail-closed Redis recovery, plus a seven-minute presentation sequence. Subsequent local browser/wallet acceptance is recorded in [final local integration](docs/20-FINAL-LOCAL-INTEGRATION.md); public-network acceptance remains open.
 
 The [release container checkpoint](docs/18-RELEASE-CONTAINER-CHECKPOINT.md) records fresh Linux images, merged configuration, restricted database grants and worker health/shutdown checks. Full evidence writes require the new evidence-storage override; public activation remains pending.
 
