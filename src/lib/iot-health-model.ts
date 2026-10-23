@@ -1,159 +1,34 @@
-// ============================================================
-// Pollinator IoT Hive Health & Diagnostic Intelligence Model
-// Evaluates Brood Thermoregulation, Humidity Equilibrium & Nectar Weight
-// ============================================================
-
+// Versioned engineering rules. These are configurable inspection prompts, not disease diagnoses.
 export interface HiveTelemetry {
-  tempC: number;
-  humidityPct: number;
-  weightKg: number;
-  batteryPct?: number | null;
-  previousWeightKg?: number | null;
+  tempC?: number | null; humidityPct?: number | null; weightKg?: number | null;
+  batteryPct?: number | null; previousWeightKg?: number | null;
+  timestamp?: Date | string; previousTimestamp?: Date | string; source?: string;
 }
-
 export interface HiveHealthAssessment {
-  score: number; // 0 to 100
-  status: 'OPTIMAL' | 'MODERATE_STRESS' | 'HIGH_RISK' | 'CRITICAL';
-  statusColor: string;
-  metrics: {
-    tempScore: number;
-    tempStatus: 'OPTIMAL' | 'CHILLED' | 'OVERHEATED' | 'CRITICAL_COLD';
-    humidityScore: number;
-    humidityStatus: 'OPTIMAL' | 'TOO_DRY' | 'DAMP_FUNGAL_RISK';
-    weightDeltaKg: number;
-    weightStatus: 'STEADY' | 'ACTIVE_NECTAR_FLOW' | 'RAPID_WEIGHT_LOSS_SWARM';
-  };
-  insights: string[];
-  recommendations: string[];
+  ruleVersion: string; score: number | null;
+  status: 'WITHIN_RANGE' | 'ATTENTION' | 'INSPECT' | 'INSUFFICIENT_DATA'; statusColor: string;
+  metrics: { tempScore: number | null; tempStatus: string; humidityScore: number | null; humidityStatus: string; weightDeltaKg: number | null; weightStatus: string };
+  insights: string[]; recommendations: string[];
 }
-
-/**
- * Evaluates raw sensor data against biological apiculture thresholds.
- * Honeybee brood nests naturally regulate at 34.5°C - 35.5°C and 50% - 65% RH.
- */
-export function calculateHiveHealth(telemetry: HiveTelemetry): HiveHealthAssessment {
-  const { tempC, humidityPct, weightKg, previousWeightKg } = telemetry;
-
-  // 1. Thermoregulation Scoring (Weight: 45%)
-  let tempScore = 100;
-  let tempStatus: 'OPTIMAL' | 'CHILLED' | 'OVERHEATED' | 'CRITICAL_COLD' = 'OPTIMAL';
-
-  if (tempC >= 34.0 && tempC <= 36.0) {
-    tempScore = 100;
-    tempStatus = 'OPTIMAL';
-  } else if (tempC > 36.0 && tempC <= 38.0) {
-    tempScore = Math.max(40, 100 - (tempC - 36.0) * 25);
-    tempStatus = 'OVERHEATED';
-  } else if (tempC >= 31.0 && tempC < 34.0) {
-    tempScore = Math.max(40, 100 - (34.0 - tempC) * 18);
-    tempStatus = 'CHILLED';
-  } else if (tempC < 31.0) {
-    tempScore = Math.max(10, 40 - (31.0 - tempC) * 10);
-    tempStatus = 'CRITICAL_COLD';
-  } else {
-    tempScore = 20;
-    tempStatus = 'OVERHEATED';
-  }
-
-  // 2. Humidity Equilibrium Scoring (Weight: 30%)
-  let humidityScore = 100;
-  let humidityStatus: 'OPTIMAL' | 'TOO_DRY' | 'DAMP_FUNGAL_RISK' = 'OPTIMAL';
-
-  if (humidityPct >= 50 && humidityPct <= 65) {
-    humidityScore = 100;
-    humidityStatus = 'OPTIMAL';
-  } else if (humidityPct > 65) {
-    humidityScore = Math.max(25, 100 - (humidityPct - 65) * 2.5);
-    humidityStatus = 'DAMP_FUNGAL_RISK';
-  } else {
-    humidityScore = Math.max(30, 100 - (50 - humidityPct) * 2.5);
-    humidityStatus = 'TOO_DRY';
-  }
-
-  // 3. Weight Stability & Nectar Dynamics (Weight: 25%)
-  const prevWeight = previousWeightKg ?? weightKg;
-  const weightDeltaKg = Number((weightKg - prevWeight).toFixed(2));
-  let weightScore = 95;
-  let weightStatus: 'STEADY' | 'ACTIVE_NECTAR_FLOW' | 'RAPID_WEIGHT_LOSS_SWARM' = 'STEADY';
-
-  if (weightDeltaKg < -1.5) {
-    weightScore = 30;
-    weightStatus = 'RAPID_WEIGHT_LOSS_SWARM';
-  } else if (weightDeltaKg > 0.4) {
-    weightScore = 100;
-    weightStatus = 'ACTIVE_NECTAR_FLOW';
-  } else {
-    weightScore = 95;
-    weightStatus = 'STEADY';
-  }
-
-  // Composite Score
-  const compositeScore = Math.round(
-    tempScore * 0.45 + humidityScore * 0.3 + weightScore * 0.25
-  );
-
-  let status: 'OPTIMAL' | 'MODERATE_STRESS' | 'HIGH_RISK' | 'CRITICAL' = 'OPTIMAL';
-  let statusColor = '#10b981';
-
-  if (compositeScore >= 85) {
-    status = 'OPTIMAL';
-    statusColor = '#10b981';
-  } else if (compositeScore >= 70) {
-    status = 'MODERATE_STRESS';
-    statusColor = '#f59e0b';
-  } else if (compositeScore >= 50) {
-    status = 'HIGH_RISK';
-    statusColor = '#f97316';
-  } else {
-    status = 'CRITICAL';
-    statusColor = '#ef4444';
-  }
-
-  const insights: string[] = [];
-  const recommendations: string[] = [];
-
-  if (tempStatus === 'OPTIMAL') {
-    insights.push('Optimal brood thermoregulation (34.5°C - 35.5°C). Strong nurse bee population.');
-  } else if (tempStatus === 'OVERHEATED') {
-    insights.push('Elevated internal temperature. Risk of comb melting or excessive fanning fatigue.');
-    recommendations.push('Provide afternoon shade or open top ventilation.');
-  } else if (tempStatus === 'CHILLED') {
-    insights.push('Brood nest chilled below 34°C. Elevated risk of pupal mortality.');
-    recommendations.push('Reduce entrance reducer size and inspect cluster density.');
-  } else {
-    insights.push('Severe low temperature. Potential colony absconding or freezing risk.');
-    recommendations.push('Urgent manual hive inspection needed.');
-  }
-
-  if (humidityStatus === 'DAMP_FUNGAL_RISK') {
-    insights.push('High moisture levels (>65%). High condensation risk favorable to Chalkbrood.');
-    recommendations.push('Elevate bottom board and verify upper ventilation quilt.');
-  } else if (humidityStatus === 'TOO_DRY') {
-    insights.push('Low relative humidity (<50%). Uncapped brood susceptible to desiccation.');
-    recommendations.push('Place clean water source near apiary.');
-  }
-
-  if (weightStatus === 'RAPID_WEIGHT_LOSS_SWARM') {
-    insights.push(`Sudden weight drop of ${Math.abs(weightDeltaKg)} kg detected. Swarm departure suspected.`);
-    recommendations.push('Scan nearby branches for swarms and check for emergency queen cells.');
-  } else if (weightStatus === 'ACTIVE_NECTAR_FLOW') {
-    insights.push(`Consistent weight gain (+${weightDeltaKg} kg) indicating active local nectar flow.`);
-    recommendations.push('Ensure sufficient super space to prevent honey-bound broodnest.');
-  }
-
-  return {
-    score: compositeScore,
-    status,
-    statusColor,
-    metrics: {
-      tempScore: Math.round(tempScore),
-      tempStatus,
-      humidityScore: Math.round(humidityScore),
-      humidityStatus,
-      weightDeltaKg,
-      weightStatus,
-    },
-    insights,
-    recommendations,
-  };
+export function calculateHiveHealth(t: HiveTelemetry, now = new Date()): HiveHealthAssessment {
+  const currentTime = t.timestamp ? new Date(t.timestamp).getTime() : NaN;
+  const age = now.getTime() - currentTime;
+  const usable = Number.isFinite(t.tempC) && Number.isFinite(t.humidityPct) && Number.isFinite(age) && age >= -300000 && age <= 1800000 && ['DEVICE','SIMULATED'].includes(t.source || '');
+  const tempStatus = t.tempC == null ? 'MISSING' : t.tempC < 34 ? 'BELOW_CONFIGURED_BAND' : t.tempC > 36 ? 'ABOVE_CONFIGURED_BAND' : 'IN_CONFIGURED_BAND';
+  const humidityStatus = t.humidityPct == null ? 'MISSING' : t.humidityPct < 50 ? 'BELOW_CONFIGURED_BAND' : t.humidityPct > 65 ? 'ABOVE_CONFIGURED_BAND' : 'IN_CONFIGURED_BAND';
+  const previousTime = t.previousTimestamp ? new Date(t.previousTimestamp).getTime() : NaN;
+  const interval = currentTime - previousTime;
+  const delta = Number.isFinite(t.weightKg) && Number.isFinite(t.previousWeightKg) && interval >= 60000 && interval <= 86400000
+    ? Number((t.weightKg! - t.previousWeightKg!).toFixed(2)) : null;
+  const tempScore = t.tempC == null ? null : tempStatus === 'IN_CONFIGURED_BAND' ? 100 : Math.max(0, 100 - Math.abs(t.tempC - 35) * 15);
+  const humidityScore = t.humidityPct == null ? null : humidityStatus === 'IN_CONFIGURED_BAND' ? 100 : Math.max(0, 100 - Math.abs(t.humidityPct - 57.5) * 2);
+  const score = usable ? Math.round(tempScore! * 0.6 + humidityScore! * 0.4) : null;
+  const status = score == null ? 'INSUFFICIENT_DATA' : score < 50 ? 'INSPECT' : score < 85 ? 'ATTENTION' : 'WITHIN_RANGE';
+  const insights = score == null ? ['Fresh, attributed temperature and humidity readings are required. Missing or stale data is not a healthy result.']
+    : ['Sensor readings were compared with prototype configuration bands. This does not establish colony health, disease or nectar flow.'];
+  if (delta != null) insights.push('Observed weight change: ' + delta + ' kg over ' + Math.round(interval / 60000) + ' minutes. Harvests, rain and handling can change scale weight.');
+  if (t.source === 'SIMULATED') insights.unshift('Synthetic readings: demonstration only.');
+  return { ruleVersion: 'inspection-rules-v2', score, status, statusColor: score == null ? '#94a3b8' : score < 50 ? '#ef4444' : score < 85 ? '#f59e0b' : '#10b981',
+    metrics: { tempScore, tempStatus, humidityScore, humidityStatus, weightDeltaKg: delta, weightStatus: delta == null ? 'INSUFFICIENT_COMPARABLE_DATA' : 'OBSERVED_CHANGE' },
+    insights, recommendations: score == null ? ['Check device enrollment, placement, clock, connectivity and sensor calibration.'] : status === 'WITHIN_RANGE' ? [] : ['Check sensor placement and calibration, then inspect the hive with a trained beekeeper. Sensor rules do not prescribe treatment.'] };
 }

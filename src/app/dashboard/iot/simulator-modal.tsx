@@ -1,298 +1,34 @@
 'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Radio, Zap, AlertTriangle, CheckCircle2, Flame, Wind, ArrowRight, Loader2, RefreshCw } from 'lucide-react';
 
-interface SimulatorModalProps {
-  deviceId: string;
-}
-
-export function IotSimulatorModal({ deviceId }: SimulatorModalProps) {
+export function IotSimulatorModal({ devices }: { devices: string[] }) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [lastResult, setLastResult] = useState<string | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamCount, setStreamCount] = useState(0);
-
-  const [temp, setTemp] = useState(35.0);
-  const [humidity, setHumidity] = useState(58.0);
-  const [weight, setWeight] = useState(46.5);
-  const [battery, setBattery] = useState(92);
-
-  async function sendTelemetry(t: number, h: number, w: number, b: number, presetName: string) {
-    setLoading(true);
-    setLastResult(null);
-
+  const [deviceId, setDeviceId] = useState(devices[0] || '');
+  const [open, setOpen] = useState(false), [busy, setBusy] = useState(false), [message, setMessage] = useState('');
+  const [temp, setTemp] = useState(35), [humidity, setHumidity] = useState(58), [weight, setWeight] = useState(40);
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setBusy(true); setMessage('');
     try {
-      const res = await fetch('/api/sensor-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer pollinator-iot-device-secret',
-        },
-        body: JSON.stringify({
-          hiveId: deviceId,
-          deviceId: deviceId,
-          temperatureC: t,
-          humidityPct: h,
-          weightKg: w,
-          batteryPct: b,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setLastResult(`✅ Transmitted ${presetName}: Score ${data.healthAssessment?.score}% (${data.healthAssessment?.status})`);
-        router.refresh();
-      } else {
-        setLastResult('❌ Failed to transmit packet');
-      }
-    } catch {
-      setLastResult('❌ Network error during transmission');
-    } finally {
-      setLoading(false);
-    }
+      const response = await fetch('/api/iot/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId, metrics: { tempC: temp, humidityPct: humidity, weightKg: weight, batteryPct: 90 } }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Simulation failed');
+      setMessage('Synthetic packet saved. It remains labelled SIMULATED in history.'); router.refresh();
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Simulation unavailable'); }
+    finally { setBusy(false); }
   }
-
-  // Auto-stream interval effect (every 2 seconds)
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isStreaming) {
-      let liveWeight = weight;
-      interval = setInterval(async () => {
-        // Realistic biological jitter
-        const liveTemp = Number((34.8 + Math.random() * 0.7).toFixed(1));
-        const liveHum = Number((55 + Math.random() * 5).toFixed(1));
-        liveWeight = Number((liveWeight + (Math.random() * 0.08 - 0.02)).toFixed(2));
-        const liveBat = Math.round(92 + Math.random() * 5);
-
-        try {
-          const res = await fetch('/api/sensor-data', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer pollinator-iot-device-secret',
-            },
-            body: JSON.stringify({
-              hiveId: deviceId,
-              deviceId: deviceId,
-              temperatureC: liveTemp,
-              humidityPct: liveHum,
-              weightKg: liveWeight,
-              batteryPct: liveBat,
-            }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setStreamCount((c) => c + 1);
-            setLastResult(`📡 Packet #${streamCount + 1}: ${liveTemp}°C • ${liveHum}% • ${liveWeight}kg (Score: ${data.healthAssessment?.score}%)`);
-            router.refresh();
-          }
-        } catch {
-          // ignore stream error
-        }
-      }, 2000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isStreaming, deviceId, weight, streamCount, router]);
-
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => setIsStreaming(!isStreaming)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-mono transition-all shadow-md active:scale-95 ${
-          isStreaming
-            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-emerald-500/20'
-            : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
-        }`}
-      >
-        <span className={`w-2 h-2 rounded-full ${isStreaming ? 'bg-emerald-400 animate-ping' : 'bg-slate-500'}`} />
-        <span>{isStreaming ? `Live 2s Stream ON (#${streamCount})` : 'Start 2s Stream'}</span>
-      </button>
-
-      <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/20 to-amber-500/20 border border-cyan-400/40 text-xs font-mono text-cyan-300 hover:border-cyan-400 hover:text-white transition-all shadow-lg shadow-cyan-500/10 active:scale-95"
-      >
-        <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-        <span>⚡ Simulate ESP32 Telemetry</span>
-      </button>
-
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#0d111a] p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div>
-                <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
-                  <Radio className="w-5 h-5 text-cyan-400" />
-                  ESP32 Hive Telemetry Simulator
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Inject synthetic sensor packets into Edge Node <code className="text-cyan-300 font-mono">{deviceId}</code>
-                </p>
-              </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-slate-500 hover:text-white text-lg font-mono p-1"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Quick Diagnostic Presets */}
-            <div className="space-y-3">
-              <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                1-Click Apiculture Simulation Presets
-              </label>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => sendTelemetry(35.1, 57.0, 47.8, 95, 'Optimal Nectar Flow')}
-                  className="p-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 hover:bg-emerald-900/40 text-left transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> 100% Optimal
-                    </span>
-                    <span className="text-[10px] font-mono text-emerald-300">+0.8 kg</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400">35.1°C • 57% RH • Steady Nectar Flow</p>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => sendTelemetry(38.4, 76.0, 45.9, 86, 'Heat Stress')}
-                  className="p-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 hover:bg-amber-900/40 text-left transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                      <Flame className="w-3.5 h-3.5" /> Overheating
-                    </span>
-                    <span className="text-[10px] font-mono text-amber-300">38.4°C</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400">76% RH • Fungal & Heat Shock Risk</p>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => sendTelemetry(34.8, 60.0, 43.5, 90, 'Swarm Departure')}
-                  className="p-3 rounded-2xl border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-left transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-red-400 flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5" /> Swarm Alarm
-                    </span>
-                    <span className="text-[10px] font-mono text-red-300">-2.5 kg</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400">Sudden weight crash: Swarm left</p>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => sendTelemetry(30.4, 49.0, 46.0, 88, 'Chilled Brood')}
-                  className="p-3 rounded-2xl border border-cyan-500/30 bg-cyan-950/20 hover:bg-cyan-900/40 text-left transition-all group"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-cyan-400 flex items-center gap-1.5">
-                      <Wind className="w-3.5 h-3.5" /> Chilled Brood
-                    </span>
-                    <span className="text-[10px] font-mono text-cyan-300">30.4°C</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400">Sub-optimal temp: Brood mortality</p>
-                </button>
-              </div>
-            </div>
-
-            {/* Custom Sliders */}
-            <div className="space-y-3 pt-2 border-t border-white/10">
-              <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                Manual Fine-Tuning
-              </label>
-
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <span className="text-slate-400">Temperature: <strong className="text-white font-mono">{temp}°C</strong></span>
-                  <input
-                    type="range"
-                    min="25"
-                    max="45"
-                    step="0.5"
-                    value={temp}
-                    onChange={(e) => setTemp(parseFloat(e.target.value))}
-                    className="w-full accent-amber-400 mt-1"
-                  />
-                </div>
-
-                <div>
-                  <span className="text-slate-400">Humidity: <strong className="text-white font-mono">{humidity}%</strong></span>
-                  <input
-                    type="range"
-                    min="20"
-                    max="95"
-                    step="1"
-                    value={humidity}
-                    onChange={(e) => setHumidity(parseInt(e.target.value, 10))}
-                    className="w-full accent-cyan-400 mt-1"
-                  />
-                </div>
-
-                <div>
-                  <span className="text-slate-400">Weight: <strong className="text-white font-mono">{weight} kg</strong></span>
-                  <input
-                    type="range"
-                    min="30"
-                    max="60"
-                    step="0.2"
-                    value={weight}
-                    onChange={(e) => setWeight(parseFloat(e.target.value))}
-                    className="w-full accent-emerald-400 mt-1"
-                  />
-                </div>
-
-                <div>
-                  <span className="text-slate-400">Battery: <strong className="text-white font-mono">{battery}%</strong></span>
-                  <input
-                    type="range"
-                    min="10"
-                    max="100"
-                    step="5"
-                    value={battery}
-                    onChange={(e) => setBattery(parseInt(e.target.value, 10))}
-                    className="w-full accent-purple-400 mt-1"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => sendTelemetry(temp, humidity, weight, battery, 'Manual Packet')}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-lg shadow-cyan-500/20"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                Transmit Custom Packet
-              </button>
-            </div>
-
-            {/* Status output */}
-            {lastResult && (
-              <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs font-mono text-center text-slate-200 animate-fade-in">
-                {lastResult}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return <div>
+    <button type="button" disabled={!devices.length} onClick={() => setOpen(true)} className="rounded-xl border border-[var(--surface-border)] px-4 py-2 text-sm disabled:opacity-50">Simulate a reading</button>
+    {open && <div role="dialog" aria-modal="true" aria-labelledby="sim-heading" className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/70 p-5">
+      <form onSubmit={submit} className="w-full max-w-md space-y-4 rounded-2xl bg-[var(--surface-solid)] p-6 text-foreground">
+        <div className="flex justify-between gap-4"><h2 id="sim-heading" className="font-bold">Synthetic telemetry</h2><button type="button" onClick={() => setOpen(false)} aria-label="Close simulation">Close</button></div>
+        <p className="text-sm text-[var(--text-muted)]">Demonstration data. This cannot write to a physical device or establish colony health.</p>
+        <label className="block text-sm">Enrolled simulation device<select value={deviceId} onChange={event => setDeviceId(event.target.value)} className="mt-1 block w-full rounded-lg border border-[var(--surface-border)] bg-[var(--surface-solid)] p-2">{devices.map(id => <option key={id}>{id}</option>)}</select></label>
+        {[{label:'Temperature (°C)',value:temp,set:setTemp,min:-20,max:70},{label:'Humidity (%)',value:humidity,set:setHumidity,min:0,max:100},{label:'Scale weight (kg)',value:weight,set:setWeight,min:0,max:500}].map(item => <label className="block text-sm" key={item.label}>{item.label}<input required type="number" step="0.1" min={item.min} max={item.max} value={item.value} onChange={event => item.set(event.target.valueAsNumber)} className="mt-1 block w-full rounded-lg border border-[var(--surface-border)] bg-[var(--surface-solid)] p-2" /></label>)}
+        <button disabled={busy || !deviceId} className="rounded-xl bg-amber-400 px-4 py-2 font-semibold text-black disabled:opacity-50">{busy ? 'Saving…' : 'Save simulated packet'}</button>
+        <p role="status" className="text-sm">{message}</p>
+      </form>
+    </div>}
+  </div>;
 }

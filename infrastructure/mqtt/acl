@@ -1,0 +1,11 @@
+# Device client certificate CN must equal its enrolled device ID.
+pattern write honeychain/v1/devices/%u/telemetry
+
+# Issue a separate bridge certificate with CN honeychain-bridge.
+user honeychain-bridge
+topic read honeychain/v1/devices/+/telemetry
+
+# Phone relay verifies the current session, hive ownership and packet HMAC before publishing.
+# Its certificate is distinct from the read-only ingestion bridge.
+user honeychain-gateway
+topic write honeychain/v1/devices/+/telemetry

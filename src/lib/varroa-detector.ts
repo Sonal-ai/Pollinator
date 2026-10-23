@@ -1,70 +1,20 @@
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
-import { env } from './env';
+import { assessVisionOutput, validateVisionImage } from './vision-result';
+export type { DetectionItem, VarroaDetectionResult } from './vision-result';
 
-export interface DetectionItem {
-  class: 'bee' | 'varroa';
-  class_id: number;
-  confidence: number;
-  bbox: { x1: number; y1: number; x2: number; y2: number };
-}
-
-export interface VarroaDetectionResult {
-  success: boolean;
-  latency_ms: number;
-  summary: {
-    bee_count: number;
-    mite_count: number;
-    total: number;
-  };
-  alert: {
-    level: 'GREEN' | 'YELLOW' | 'RED';
-    infestation_rate_pct: number;
-    message: string;
-  };
-  detections: DetectionItem[];
-}
-
-const lambdaClient = new LambdaClient({
-  region: env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-  },
-});
-
-const FUNCTION_NAME = 'pollinator-varroa-detector';
-
-/**
- * Invoke the deployed AWS Lambda Varroa Detector using an image Buffer.
- */
-export async function detectVarroaFromBuffer(imageBuffer: Buffer): Promise<VarroaDetectionResult> {
-  const base64Image = imageBuffer.toString('base64');
-  const payload = {
-    body: JSON.stringify({ image: base64Image }),
-  };
-
-  const command = new InvokeCommand({
-    FunctionName: FUNCTION_NAME,
-    Payload: Buffer.from(JSON.stringify(payload)),
-  });
-
-  const response = await lambdaClient.send(command);
-
-  if (!response.Payload) {
-    throw new Error('No response payload received from Lambda Varroa Detector');
-  }
-
-  const rawJson = JSON.parse(Buffer.from(response.Payload).toString('utf-8'));
-
-  if (rawJson.errorMessage || rawJson.errorType) {
-    throw new Error(`Lambda runtime error: ${rawJson.errorMessage || rawJson.errorType}`);
-  }
-
-  if (rawJson.statusCode && rawJson.statusCode !== 200) {
-    const errorBody = typeof rawJson.body === 'string' ? JSON.parse(rawJson.body) : rawJson.body;
-    throw new Error(`Lambda detection error (${rawJson.statusCode}): ${errorBody?.error || 'Unknown error'}`);
-  }
-
-  const result: VarroaDetectionResult = typeof rawJson.body === 'string' ? JSON.parse(rawJson.body) : rawJson;
-  return result;
+/** Bounded image-level inference. No diagnosis or calibrated probability is inferred from an empty result. */
+export async function detectVarroaFromBuffer(imageBuffer: Buffer) {
+  validateVisionImage(imageBuffer);
+  const functionName=process.env.VARROA_LAMBDA_FUNCTION, modelVersion=process.env.VARROA_MODEL_VERSION;
+  if (!functionName || !modelVersion || !/^[A-Za-z0-9_.:/-]{1,200}$/.test(modelVersion)) throw new Error('The vision model endpoint and version must be configured');
+  const client=new LambdaClient({region:process.env.AWS_REGION||'us-east-1',maxAttempts:1});
+  const started=Date.now();
+  try {
+    const response=await client.send(new InvokeCommand({FunctionName:functionName,Payload:Buffer.from(JSON.stringify({body:JSON.stringify({image:imageBuffer.toString('base64')})}))}), {abortSignal:AbortSignal.timeout(25000)});
+    if(response.FunctionError || !response.Payload || response.Payload.length>2*1024*1024) throw new Error('The vision endpoint is unavailable');
+    const envelope=JSON.parse(Buffer.from(response.Payload).toString('utf8'));
+    if(envelope.errorMessage || (envelope.statusCode && envelope.statusCode!==200)) throw new Error('The vision endpoint did not return a successful result');
+    const result=typeof envelope.body==='string'?JSON.parse(envelope.body):envelope.body||envelope;
+    return assessVisionOutput(result,modelVersion,Date.now()-started);
+  } finally { client.destroy(); }
 }

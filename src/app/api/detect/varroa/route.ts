@@ -1,74 +1,46 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import { prisma } from '@/lib/db';
 import { detectVarroaFromBuffer } from '@/lib/varroa-detector';
 import { getSession } from '@/lib/auth';
-
-export const runtime = 'nodejs';
-
-export async function POST(req: NextRequest) {
+import { hiveScope } from '@/lib/access-policy';
+import { allowedRequestOrigin } from '@/lib/request-origin';
+import { boundedBody, RequestBodyError } from '@/lib/request-body';
+import { MAX_IMAGE_BYTES, validateVisionImage } from '@/lib/vision-result';
+export const runtime='nodejs';
+export async function POST(request: Request) {
   try {
-    let buffer: Buffer;
-
-    const contentType = req.headers.get('content-type') || '';
-
-    if (contentType.includes('multipart/form-data')) {
-      const formData = await req.formData();
-      const file = formData.get('image') as File | null;
-      if (!file) {
-        return NextResponse.json({ error: 'No image file provided in form-data' }, { status: 400 });
-      }
-      const arrayBuffer = await file.arrayBuffer();
-      buffer = Buffer.from(arrayBuffer);
-    } else {
-      const body = await req.json();
-      if (!body.image) {
-        return NextResponse.json({ error: 'No image field provided in JSON payload' }, { status: 400 });
-      }
-      buffer = Buffer.from(body.image, 'base64');
+    const session=await getSession();
+    if(!session) return Response.json({error:'Unauthorized'},{status:401});
+    if(!['admin','beekeeper'].includes(session.role)||!allowedRequestOrigin(request)) return Response.json({error:'Forbidden'},{status:403});
+    const type=request.headers.get('content-type')||'';
+    let buffer:Buffer, hiveId:string|null=null;
+    if(type.startsWith('multipart/form-data')) {
+      const body=await boundedBody(request,MAX_IMAGE_BYTES+65536);
+      let form:FormData;
+      try { form=await new Request(request.url,{method:'POST',headers:{'Content-Type':type},body:new Uint8Array(body)}).formData(); } catch { throw new RequestBodyError('Invalid multipart image upload'); }
+      const file=form.get('image');
+      if(!file||typeof file==='string') throw new RequestBodyError('An image file is required');
+      buffer=Buffer.from(await file.arrayBuffer());
+      const id=form.get('hiveId'); if(typeof id==='string'&&id) hiveId=id;
+    } else if(type.startsWith('application/json')) {
+      let input;
+      try { input=JSON.parse((await boundedBody(request,Math.ceil(MAX_IMAGE_BYTES/3)*4+1024)).toString('utf8')); } catch(error) { if(error instanceof RequestBodyError) throw error; throw new RequestBodyError('Invalid JSON'); }
+      if(typeof input?.image!=='string'||!/^[A-Za-z0-9+/]+={0,2}$/.test(input.image)) throw new RequestBodyError('An image in canonical base64 is required');
+      buffer=Buffer.from(input.image,'base64'); if(buffer.toString('base64')!==input.image) throw new RequestBodyError('Invalid base64');
+      if(typeof input.hiveId==='string'&&input.hiveId) hiveId=input.hiveId;
+    } else return Response.json({error:'Use multipart/form-data or application/json'},{status:415});
+    try { validateVisionImage(buffer); } catch(error) { throw new RequestBodyError(error instanceof Error?error.message:'Invalid image',buffer.length>MAX_IMAGE_BYTES?413:422); }
+    let beekeeperId=session.beekeeperId;
+    if(hiveId) {
+      if(hiveId.length>128) throw new RequestBodyError('Invalid hive ID');
+      const hive=await prisma.hive.findFirst({where:{AND:[hiveScope(session),{id:hiveId}]}});
+      if(!hive) return Response.json({error:'Hive not found'},{status:404});
+      beekeeperId=hive.beekeeperId;
     }
-
-    // Run inference on AWS Lambda Varroa Detector
-    const result = await detectVarroaFromBuffer(buffer);
-    const imageHash = createHash('sha256').update(buffer).digest('hex');
-
-    // Link to logged-in beekeeper if session exists
-    const session = await getSession();
-    let beekeeperId: string | null = null;
-    let hiveId: string | null = null;
-
-    if (session?.walletAddress) {
-      const bk = await prisma.beekeeper.findFirst({
-        where: { wallet: session.walletAddress },
-        include: { hives: { take: 1 } },
-      });
-      beekeeperId = bk?.id ?? null;
-      hiveId = bk?.hives?.[0]?.id ?? null;
-    }
-
-    const maxConfidence = result.detections.length > 0
-      ? Math.max(...result.detections.map((d) => d.confidence))
-      : 0.95;
-
-    const record = await prisma.aIInference.create({
-      data: {
-        beekeeperId,
-        hiveId,
-        modelVersion: 'yolo11l-varroa-onnx-v1.0',
-        inputImageHash: imageHash,
-        prediction: result.alert.level === 'GREEN' ? 'healthy' : 'varroa_parasite_suspected',
-        confidence: maxConfidence,
-        rawOutput: JSON.stringify(result),
-      },
-    });
-
-    return NextResponse.json({
-      inferenceId: record.id,
-      ...result,
-    });
-  } catch (error: unknown) {
-    console.error('[api/detect/varroa] Error:', error);
-    const message = error instanceof Error ? error.message : 'Internal detection error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const result=await detectVarroaFromBuffer(buffer);
+    const record=await prisma.aIInference.create({data:{beekeeperId,hiveId,modelVersion:result.modelVersion,inputImageHash:createHash('sha256').update(buffer).digest('hex'),prediction:result.prediction,confidence:result.confidence,rawOutput:JSON.stringify(result)}});
+    return Response.json({inferenceId:record.id,...result});
+  } catch(error) {
+    return Response.json({error:error instanceof RequestBodyError?error.message:'Image analysis is unavailable. No health conclusion was recorded.'},{status:error instanceof RequestBodyError?error.status:503});
   }
 }
