@@ -1,0 +1,10 @@
+# Required for harvest/report/packaging writes that store actual evidence.
+# Supply the private Pinata JWT file before enabling; never put it in stack.env.
+services:
+  web:
+    environment:
+      PINATA_JWT_FILE: /run/secrets/pinata_jwt
+      IPFS_GATEWAY: ${IPFS_GATEWAY:-https://gateway.pinata.cloud/ipfs/}
+    secrets: [pinata_jwt]
+secrets:
+  pinata_jwt: { file: '${SECRET_DIR}/pinata_jwt' }

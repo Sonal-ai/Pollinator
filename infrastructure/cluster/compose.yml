@@ -1,0 +1,201 @@
+name: honeychain-${CLUSTER_ID:?Set CLUSTER_ID}
+x-cluster: &cluster
+  NODE_ENV: production
+  HONEYCHAIN_CLUSTER_MODE: isolated
+  CLUSTER_ID: ${CLUSTER_ID}
+  NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Set the HTTPS application origin}
+  APP_ORIGIN: ${NEXT_PUBLIC_APP_URL}
+  WHATSAPP_PUBLIC_NUMBER: ${WHATSAPP_PUBLIC_NUMBER:-}
+  BLOCKCHAIN_NETWORK: amoy
+  CONTRACT_ADDRESS: ${CONTRACT_ADDRESS:?Set the deployed registry v2 address}
+  REGISTRY_CHAIN_ID: '80002'
+  REGISTRY_FORWARDER_ADDRESS: ${REGISTRY_FORWARDER_ADDRESS:?Set the trusted forwarder}
+  REGISTRY_GENESIS_HASH: ${REGISTRY_GENESIS_HASH:?Set the verified RPC genesis hash}
+  POLYGON_RPC_URL: ${POLYGON_RPC_URL:?Set a working Amoy RPC}
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:-docker.io/library/postgres:17-alpine}
+    environment:
+      POSTGRES_USER: cluster_admin
+      POSTGRES_DB: honeychain
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+      - source: database_init
+        target: /docker-entrypoint-initdb.d/10-application-roles.sql
+    volumes:
+      - database:/var/lib/postgresql/data
+    networks: [data]
+    healthcheck:
+      test: [CMD, pg_isready, -U, cluster_admin, -d, honeychain]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  redis:
+    image: ${REDIS_IMAGE:-docker.io/library/redis:7-alpine}
+    command: [redis-server, /run/secrets/redis_config]
+    secrets: [redis_config, redis_password]
+    volumes: [redis:/data]
+    networks: [data]
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH=$$(cat /run/secrets/redis_password) redis-cli ping | grep -q PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  migrate:
+    image: ${MIGRATOR_IMAGE:?Build the migrator image}
+    command: [migrate]
+    environment:
+      DATABASE_URL_FILE: /run/secrets/migration_database_url
+    secrets: [migration_database_url]
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [data]
+    profiles: [setup]
+  bind:
+    image: ${MIGRATOR_IMAGE}
+    command: [bind]
+    environment:
+      <<: *cluster
+      DATABASE_URL_FILE: /run/secrets/migration_database_url
+    secrets: [migration_database_url]
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [data, outbound]
+    profiles: [setup]
+  web:
+    image: ${WEB_IMAGE:?Build the web image}
+    environment:
+      <<: *cluster
+      DEPLOYMENT_ADMIN_ADDRESS: ${DEPLOYMENT_ADMIN_ADDRESS:-}
+      DATABASE_URL_FILE: /run/secrets/app_database_url
+      REDIS_URL_FILE: /run/secrets/redis_url
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      QR_HMAC_SECRET_FILE: /run/secrets/qr_secret
+      IOT_CREDENTIAL_KEY_FILE: /run/secrets/device_encryption_key
+    secrets: [app_database_url, redis_url, jwt_secret, qr_secret, device_encryption_key]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks: [data, edge, outbound]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+    stop_grace_period: 30s
+  chain:
+    image: ${WORKER_IMAGE:?Build the worker image}
+    command: [chain]
+    environment:
+      <<: *cluster
+      DATABASE_URL_FILE: /run/secrets/app_database_url
+      RELAYER_PRIVATE_KEY_FILE: /run/secrets/relayer_private_key
+      WORKER_HEARTBEAT_FILE: /run/honeychain/heartbeat.json
+    secrets: [app_database_url, relayer_private_key]
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [data, outbound]
+    healthcheck:
+      test: [CMD, node, scripts/worker-health.cjs]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+    stop_grace_period: 45s
+  proxy:
+    image: ${NGINX_IMAGE:-docker.io/library/nginx:stable-alpine}
+    ports: ['${LISTEN_IP:-127.0.0.1}:${WEB_TLS_PORT:-8443}:8443']
+    volumes:
+      - type: bind
+        source: '${PROJECT_DIR}/infrastructure/cluster/nginx.conf'
+        target: /etc/nginx/nginx.conf
+        read_only: true
+    secrets: [web_tls_cert, web_tls_key]
+    networks: [edge]
+    depends_on:
+      web: { condition: service_healthy }
+    restart: unless-stopped
+  mqtt:
+    image: ${MOSQUITTO_IMAGE:-docker.io/library/eclipse-mosquitto:2}
+    profiles: [iot]
+    ports: ['${LISTEN_IP:-127.0.0.1}:${MQTT_TLS_PORT:-8883}:8883']
+    volumes:
+      - type: bind
+        source: '${PROJECT_DIR}/infrastructure/mqtt/mosquitto.conf'
+        target: /mosquitto/config/mosquitto.conf
+        read_only: true
+      - type: bind
+        source: '${PROJECT_DIR}/infrastructure/mqtt/acl'
+        target: /mosquitto/config/acl
+        read_only: true
+      - mqtt:/mosquitto/data
+    secrets:
+      - source: mqtt_ca
+        target: /mosquitto/certs/ca.crt
+      - source: mqtt_server_cert
+        target: /mosquitto/certs/server.crt
+      - source: mqtt_server_key
+        target: /mosquitto/certs/server.key
+    networks: [devices]
+    restart: unless-stopped
+  telemetry:
+    image: ${WORKER_IMAGE}
+    command: [mqtt]
+    profiles: [iot]
+    environment:
+      <<: *cluster
+      DATABASE_URL_FILE: /run/secrets/app_database_url
+      IOT_CREDENTIAL_KEY_FILE: /run/secrets/device_encryption_key
+      IOT_MQTT_URL: mqtts://mqtt:8883
+      IOT_MQTT_CLIENT_ID: honeychain-bridge-${CLUSTER_ID}
+      IOT_MQTT_CA: /run/secrets/mqtt_ca
+      IOT_MQTT_CERT: /run/secrets/mqtt_bridge_cert
+      IOT_MQTT_KEY: /run/secrets/mqtt_bridge_key
+      WORKER_HEARTBEAT_FILE: /run/honeychain/heartbeat.json
+    secrets: [app_database_url, device_encryption_key, mqtt_ca, mqtt_bridge_cert, mqtt_bridge_key]
+    depends_on:
+      postgres: { condition: service_healthy }
+      mqtt: { condition: service_started }
+    networks: [data, devices]
+    healthcheck:
+      test: [CMD, node, scripts/worker-health.cjs]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+    stop_grace_period: 30s
+networks:
+  data: { internal: true }
+  edge: {}
+  outbound: {}
+  devices: {}
+volumes:
+  database: {}
+  redis: {}
+  mqtt: {}
+secrets:
+  postgres_password: { file: '${SECRET_DIR}/postgres_password' }
+  database_init: { file: '${SECRET_DIR}/database_init.sql' }
+  app_database_url: { file: '${SECRET_DIR}/app_database_url' }
+  migration_database_url: { file: '${SECRET_DIR}/migration_database_url' }
+  redis_config: { file: '${SECRET_DIR}/redis.conf' }
+  redis_password: { file: '${SECRET_DIR}/redis_password' }
+  redis_url: { file: '${SECRET_DIR}/redis_url' }
+  jwt_secret: { file: '${SECRET_DIR}/jwt_secret' }
+  qr_secret: { file: '${SECRET_DIR}/qr_secret' }
+  device_encryption_key: { file: '${SECRET_DIR}/device_encryption_key' }
+  relayer_private_key: { file: '${SECRET_DIR}/relayer_private_key' }
+  web_tls_cert: { file: '${SECRET_DIR}/web_tls.crt' }
+  web_tls_key: { file: '${SECRET_DIR}/web_tls.key' }
+  mqtt_ca: { file: '${SECRET_DIR}/mqtt_ca.crt' }
+  mqtt_server_cert: { file: '${SECRET_DIR}/mqtt_server.crt' }
+  mqtt_server_key: { file: '${SECRET_DIR}/mqtt_server.key' }
+  mqtt_bridge_cert: { file: '${SECRET_DIR}/mqtt_bridge.crt' }
+  mqtt_bridge_key: { file: '${SECRET_DIR}/mqtt_bridge.key' }

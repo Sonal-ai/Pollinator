@@ -1,0 +1,52 @@
+# Optional: apply after migrations and supply real Meta secret files first.
+x-whatsapp-cluster: &whatsapp-cluster
+  NODE_ENV: production
+  HONEYCHAIN_CLUSTER_MODE: isolated
+  CLUSTER_ID: ${CLUSTER_ID}
+  APP_ORIGIN: ${NEXT_PUBLIC_APP_URL}
+  NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+  BLOCKCHAIN_NETWORK: amoy
+  REGISTRY_CHAIN_ID: '80002'
+  CONTRACT_ADDRESS: ${CONTRACT_ADDRESS}
+  REGISTRY_FORWARDER_ADDRESS: ${REGISTRY_FORWARDER_ADDRESS}
+  REGISTRY_GENESIS_HASH: ${REGISTRY_GENESIS_HASH}
+  POLYGON_RPC_URL: ${POLYGON_RPC_URL}
+  WHATSAPP_GRAPH_VERSION: ${WHATSAPP_GRAPH_VERSION:-v26.0}
+services:
+  web:
+    environment:
+      WHATSAPP_PHONE_ID_FILE: /run/secrets/whatsapp_phone_id
+      WHATSAPP_APP_SECRET_FILE: /run/secrets/whatsapp_app_secret
+      WHATSAPP_VERIFY_TOKEN_FILE: /run/secrets/whatsapp_verify_token
+      ADMIN_API_KEY_FILE: /run/secrets/whatsapp_service_key
+    secrets: [whatsapp_phone_id, whatsapp_app_secret, whatsapp_verify_token, whatsapp_service_key]
+  whatsapp:
+    image: ${WORKER_IMAGE:?Build the worker image}
+    command: [whatsapp]
+    environment:
+      <<: *whatsapp-cluster
+      DATABASE_URL_FILE: /run/secrets/app_database_url
+      WHATSAPP_PHONE_ID_FILE: /run/secrets/whatsapp_phone_id
+      WHATSAPP_ACCESS_TOKEN_FILE: /run/secrets/whatsapp_access_token
+      ADMIN_API_KEY_FILE: /run/secrets/whatsapp_service_key
+      WORKER_HEARTBEAT_FILE: /run/honeychain/heartbeat.json
+      WORKER_HEARTBEAT_MAX_AGE_MS: '180000'
+    secrets: [app_database_url, whatsapp_phone_id, whatsapp_access_token, whatsapp_service_key]
+    depends_on:
+      postgres: { condition: service_healthy }
+      web: { condition: service_healthy }
+    networks: [data, outbound]
+    healthcheck:
+      test: [CMD, node, scripts/worker-health.cjs]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+    stop_grace_period: 180s
+secrets:
+  whatsapp_phone_id: { file: '${SECRET_DIR}/whatsapp_phone_id' }
+  whatsapp_access_token: { file: '${SECRET_DIR}/whatsapp_access_token' }
+  whatsapp_app_secret: { file: '${SECRET_DIR}/whatsapp_app_secret' }
+  whatsapp_verify_token: { file: '${SECRET_DIR}/whatsapp_verify_token' }
+  whatsapp_service_key: { file: '${SECRET_DIR}/whatsapp_service_key' }

@@ -1,0 +1,16 @@
+# Optional phone relay. Use together with compose.yml and --profile iot.
+# Issue a distinct client certificate with CN honeychain-gateway.
+services:
+  web:
+    environment:
+      IOT_GATEWAY_MQTT_URL: mqtts://mqtt:8883
+      IOT_GATEWAY_MQTT_CA: /run/secrets/mqtt_ca
+      IOT_GATEWAY_MQTT_CERT: /run/secrets/mqtt_gateway_cert
+      IOT_GATEWAY_MQTT_KEY: /run/secrets/mqtt_gateway_key
+    secrets: [mqtt_ca, mqtt_gateway_cert, mqtt_gateway_key]
+    networks: [data, edge, outbound, devices]
+    depends_on:
+      mqtt: { condition: service_started }
+secrets:
+  mqtt_gateway_cert: { file: '${SECRET_DIR}/mqtt_gateway.crt' }
+  mqtt_gateway_key: { file: '${SECRET_DIR}/mqtt_gateway.key' }

@@ -1,0 +1,14 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const { randomBytes } = require('node:crypto');
+const root = path.resolve(__dirname, '..');
+const file = path.join(root, '.env.integration');
+const config = require('dotenv').parse(fs.readFileSync(file));
+const old = config.REDIS_URL ? new URL(config.REDIS_URL) : null;
+const password = old?.hostname === '127.0.0.1' && old.port === '56379' && old.password ? old.password : randomBytes(32).toString('hex');
+config.REDIS_URL = 'redis://:' + password + '@127.0.0.1:56379/15';
+const dir = path.join(root, '.local-data/redis-integration'); fs.mkdirSync(dir, { recursive: true });
+const quote = value => '"' + value.replaceAll('\\', '/') + '"';
+fs.writeFileSync(path.join(root, '.local-data/redis-integration.conf'), ['bind 127.0.0.1','port 56379','requirepass ' + password,'dir ' + quote(dir),'appendonly no','save ""','logfile ' + quote(path.join(root, '.local-data/redis-integration.log'))].join('\n') + '\n');
+fs.writeFileSync(file, Object.entries(config).map(([key, value]) => key + '=' + JSON.stringify(value)).join('\n') + '\n');
+console.log('Prepared password-protected localhost Redis test configuration on port 56379.');
