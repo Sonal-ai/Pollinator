@@ -1,0 +1,78 @@
+{
+  "recordedDate": "2026-10-21",
+  "scope": "Durable WhatsApp processing and local integration; not public deployment acceptance",
+  "freshTests": {
+    "applicationWebhookAdminReadinessDeployment": {
+      "passed": 22,
+      "failed": 0
+    },
+    "realPostgreSQLDurability": {
+      "passed": 12,
+      "failed": 0
+    },
+    "handlerBatchApiPostgreSQLLocalEvm": {
+      "passed": 1,
+      "failed": 0
+    },
+    "distinctTotal": 35,
+    "overlapsPreviousCheckpoint": true,
+    "providerSendsMocked": true,
+    "ipfsMockedInHarvestIntegration": true,
+    "harvestInterruptedAfterApiCommitReusesIntent": true
+  },
+  "staticChecks": {
+    "typeScript": "PASS",
+    "compiledWorkers": "PASS",
+    "compiledWhatsAppWorkerImport": "PASS",
+    "targetedLint": {
+      "files": 27,
+      "errors": 0,
+      "warnings": 0
+    },
+    "productionWebBuild": "PASS_WINDOWS_WEBPACK_STANDALONE",
+    "productionBuildPostcheck": "PASS_ENVIRONMENT_FILES_REMOVED_FROM_STANDALONE",
+    "productionContainerImages": "NOT_REBUILT_THIS_CHECKPOINT",
+    "initialSandboxBuild": "EPERM_GENERATED_DIRECTORY; normal host-permission retry passed"
+  },
+  "migrations": {
+    "appliedOnlyToDedicatedLocalIntegrationDatabase": true,
+    "names": [
+      "20261021000000_whatsapp_delivery",
+      "20261021000001_whatsapp_status_reconciliation",
+      "20261021000002_whatsapp_send_attempts"
+    ]
+  },
+  "liveEvidence": {
+    "mainAmoyRegistryV2Context": "FAILED_CALL_EXCEPTION_PREVIOUS_CHECKPOINT",
+    "metaReadOnlyPhoneIdentity": "HTTP_200_PREVIOUS_CHECKPOINT",
+    "authorizedTemplateSend": "UNKNOWN",
+    "recipientSuffix": "1014",
+    "recipientCannotCheckYet": true,
+    "automaticResendPerformed": false,
+    "publicCallbackOrDeploymentChanged": false,
+    "mainEnvironmentModified": false
+  },
+  "remaining": [
+    "Resolve main Amoy registry/forwarder compatibility before live network demo",
+    "Validate merged Compose configuration and production runtime database permissions; config probe could not connect to Podman",
+    "Activate matching web build, migrations and WhatsApp worker in intended deployment",
+    "Confirm authorized phone delivery and current HTTPS callback/subscriptions without blindly resending unknown work",
+    "Verify real incoming WhatsApp harvest through web actor approval",
+    "Run current build HTTP role/lifecycle and browser/external-wallet acceptance",
+    "Verify actual IPFS upload and retrieval",
+    "Rehearse and capture full presentation journey",
+    "Collect real team, institution and field evidence; IoT deferred to teammate"
+  ],
+  "sourceSha256": {
+    "prisma/schema.prisma": "f648ca9435b522a191d47b972e87fd8349bd96eddc2664bae9dcb34ed082b5d7",
+    "src/lib/whatsapp/worker.ts": "29f59825edcfd3929a4926ee1b8c16f181a3cf49b0e2732410f05782a746d318",
+    "src/lib/whatsapp/store.ts": "669bd9458d7c55948bc8a35f17cb8cd23af6b5ff827b50c902eeef4a0afa1599",
+    "src/lib/whatsapp/protocol.ts": "7900563a47a277729386297129bde0abb578ba88a89db2889718348059ed6efa",
+    "src/lib/whatsapp/webhook.ts": "d2459d78c00bf7f4e073cec6cff581fc0f47368cda273b048604184dabd269da",
+    "src/lib/whatsapp/review.ts": "2810b72bdc6fd1bd5e0186f1d8ef72baa92c140cc74de500a2248fe13ff2570a",
+    "src/lib/whatsapp/handler.ts": "2076e017518c435eb1f24d4606cfa1c979e5c6501555f975464b69d1cccddad0",
+    "src/lib/whatsapp/client.ts": "e7a5bf4287a55e46c7e4a8ea6c61f5bb58b68d6fccd330a610756b2a117b1f92",
+    "src/app/api/webhook/whatsapp/route.ts": "c8d294d524d1b451bb2ce5da612e73019d7e88eea011f5d5a0fc0f443d88ae50",
+    "src/app/api/whatsapp/operations/route.ts": "e5405a9fff1e712a873ea2102e277186bd65c6d0e01119e3269f7ecfc88d6aa6"
+  }
+}

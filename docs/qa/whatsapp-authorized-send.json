@@ -1,0 +1,13 @@
+{
+  "recordedDate": "2026-10-21",
+  "recipientSuffix": "1014",
+  "recipientCountryCode": "91",
+  "authorizedByUser": true,
+  "template": "hello_world",
+  "attempts": 1,
+  "outcome": "UNKNOWN",
+  "apiAccepted": null,
+  "deliveryConfirmed": false,
+  "observation": "Send process exited with a generic transport failure after its bounded request. No provider response or message ID was captured. The send may have reached Meta; it was not automatically retried.",
+  "recipientConfirmation": "user cannot check right now; no resend authorized or attempted"
+}

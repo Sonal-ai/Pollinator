@@ -1,0 +1,25 @@
+{
+  "scope": "Installed podman-compose merged configuration; no service launched",
+  "passed": true,
+  "webSecretMounts": [
+    "app_database_url",
+    "device_encryption_key",
+    "jwt_secret",
+    "pinata_jwt",
+    "qr_secret",
+    "redis_url",
+    "whatsapp_app_secret",
+    "whatsapp_phone_id",
+    "whatsapp_service_key",
+    "whatsapp_verify_token"
+  ],
+  "whatsAppSecretMounts": [
+    "app_database_url",
+    "whatsapp_access_token",
+    "whatsapp_phone_id",
+    "whatsapp_service_key"
+  ],
+  "baseSecretMountsPreserved": true,
+  "pinataMountedOnlyInWeb": true,
+  "relayerKeyAbsentFromWhatsApp": true
+}

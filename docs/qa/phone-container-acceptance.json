@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-10-20T18:44:15.370Z",
+  "scope": "packaged Next.js HTTPS backend, optional gateway Compose override, real MQTT TLS and PostgreSQL; browser UI not inspected",
+  "httpSessionRequired": true,
+  "staleQueueAccountRejected": true,
+  "source": "SIMULATED",
+  "serverReceiptVerifiedBySimulatedHive": true,
+  "phoneCopyRemovedAfterReceiptDelivery": true,
+  "duplicateReturnedCommittedReceipt": true,
+  "chainWorkerStarted": false,
+  "qaEvmStarted": false,
+  "physicalBleOrFirmwareValidated": false
+}

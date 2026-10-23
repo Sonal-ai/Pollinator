@@ -1,325 +1,61 @@
-# 🐝 Pollinator (HoneyChain Ecosystem)
+# Honey Chain / Pollinator
 
-> **Decentralized Honey Supply Chain, IoT Hive Intelligence & Multilingual WhatsApp AI Assistant**  
-> *Built for Bharat Builds Tour / AWS First Commit Hackathon 2026*
+Honey Chain is a prototype for beekeeper cooperatives: record a honey harvest, obtain an independent laboratory attestation, track custody, package a bounded jar inventory, and let consumers inspect evidence and recalls using a QR label. WhatsApp and smart-hive assistance support the farmer workflow.
 
-[![Next.js 16](https://img.shields.io/badge/Next.js-16.3.5-black?style=flat&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Polygon Amoy](https://img.shields.io/badge/Polygon-Amoy_Testnet-8247E5?style=flat&logo=polygon)](https://polygon.technology/)
-[![AWS Native](https://img.shields.io/badge/AWS-EC2_|_S3_|_SSM-FF9900?style=flat&logo=amazon-aws)](https://aws.amazon.com/)
-[![Google Gemini](https://img.shields.io/badge/Google_Gemini-3.5_Flash_|_Multimodal-4285F4?style=flat&logo=google)](https://deepmind.google/technologies/gemini/)
-[![Meta WhatsApp](https://img.shields.io/badge/Meta_Cloud_API-WhatsApp_Bot-25D366?style=flat&logo=whatsapp)](https://developers.facebook.com/docs/whatsapp)
-[![Prisma ORM](https://img.shields.io/badge/Prisma-PostgreSQL-2D3748?style=flat&logo=prisma)](https://www.prisma.io/)
-[![Redis FSM](https://img.shields.io/badge/Redis-FSM_State_Machine-DC382D?style=flat&logo=redis)](https://redis.io/)
+**Current status: 22 October 2026.** Local software integration is working for actor-approved batch operations and authenticated phone-to-MQTT delivery. No public chain deployment, completed field pilot, physical device validation or measured AI accuracy is claimed. Team, institution and beneficiary details are pending; fieldwork has not started.
 
----
+## Documentation
 
-## 🍯 Executive Summary
+**Current scope:** [final local integration](docs/20-FINAL-LOCAL-INTEGRATION.md), excluding public deployment and IoT at the user's request. Local rehearsal and browser acceptance are tracked separately there. The earlier [checklist](docs/15-MAIN-FLOW-VERIFICATION.md) includes public-network gates outside this revised scope. Main `.env` and isolated `.env.integration` remain separate.
 
-The Indian apiculture industry faces two critical challenges:
-1. **Middlemen Exploitation:** Smallholder beekeepers receive low farmgate prices while adulterated synthetic syrups flood the retail market.
-2. **Technological Barrier:** Most rural beekeepers lack modern smartphones, crypto wallets, or English fluency to access transparent blockchain and IoT monitoring platforms.
+The [phased publication record](docs/21-PHASED-PUBLICATION.md) explains the separate commits/pushes, fresh validation, private-file exclusions and separate IoT publication approval. External MetaMask approval is still pending; WhatsApp activation remains deferred.
 
-**Pollinator** bridges this divide by delivering an end-to-end hardware-to-blockchain traceability ecosystem with a **zero-friction WhatsApp AI interface** (`Forager Bot`). Farmers interact in their native language (Hindi, Telugu, Tamil, Marathi, Bengali, English) via **voice notes and text**, while an **AWS-hosted Next.js engine** pairs their IoT hive sensors, mints cryptographic ERC-721 batch provenance on **Polygon Amoy**, and generates anti-counterfeit QR codes with real-time audit trails.
+The [WhatsApp delivery runbook](docs/16-WHATSAPP-DELIVERY-RUNBOOK.md) covers the new durable inbox/outbox, worker activation and administrator review. Local recovery tests pass; public callback activation and real phone delivery remain pending.
 
----
+The [HTTP rehearsal and Amoy handoff](docs/17-HTTP-REHEARSAL-AND-AMOY-HANDOFF.md) records the current standalone app's full local lifecycle, signed-webhook integration, actual IPFS round trip and fail-closed Redis recovery, plus a seven-minute presentation sequence. Browser/wallet and public-network acceptance remain open.
 
-## 🌟 Key Architecture & Capabilities
+The [release container checkpoint](docs/18-RELEASE-CONTAINER-CHECKPOINT.md) records fresh Linux images, merged configuration, restricted database grants and worker health/shutdown checks. Full evidence writes require the new evidence-storage override; public activation remains pending.
 
-### 1. 🤖 Multilingual WhatsApp AI & Voice Agent (`Forager Bot`)
-* **Voice Note Chatting:** Natively processes WhatsApp voice notes (`audio/ogg`) using Gemini multimodal transcription and intent classification.
-* **Frictionless Onboarding:** Welcomes new users without forcing registration, providing interactive guidance and answering beekeeping questions.
-* **Dialect & Language Detection:** Automatically identifies regional Indian languages and adapts responses dynamically.
-* **Real-Time Market Prices:** Delivers current farmgate rates for Mustard, Multiflora, Litchi, and Raw honey.
-* **Government Scheme Guidance:** Step-by-step information on the **KVIC National Honey Mission** 80% subsidy and National Bee Board (NBB) support.
-* **Beekeeping Advisor:** Diagnostic tips on Varroa mite treatment, queen bee acoustics, and seasonal brood management.
+The [MetaMask deployment flow and next steps](docs/19-METAMASK-DEPLOYMENT-AND-NEXT-STEPS.md) covers the administrator deployment page, transaction recovery, role enrollment and remaining live acceptance gates.
 
-### 2. 🌡️ Smart IoT Hive Telemetry
-* **Live Environmental Telemetry:** Continuous tracking of brood temperature, humidity, super weight, and battery levels from ESP32 field devices.
-* **Acoustic & Anomaly Alerts:** Detection of swarming conditions (elevated temperatures >37°C) and pest infestation risks.
-* **One-Touch Pairing:** Farmers can pair any smart box directly via WhatsApp using device IDs (e.g. `ESP32-001`).
+Start with the [audit and improvement dossier](docs/README.md). The latest [hive firmware and bench plan](docs/14-HIVE-FIRMWARE-AND-BENCH-PLAN.md) covers the reference ESP32 source, persistent journal, pairing, sensor setup and physical acceptance gates. The [phone gateway record](docs/13-PHONE-GATEWAY-AND-OFFLINE-QUEUE.md) describes BLE transport, the account-scoped queue, authenticated MQTT relay and receipt lookup. The [cluster deployment and recovery record](docs/11-CLUSTER-DEPLOYMENT-AND-RECOVERY.md) covers compiled services, isolation, migrations and backup tooling. The [submission requirements](docs/07-SUBMISSION-REQUIREMENTS-AND-DOSSIER.md) distinguish required attachments from facts still to collect.
 
-### 3. ⛓️ Blockchain Provenance & Anti-Clone Verification
-* **Cryptographic Batch Minting:** Honey harvests are minted as verifiable records on the **Polygon Amoy Testnet** with IPFS lab reports stored on Pinata.
-* **HMAC-Protected Anti-Clone QR Codes:** Time-and-hash validated QR codes with geo-fencing to prevent packaging counterfeiting.
-* **Deterministic Custodial Wallets:** Rural farmers do not need MetaMask. Wallets are derived deterministically using HMAC-SHA256, enabling zero-friction onboarding.
+## Implemented
 
-### 4. 📊 Enterprise Web Dashboard
-* **Role-Based Workflows:** Tailored interfaces for Beekeepers, Processors, Certified Quality Testing Labs, and Regulatory Admins.
-* **One-Click Recall Engine:** Instant cryptographic flagging of contaminated or adulterated batches across the distribution chain.
+- Password accounts, server-managed roles, revocable sessions and owner-scoped application access.
+- Registry v2: strict custody lifecycle, independent lab commitment, permanent packaging count/mass limits, recall and OpenZeppelin ERC-2771 actor signatures.
+- Durable PostgreSQL operations with idempotency, wallet review/approval, a separate gas-paying relayer, receipt verification and recovery after process/RPC/database failure.
+- Exact-byte evidence hashes, explicit unavailable/mismatched states, serialized jar inventory and stable QR reprints. A copied QR can still be copied physically; anomaly checks are advisory.
+- Responsive light/dark interface and an illustrated scrolling hive → Bluetooth phone → MQTT → server/AI → blockchain → consumer journey.
+- Per-device signed telemetry, encrypted enrollment keys, replay/duplicate protection, source-separated charts, a session-based synthetic simulator and a QoS-1 MQTT bridge.
+- Phone gateway source: Web Bluetooth collection, persistent account queues, TLS MQTT relay, authenticated database receipts and explicit retry/error states. Browser and physical firmware acceptance remain pending.
+- Reference ESP32 firmware: sequence reservation in NVS, signed LittleFS journal, authenticated BLE transport, exact-receipt deletion, explicit USB provisioning/clock/calibration and separate sensor/simulation builds. Hardware validation remains pending.
+- Uncertainty-aware image screening and a labelled gross-scale trend scenario; no disease diagnosis or honey-yield accuracy claim.
+- WhatsApp identity resolution and harvest-intent links. Farmer signing enrollment remains pending; phone numbers are not converted into private keys.
 
----
+The contract is a provenance registry, not an ERC-721 NFT. A chain commitment records an actor's declaration; it cannot establish the physical purity of honey. Only use an independently obtained laboratory report as quality evidence.
 
-## 🏗️ System Architecture
+## Development
 
-```mermaid
-flowchart TD
+Use the lockfile and read the installed Next.js guides before framework changes, as required by AGENTS.md.
 
-  %% --- 1. USERS & FIELD IOT ---
-  subgraph Ingress["👥 Stakeholders & Field IoT (Star Mesh)"]
-    direction LR
-    Users["👥 User Stakeholders<br/>• Farmer: WhatsApp Voice & Chat<br/>• Processor: Batch Packaging<br/>• Lab: NMR & Purity Reports<br/>• Consumer: Smart QR Scanner"]
-    Hive["🐝 Physical Smart Hive<br/>• SHT31: Brood Temp & Humidity<br/>• HX711: Super Weight Load Cell<br/>• INMP441: Acoustic Microphone<br/>• ESP32-CAM: Comb Inspection"]
-    Gateway["📡 Central Solar GSM Hub<br/>Star Topology Master Gateway"]
-    Hive -->|"ESP-NOW / LoRa"| Gateway
-  end
-
-  %% --- 2. CLOUD CORE ---
-  subgraph Cloud["☁️ AWS EC2 Cloud Core Backend"]
-    direction TB
-    MQTT["📨 MQTT Star Broker (Mosquitto / AWS IoT Core)"]
-    Backend["⚡ Next.js 16 Full-Stack Engine & NGINX SSL"]
-    DB[("🗄️ PostgreSQL Database (Prisma) + Redis FSM")]
-    MQTT -->|"Telemetry Stream"| Backend
-    Backend ---|"State Sync & Queries"| DB
-  end
-
-  %% --- 3. SPECIALIZED ENGINES ---
-  subgraph Engines["🚀 Processing, Intelligence & Trust Engines"]
-    direction LR
-    AI["🧠 AI Health Engine<br/>• Gemini 3.5 Flash: Voice NLP<br/>• Acoustic FFT: Swarm & Piping<br/>• CV Model: Pest & Varroa Mites<br/>• Hive Health Score (0-100)"]
-    Trust["⛓️ Blockchain & Storage<br/>• HoneyChain.sol: Polygon Amoy<br/>• Pinata IPFS: Lab Reports<br/>• Custody Transfer Protocol"]
-    Security["🛡️ Anti-Clone Security<br/>• Dynamic HMAC-SHA256 QR<br/>• Geo-Velocity Anomaly Audit<br/>• 1-Click Cryptographic Recall"]
-  end
-
-  %% --- DATA & EVENT FLOWS ---
-  Gateway -->|"MQTT Pub"| MQTT
-  Users -->|"HTTPS / WhatsApp Webhook"| Backend
-
-  Backend -->|"Audio & Telemetry"| AI
-  AI -->|"Store Health Score"| DB
-
-  Backend -->|"Mint NFT & Pin CID"| Trust
-  Backend -->|"Generate & Verify QR"| Security
-  Security -.->|"Flag Tampered Batch"| Trust
-```
-
-### 🔄 End-to-End Honey Lifecycle & Custody Transfer Sequence
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Farmer as 🌾 Beekeeper
-    participant Hive as 🐝 Smart Hive (IoT)
-    participant MQTT as 📡 MQTT Broker
-    participant Backend as ⚡ Next.js / AWS EC2
-    participant AI as 🧠 AI Models (Gemini/Audio/CV)
-    participant DB as 🗄️ PostgreSQL (Prisma)
-    participant Chain as ⛓️ Polygon Amoy
-    participant IPFS as 📦 Pinata IPFS
-    actor Processor as 🏭 Honey Processor
-    actor Consumer as 🛒 End Consumer
-
-    %% 1. Telemetry & Scoring
-    Hive->>MQTT: Publish Temp, Humidity, Weight, Acoustic (.wav) via Star Topology
-    MQTT->>Backend: Ingest Telemetry (/api/sensor-data)
-    Backend->>AI: Analyze Acoustic Buzzing + SHT31/HX711 Telemetry
-    AI-->>Backend: Anomaly: None | Hive Score: 94/100 (Optimal Brood)
-    Backend->>DB: Store Sensor Readings & Hive Health Score
-
-    %% 2. Harvest Logging via WhatsApp
-    Farmer->>Backend: WhatsApp Voice Note: "Logging 25kg Multiflora Harvest"
-    Backend->>AI: Gemini Multimodal Transcribe & Intent Classify
-    Backend->>Chain: Mint Honey Batch (Token ID, Harvest Hash, Hive Score)
-    Chain-->>Backend: Polygon TX Hash (0x4B65...)
-    Backend-->>Farmer: WhatsApp Confirmation + Blockchain Explorer Link
-
-    %% 3. Lab Testing & IPFS
-    Backend->>IPFS: Upload Lab Purity Certificate & NMR Analysis
-    IPFS-->>Backend: Return CID (QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco)
-    Backend->>Chain: Attach IPFS CID to Batch On-Chain
-
-    %% 4. Custody Transfer
-    Farmer->>Processor: Handover Physical Honey Consignment
-    Processor->>Backend: Request Custody Transfer (Batch Code)
-    Backend->>Chain: Update Custodian Address (Beekeeper -> Processor)
-    Backend->>DB: Record Audit Trail with Timestamp & Geo Coordinates
-
-    %% 5. Packaging & Anti-Clone QR Generation
-    Processor->>Backend: Package Honey into 500g Jars
-    Backend->>Backend: Generate Dynamic Anti-Clone QR (HMAC-SHA256 + Batch ID)
-    Backend-->>Processor: Download Crypto-Tamper-Proof QR Labels
-
-    %% 6. Consumer Verification
-    Consumer->>Backend: Scan QR Code on Honey Jar (/verify?code=...&hmac=...)
-    Backend->>Backend: Validate Cryptographic HMAC Signature
-    Backend->>DB: Increment Scan Count & Check Geo-Anomaly Velocity
-    Backend->>Chain: Query Real-Time On-Chain Batch & Recall Status
-    Backend->>IPFS: Fetch Original Lab Purity Certificate
-    Backend-->>Consumer: Display Holographic Provenance Journey & Purity Proof
-```
-
----
-
-## 🔬 Deep-Dive: Core Technical Components
-
-### 1. 📡 Star Topology IoT Architecture & MQTT Broker
-Each apiary operates on a **Star Topology Mesh**:
-* **Sensor Nodes:** Individual hives contain lightweight microcontrollers (ESP32/ESP8266) equipped with:
-  * **SHT31 / DHT22:** High-precision brood temperature (±0.2°C) and relative humidity.
-  * **HX711 Load Cell:** Continuous super weight tracking (detecting nectar flow vs. consumption).
-  * **INMP441 I2S Microphone:** Acoustic audio sampling of hive buzzing frequencies (100 Hz – 600 Hz).
-  * **ESP32-CAM:** Periodic visual inspection snapshots of landing boards.
-* **Star Topology Master Gateway:** Field hives broadcast telemetry locally via low-power ESP-NOW / LoRa to a central Solar-Powered GSM Gateway.
-* **MQTT Broker:** The gateway publishes compressed JSON packets over cellular MQTT to Mosquitto / AWS IoT Core (`telemetry/{apiary_id}/{hive_id}`).
-
-### 2. 🧠 AI Intelligence Layer & Hive Scoring Engine
-* **Acoustic Buzzing Frequency Analysis:**
-  * Healthy Queen/Colony: Dominant frequency band around $200\text{--}250\text{ Hz}$.
-  * Swarming Impending: Audio spikes in the $450\text{--}600\text{ Hz}$ range ("piping" sounds) triggers automated early swarming warnings.
-* **Computer Vision Disease Detection:**
-  * Analyzes landing board and comb imagery using transfer-learned models to identify Varroa mite infestation, American Foulbrood, and wax moth larvae.
-* **Dynamic Hive Health Score Algorithm:**
-  $$\text{Hive Score} = w_T \cdot S_T(T) + w_H \cdot S_H(H) + w_W \cdot S_W(\Delta W) + w_A \cdot S_A(f) - D_{\text{penalty}}$$
-  * $S_T$: Optimal brood temperature score ($34.5\text{--}35.5^\circ\text{C}$).
-  * $S_H$: Relative humidity score ($40\text{--}60\%$).
-  * $S_W$: Weight trend derivative (positive delta during harvest flow).
-  * $S_A$: Acoustic stability index.
-  * $D_{\text{penalty}}$: Penalties from visual disease detections.
-
-### 3. 🛡️ Anti-Clone Cryptographic QR System
-Standard QR codes are trivially copy-pasted onto fake honey jars. Pollinator prevents counterfeiting through a 4-tier security defense:
-1. **Dynamic HMAC-SHA256 Tokenization:** Each QR URL contains a tamper-evident signature computed from the secret salt, batch identifier, and jar packaging index:
-   $$\text{Token} = \text{HMAC-SHA256}(K_{\text{secret}}, \text{BatchCode} \mathbin{\Vert} \text{JarID})$$
-2. **Scan Velocity & Geo-Anomaly Detection:** If the same jar QR code is scanned in New Delhi and Mumbai within 10 minutes, the engine automatically flags the batch as cloned and triggers an inspection alert.
-3. **Scan Counter Invalidation:** The first scan indicates consumer purchase. Subsequent scans display warning badges highlighting potential package re-use.
-4. **Cryptographic One-Click Recall:** Administrators can instantly revoke a compromised batch on-chain, rendering all associated QR codes immediately "RECALLED / DO NOT CONSUME" globally.
-
-### 4. 🤝 Decentralized Custody Transfer State Machine
-Every honey consignment moves through an immutable state ladder:
-$$\text{Harvested} \longrightarrow \text{Lab Tested} \longrightarrow \text{Transferred to Processor} \longrightarrow \text{Packaged} \longrightarrow \text{Consumer Distributed}$$
-* Handover between beekeepers and processors requires dual-party confirmation on Polygon Amoy.
-* Batch metadata, including chemical analysis (Fructose/Glucose ratio, HMF, Moisture %, NMR spectral report), is permanently pinned to IPFS via Pinata.
-
----
-
-## 🛠️ Technology Stack
-
-| Layer | Technologies |
-|---|---|
-| **Frontend & API** | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Lucide Icons |
-| **Cloud Infrastructure** | AWS EC2 (t3.small), Amazon S3, AWS Systems Manager (SSM), NGINX |
-| **Artificial Intelligence** | Google Gemini 3.5 Flash / Flash Lite (Multimodal Audio & Intent Recognition), Amazon Bedrock Proxy |
-| **State & Database** | Redis (Finite State Machine), PostgreSQL (Prisma ORM) |
-| **Blockchain & Web3** | Solidity, Hardhat, Ethers.js v6, Polygon Amoy Testnet, Pinata IPFS |
-| **Messaging & IoT** | Meta WhatsApp Cloud API, ESP32 IoT Sensor Protocols |
-| **Security & Cryptography** | HMAC-SHA256 Webhook Verification, Let's Encrypt Automated SSL, EVM Deterministic Wallets |
-
----
-
-## 🚀 Live Deployment Information
-
-* **Web Dashboard:** [http://100.24.80.15](http://100.24.80.15)
-* **Permanent HTTPS Webhook URL:** `https://100.24.80.15.sslip.io/api/webhook/whatsapp`
-* **Verified WhatsApp Bot Phone:** `+91 88822 91014`
-* **Polygon Amoy Smart Contract:** [`0x4B650a3d926A8f777f96422d790B0e36eB29b47a`](https://amoy.polygonscan.com/address/0x4B650a3d926A8f777f96422d790B0e36eB29b47a)
-* **Meta Verify Token:** `honeychain_verify_2026`
-
----
-
-## 💬 WhatsApp Forager Bot Flow
-
-### Sample Farmer Interaction (Voice or Text)
-
-```text
-Farmer: "Hi"
-Bot:    "👋 Welcome to HoneyChain & Pollinator!
-         We connect beekeepers directly to fair markets and IoT hive monitoring on Polygon.
-         How can I help you today?
-         [1] Register Now
-         [2] About Platform
-         [3] Ask a Question"
-
-Farmer (Voice Note in Hindi): "सरसों के शहद का आज का भाव क्या है?"
-Bot:    "💰 Current Honey Market Rates:
-         • Mustard Honey: ₹100–130/kg
-         • Litchi Honey: ₹150–180/kg
-         • Multiflora Honey: ₹90–120/kg
-         🏛️ KVIC National Honey Mission offers up to 80% subsidy on 10 bee boxes."
-
-Farmer: "Show my hive status"
-Bot:    "🌡️ Your Hive IoT Status:
-         📦 Hive ESP32-001
-         • Temperature: 34.8°C (Optimal brood temp ✅)
-         • Humidity: 46.2% (Healthy range ✅)
-         • Super Weight: 24.5 kg (+1.2 kg gain this week 🍯)
-         • Battery: 94% 🔋"
-```
-
----
-
-## 💻 Local Development Setup
-
-### 1. Clone & Install Dependencies
-```bash
-git clone https://github.com/Sonal-ai/Pollinator.git
-cd Pollinator
-npm install --legacy-peer-deps
-```
-
-### 2. Environment Variables Configuration
-Create a `.env` file in the root directory:
-
-```env
-# Database & Cache
-DATABASE_URL="postgresql://pollinator:dev_password_only@localhost:5432/pollinator?schema=public"
-REDIS_URL="redis://localhost:6379"
-
-# Meta WhatsApp Cloud API
-WHATSAPP_PHONE_ID="your_phone_number_id"
-WHATSAPP_ACCESS_TOKEN="your_meta_system_user_token"
-WHATSAPP_APP_SECRET="your_app_secret"
-WHATSAPP_VERIFY_TOKEN="honeychain_verify_2026"
-
-# AI Layer
-GEMINI_API_KEY="your_gemini_api_key"
-
-# Blockchain (Polygon Amoy)
-BLOCKCHAIN_NETWORK="amoy"
-POLYGON_RPC_URL="https://polygon-amoy-bor-rpc.publicnode.com"
-CONTRACT_ADDRESS="0x4B650a3d926A8f777f96422d790B0e36eB29b47a"
-PRIVATE_KEY="your_wallet_private_key"
-
-# IPFS Pinata
-IPFS_GATEWAY="https://gateway.pinata.cloud/ipfs/"
-PINATA_JWT="your_pinata_jwt"
-
-# Security & App URL
-QR_HMAC_SECRET="at_least_32_character_random_hex_string"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
-
-### 3. Database Migration & Seeding
-```bash
-npx prisma db push
-node seed.js
-```
-
-### 4. Smart Contract Compilation (Optional)
-```bash
+```powershell
+npm ci
+npx prisma generate
 npm run compile:chain
+npm run test:app
+npm run test:chain
+npm run build -- --webpack
 ```
 
-### 5. Run Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+For the PostgreSQL/Redis/Hardhat-backed workspace and integration tests, follow [the isolated local setup](docs/09-OPERATIONS-AND-LOCAL-INTEGRATION.md). It uses ignored private configuration and dedicated localhost ports. A fresh database migration and the additive scripts for existing databases are different rollout paths; review the setup before applying either.
 
----
+Production-style web preview: build, then `npm run preview:standalone`. Configure public browser settings before building and `APP_ORIGIN` for the server runtime. `npm run build:workers` compiles the separate chain/MQTT workers. The corrected Linux web/worker/migrator images built and passed local cluster acceptance checks. Follow document 11 before using the cluster Compose templates.
 
-## 🔒 Security & Reliability Implementations
+## Verification and next work
 
-* **Meta HMAC-SHA256 Header Validation:** Every webhook request is cryptographically validated using the app secret to block spoofed or unauthorized triggers.
-* **Resilient FSM Architecture:** Session states utilize Redis with in-memory caching fallbacks to guarantee zero message loss during network hiccups.
-* **Deterministic EVM Custody:** Farmer addresses are derived using HMAC-SHA256 against their phone ID, removing private key management friction while keeping on-chain records distinct.
-* **Native SSL on AWS:** Automatic SSL certificate issuance and renewal through Let's Encrypt on NGINX (`100.24.80.15.sslip.io`).
+The latest phone-gateway checkpoint passed **132 unit tests and 12 PostgreSQL/MQTT/TLS integration tests**. Worker compilation, TypeScript and the Linux production web build passed. Lint reported zero errors and 49 warnings. The preceding deployment checkpoint passed 32 contract and 10 PostgreSQL/EVM tests, two-cluster HTTPS API/login/session/data checks and an encrypted database restore rehearsal. Browser observation remains blocked. These checks use synthetic local fixtures, not field evidence. See documents 11 and 13 for exact scopes and limitations.
 
----
+The firmware checkpoint additionally passed 15 host C++ protocol/journal tests, six Python USB-utility tests and one C++ → phone queue → TLS MQTT → PostgreSQL → receipt integration test. These use a host storage model and synthetic measurements. See document 14 and its verification record for the target compile result and physical limits; these checks do not replace ESP32 flash or radio tests.
 
-## 👥 Team & Acknowledgments
-
-* **Project:** Pollinator (HoneyChain)
-* **Hackathon:** Bharat Builds Tour / AWS First Commit 2026
-* **Organized by:** AWS & WeMakeDevs
-* **Built by:** Sonal Verma & Team
+Next work includes physical offline/power-loss trials, actual browser/device acceptance, assisted farmer signing, post-snapshot chain recovery rehearsal, external-wallet acceptance, and calibrated field validation for AI and scale trends. [Authenticated storage receipts](docs/12-OFFLINE-DELIVERY-RECEIPTS.md) define the safe journal deletion boundary. The [roadmap](docs/03-IMPLEMENTATION-ROADMAP.md) and latest implementation notes track remaining work separately from completed checks.

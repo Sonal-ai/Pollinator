@@ -1,0 +1,37 @@
+{
+  "recordedDate": "2026-10-21",
+  "scope": "Meta read-only account inspection and core-flow presentation update",
+  "tokenValid": true,
+  "activeAppMessagesSubscription": true,
+  "wabaLevelSubscriptionVerified": false,
+  "callbackOriginMatchesMainConfiguration": false,
+  "verificationTokenSentToCallback": false,
+  "callbackChallengeAutoReviewRejected": true,
+  "callbackSettingsChanged": false,
+  "messagesSent": 0,
+  "presentation": {
+    "artifactRef": "artifact_UkAKw9r4EQl3RTfBmUkoY09pDlWXvMiu",
+    "slideCount": 12,
+    "updatedSlides": [
+      1,
+      5,
+      6,
+      8,
+      9,
+      11
+    ],
+    "changedSlidesRenderedAndInspected": true,
+    "fullDeckMontageInspected": true,
+    "officialTemplateAndFieldEvidencePending": true
+  },
+  "remaining": [
+    "User-controlled public Amoy signer/actor addresses and deployment approval",
+    "Confirm intended callback ownership/destination and authorize any verification-token challenge",
+    "Real phone receipt and incoming harvest acceptance",
+    "Permitted browser/external-wallet acceptance and presentation screen rehearsal"
+  ],
+  "evidenceSha256": {
+    "docs/qa/meta-subscription-check.json": "9588c26b8b3c85dc23da4ca6150ef6c61f55edd990ee4b56a7a9e0bb23fe4f41",
+    "docs/submission/SLIDE-CONTENT-DRAFT.json": "afbef365e54fe56350ccf649281c2ec6bf433ef42501e880039196346be5e52b"
+  }
+}

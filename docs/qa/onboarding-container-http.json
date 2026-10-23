@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-10-21T20:21:41.556Z",
+  "scope": "Fresh Linux web image, actual release entry point, restricted QA PostgreSQL/Redis, synthetic administrator; deliberately unavailable RPC and no external network",
+  "passed": true,
+  "visualInspection": false,
+  "metaMaskInspection": false,
+  "publicBroadcast": false,
+  "checks": [
+    "Anonymous administrator-page redirect retains its safe sign-in destination",
+    "Release readiness includes deployment schema and Redis",
+    "Anonymous deployment API denied",
+    "Actual password login with secure HttpOnly session",
+    "Administrator deployment page renders over HTTP",
+    "Unavailable RPC fails safely with HTTP 503",
+    "Cross-origin deployment write denied"
+  ]
+}

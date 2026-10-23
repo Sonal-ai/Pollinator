@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-20",
+  "scope": "Local software checkpoint; synthetic fixtures only",
+  "tests": {
+    "unitAndApplication": {
+      "passed": 83,
+      "exitCode": 0
+    },
+    "contracts": {
+      "passed": 32,
+      "exitCode": 0
+    },
+    "postgresChainAndMqttIntegration": {
+      "passed": 16,
+      "exitCode": 0
+    },
+    "totalPassed": 131
+  },
+  "lint": {
+    "files": 135,
+    "errors": 0,
+    "warnings": 47,
+    "exitCode": 0
+  },
+  "framework": "16.4.2",
+  "productionBuild": {
+    "command": "npm run build -- --webpack",
+    "exitCode": 0,
+    "typescript": "passed",
+    "standaloneSecretCheck": "passed; one copied environment file removed"
+  },
+  "dependencies": {
+    "production": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "includingDevelopment": {
+      "info": 0,
+      "low": 19,
+      "moderate": 14,
+      "high": 26,
+      "critical": 0,
+      "total": 59
+    }
+  },
+  "browser": {
+    "operationReview": "observed before submission",
+    "finalPostApprovalConfirmation": "unverified; automatic approval review denied further observation due to account usage limit",
+    "newDeviceAndAiScreens": "not browser-verified"
+  },
+  "services": {
+    "projectPreview": "stopped",
+    "chainWorker": "stopped",
+    "localHardhat": "stopped",
+    "localRedis": "stopped",
+    "integrationPostgres": "stopped"
+  },
+  "pending": [
+    "BLE/firmware/offline field delivery",
+    "Assisted farmer signing and external wallet acceptance",
+    "Cluster isolation and production worker/bridge packaging",
+    "Device calibration and AI/yield validation on actual data",
+    "Official presentation and identity/team/institution/beneficiary details",
+    "Field interviews/photos/hardware/budget; fieldwork has not started"
+  ]
+}

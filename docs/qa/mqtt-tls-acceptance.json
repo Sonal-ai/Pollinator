@@ -1,0 +1,10 @@
+{
+  "scope": "synthetic localhost MQTT TLS fixture",
+  "serverCertificateVerified": true,
+  "clientCertificateUsed": true,
+  "qos1Stored": true,
+  "duplicateStoredOnce": true,
+  "invalidDeviceSignatureRejected": true,
+  "source": "SIMULATED",
+  "hardwareValidated": false
+}

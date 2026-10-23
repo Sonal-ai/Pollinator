@@ -1,0 +1,9 @@
+{
+  "checkedAt": "2026-10-21T14:18:41.355Z",
+  "configuration": ".env (main app)",
+  "mode": "amoy",
+  "readOnly": true,
+  "registryV2Verified": false,
+  "failure": "Configured registry/RPC could not establish a verified v2 context",
+  "code": "CALL_EXCEPTION"
+}

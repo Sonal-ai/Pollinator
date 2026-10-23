@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-10-21T19:39:49.483Z",
+  "scope": "MetaMask deployment implementation with local verification only",
+  "administrator": "0x06a7E556dA2e1e7C40d0C3a19DDB6ED7cC7e4607",
+  "administratorSigning": "USER_METAMASK",
+  "publicBroadcast": false,
+  "unitChecks": 7,
+  "readinessChecks": 5,
+  "postgresEvmChecks": 5,
+  "httpEvidence": "wallet-deployment-http.json",
+  "httpMode": "NEXT_DEVELOPMENT_LOCAL_FIXTURES",
+  "typecheckPassed": true,
+  "workersBuildPassed": true,
+  "lint": {
+    "files": 14,
+    "errors": 0,
+    "warnings": 0
+  },
+  "productionWindowsBuildPassed": true,
+  "standaloneSealingPassed": true,
+  "migrationAppliedTo": "dedicated native integration database only",
+  "externalWalletAcceptance": false,
+  "visualAcceptance": false,
+  "freshLinuxContainerAcceptance": false,
+  "remaining": [
+    "Six real participant/relayer public addresses",
+    "Actual browser and MetaMask signing acceptance",
+    "Amoy v2 deployment and independent relayer funding/configuration",
+    "Fresh matching release activation and database binding",
+    "Live HTTPS callback/WABA and two-way WhatsApp acceptance",
+    "Final demo capture and real team/field evidence"
+  ],
+  "iotPriority": "LAST"
+}

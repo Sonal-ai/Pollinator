@@ -1,0 +1,74 @@
+{
+  "recordedDate": "2026-10-21",
+  "scope": "Fresh Linux release images, merged deployment configuration, restricted-role migration and isolated worker startup; not a public deployment",
+  "images": {
+    "worker": "sha256:813d4974cc97fb5b0933ea63e1f21efca78a37432fc53d72d30e2db96c2b7ce5",
+    "migrator": "sha256:4f21fd97a6a9297856add0ba4eaee24775df31918305f8f4cf500b42f70dbb98",
+    "web": "sha256:f9b281cc1d6a5ba7d3030522312394f44d9e7801c73c2e4c109052399cd9eebd",
+    "tagSuffix": "main-flow-review",
+    "allBuildsPassed": true,
+    "runtimeUser": "1001:1001",
+    "webPrivateWorkspaceFilesAbsent": true
+  },
+  "configuration": {
+    "installedPodmanComposeMergedConfigPassed": true,
+    "baseWebSecretsPreserved": true,
+    "evidenceCredentialMountedOnlyInWeb": true,
+    "whatsAppWorkerHasNoRelayerKey": true,
+    "actualMetaCredentialsUsedInContainerSmoke": false
+  },
+  "database": {
+    "ownedQaDatabaseBackedUpBeforeMigration": true,
+    "threeWhatsAppMigrationsApplied": true,
+    "applicationRole": "honeychain_app",
+    "applicationIsSuperuser": false,
+    "applicationCanCreateSchemaObjects": false,
+    "applicationCanAlterDeploymentBinding": false,
+    "applicationCanReadMigrationHistory": false,
+    "allWhatsAppTablesAndSequencesOperational": true,
+    "providerAndOperatorActionsInPermissionHarness": "mocked handler/provider and direct review-audit table writes; API authorization verified separately"
+  },
+  "workerSmoke": {
+    "actualReleaseEntryPointPassed": true,
+    "databaseBindingCheckPassed": true,
+    "freshReadyPollingHeartbeat": true,
+    "containerHealthCommandPassed": true,
+    "gracefulShutdownExitCode": 0,
+    "finalHeartbeat": {
+      "service": "whatsapp",
+      "ready": false,
+      "detail": "stopped"
+    },
+    "network": "owned internal data network only",
+    "realProviderMessagesSent": 0,
+    "preservedQaEvmRestarted": false
+  },
+  "evidence": [
+    "main-flow-compose-acceptance.json",
+    "whatsapp-container-permissions.json"
+  ],
+  "remaining": [
+    "User-controlled public signer/actor addresses, testnet funding and reviewed Amoy deployment",
+    "Real HTTPS deployment activation and Meta callback/subscription verification",
+    "Recipient confirmation of the one UNKNOWN authorized send; no blind resend",
+    "Permitted browser/mobile/theme and external-wallet acceptance",
+    "Presentation screen rehearsal and verified team/field evidence"
+  ],
+  "resourcesRestored": {
+    "ownedQaDatabaseStopped": true,
+    "smokeWorkerStopped": true,
+    "podmanMachineReturnedToStopped": true,
+    "nativeIntegrationServicesUnchanged": true
+  },
+  "sourceSha256": {
+    "Dockerfile": "ec8cfb0687630a086246efdf67c2bc12120d0302fca24547aeaa246d3b996f3a",
+    "tsconfig.workers.json": "fdb14036ba5b533db944cf0cc0f81ac19555e3d1863abd8d2a94c599fcdeba49",
+    "scripts/runtime-entry.cjs": "421c7275bf7ff58a3fd547b5073c50a831e8318a73643833b064fee79d777dde",
+    "scripts/runtime-config.cjs": "0058bb9ccd803a4062503afb3c27b19ac6a602bb32b7fbc18253d237cb10ea33",
+    "src/workers/whatsapp.ts": "66ecf4c33206d502a05d6e69f222cd192baabf0371fc9cf27d4edee3ff7e3291",
+    "src/lib/whatsapp/worker.ts": "29f59825edcfd3929a4926ee1b8c16f181a3cf49b0e2732410f05782a746d318",
+    "infrastructure/cluster/compose.yml": "31ff52b57b9c406794c53dc73cd21f345af1380657e6ef77aba3be714302ebac",
+    "infrastructure/cluster/whatsapp.override.yml": "56869f912b3d40b74ee057a6ad7952570c04547188da63d5d227c2f2d9bf2144",
+    "infrastructure/cluster/evidence.override.yml": "1ac84b854f0893c035b083654cc9c33374120cf7dc9544928785125a9ac655d2"
+  }
+}

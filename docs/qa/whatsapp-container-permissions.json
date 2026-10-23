@@ -1,0 +1,11 @@
+{
+  "scope": "Fresh Linux worker image using real restricted application database role; mocked chat handler/provider and no external network",
+  "passed": true,
+  "checks": [
+    "Restricted application role",
+    "DDL, binding mutation and migration history denied",
+    "Inbox, sequence, conversation and atomic outbox writes",
+    "Send attempt, unknown hold and review-audit table writes (operator API authorization tested separately)",
+    "Receipt reconciliation with preserved attempt history"
+  ]
+}

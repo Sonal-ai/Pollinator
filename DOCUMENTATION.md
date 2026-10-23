@@ -1,5 +1,7 @@
 # Pollinator — Complete Project Documentation
 
+> **Dated engineering assessment:** The [20 October 2026 audit and improvement documentation](docs/README.md) records current implementation gaps, validation results, and the SFIC 2026 plan. **This file is the historical product concept, not current deployment documentation.** Some original claims are unvalidated or have been removed from the implementation. Use the [latest implementation and local integration record](docs/09-OPERATIONS-AND-LOCAL-INTEGRATION.md) for present behavior.
+
 > **Platform:** Beekeeper intelligence, supply chain traceability, and honey authenticity verification powered by IoT, AI, and Blockchain.
 
 ---

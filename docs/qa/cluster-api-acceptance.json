@@ -1,0 +1,27 @@
+{
+  "scope": "synthetic localhost HTTPS backend APIs only; self-signed QA certificates",
+  "checks": [
+    {
+      "cluster": "a",
+      "liveness": true,
+      "readiness": true,
+      "secureLogin": true,
+      "ownCanaryReadable": true,
+      "foreignCanaryAbsent": true,
+      "foreignLoginDenied": true,
+      "foreignOriginDenied": true
+    },
+    {
+      "cluster": "b",
+      "liveness": true,
+      "readiness": true,
+      "secureLogin": true,
+      "ownCanaryReadable": true,
+      "foreignCanaryAbsent": true,
+      "foreignLoginDenied": true,
+      "foreignOriginDenied": true
+    }
+  ],
+  "crossClusterCookiesRejected": true,
+  "uiInspected": false
+}

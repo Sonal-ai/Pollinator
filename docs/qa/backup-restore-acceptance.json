@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-10-20",
+  "scope": "synthetic local PostgreSQL fixture only",
+  "sourceProject": "honeychain-qa2-cluster-a",
+  "targetProject": "honeychain-restore-qa-cluster-a",
+  "encryption": "AES-256-GCM authenticated archive",
+  "backupCreated": true,
+  "restoredIntoSeparateEmptySchema": true,
+  "restoredSyntheticCanaryCount": 1,
+  "repeatRestoreRefusedNonemptyTarget": true,
+  "restoredWriterServicesActivated": false,
+  "productionRecoveryClaimed": false
+}

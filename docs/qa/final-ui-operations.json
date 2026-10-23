@@ -1,0 +1,102 @@
+[
+  {
+    "checkedAt": "2026-10-22T06:49:15.131Z",
+    "operationId": "cmvj6ib28001xn19cwa5vje48",
+    "kind": "CREATE_BATCH",
+    "transactionHash": "0x83e2fee6b9e17ffa3f15c361b87696a87cba85bf771719c8bd67c1b34f7d9833",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T06:50:25.156Z",
+    "operationId": "cmvj6lj700020n19c7xq6jufs",
+    "kind": "TRANSFER_CUSTODY",
+    "transactionHash": "0x79ad166d9cfc26ab55de90f4265ab9291443c8dc3f485daee72fd935c2f57ab5",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T06:51:16.193Z",
+    "operationId": "cmvj6mp5o0023n19cdw1dqd1w",
+    "kind": "TRANSFER_CUSTODY",
+    "transactionHash": "0x34709c785c24342acb39e2ad01a725514e97cea848b7569efacbb2bedfe08c4d",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T06:52:02.672Z",
+    "operationId": "cmvj6na7a0026n19cecqg7l99",
+    "kind": "TRANSFER_CUSTODY",
+    "transactionHash": "0x944ecdefcb38fbfa02ac997195714a4e07b218b3ecdea9c68d2d6498ad15cbb1",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T07:29:41.493Z",
+    "operationId": "cmvj801o00029n19cpra8q0j7",
+    "kind": "VERIFY_LAB",
+    "transactionHash": "0xe3ff1bdbdb75fda605d2c904c0ca0b37be7cb864f5f8e58bdfd65b526938c036",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T07:30:15.418Z",
+    "operationId": "cmvj80pss002cn19cnielrmuv",
+    "kind": "TRANSFER_CUSTODY",
+    "transactionHash": "0x352253096153198804ffea864c707c079db983ebe3f2726ddbfd968727a5ddeb",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T07:31:13.333Z",
+    "operationId": "cmvj8224r002fn19c64g19ufy",
+    "kind": "PACKAGE_BATCH",
+    "transactionHash": "0xdb89f10614d3091e0a4a10349fe41ba003af3c083313d7feec9f424a8182d8ac",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T07:32:23.104Z",
+    "operationId": "cmvj83kn3002un19cf2arp5vx",
+    "kind": "TRANSFER_CUSTODY",
+    "transactionHash": "0xf384e85849b504d2e102af48851b60920b84a2aea87d863ae6543a1d18f5504d",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T07:33:01.610Z",
+    "operationId": "cmvj84hed002xn19cocbdcv4j",
+    "kind": "TRANSFER_CUSTODY",
+    "transactionHash": "0x08b4bf71a9fc5e43bb07458a15aa384e57c08f9cd5611317d38c30a7324838fe",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  },
+  {
+    "checkedAt": "2026-10-22T07:48:35.955Z",
+    "operationId": "cmvj8o7lw002u1n6zvzlrn5ps",
+    "kind": "RECALL_BATCH",
+    "transactionHash": "0x618fe3aff40fdae775304942d5c6a12d181f48e1927143992839325f07d55114",
+    "chainId": 31337,
+    "state": "CONFIRMED",
+    "syntheticFixtureSignatureViaApi": true,
+    "externalWalletUiTested": false
+  }
+]

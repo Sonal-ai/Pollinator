@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-10-21T15:09:22.602Z",
+  "scope": "Synthetic non-personal evidence uploaded once through actual application code; no blockchain transaction",
+  "uploadAttempted": true,
+  "uploadConfirmed": true,
+  "retrievalConfirmed": true,
+  "exactByteHashMatches": true,
+  "cid": "bafkreib44xeela4zw3b72tsk2xayxjs64kjpa6r7efjogndrlkotrq55pi",
+  "commitment": "0x3ce5c8458399b6c3fd4e4ad5c18ba65ee292f07a3f2152e334715a9d38c3bd7a"
+}

@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "scope": "Merged Compose configuration only; no service launch",
+  "publicAdministratorPassedToWeb": true,
+  "webSecretsPreserved": true,
+  "whatsappSecretSeparation": true
+}

@@ -1,0 +1,62 @@
+{
+  "checkedAt": "2026-10-22T07:40:37.231Z",
+  "scope": "Actual Windows production standalone HTTP app, real local PostgreSQL/Redis/EVM and configured IPFS; synthetic accounts/data and fixture wallet signing",
+  "steps": [
+    {
+      "name": "Readiness, liveness and anonymous denial",
+      "passed": true
+    },
+    {
+      "name": "Real password login for all six roles with secure HttpOnly cookies",
+      "passed": true
+    },
+    {
+      "name": "Confirmed CREATE_BATCH",
+      "passed": true,
+      "operationId": "cmvj8et8v00041n6zk37imrzv",
+      "transactionHash": "0x826d0beb448aab8d603364c9d10037e2120aac3715a9df5aa43d1dab19afe285"
+    },
+    {
+      "name": "HTTP harvest, pending signature, idempotency and role boundaries",
+      "passed": true
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8ev1y00071n6zmkjyk1ob",
+      "transactionHash": "0x0b633bd821a1b624b482e69e8a9c890d1725bcc2c98e7a5e91c3ab2dbd97a06a"
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8ew5l000a1n6zt02hl3kl",
+      "transactionHash": "0x52f761ad9cb8ca603d3903cecf7a35a8508d4fd8d5ce14514b88c48b28c329b8"
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8ex6m000d1n6zkr69try6",
+      "transactionHash": "0x3b8e24d7a859e16a4f8822a49798d64c858791cd1673cfc77dd4ea62d7569690"
+    },
+    {
+      "name": "Processor custody and processing, then independent lab custody",
+      "passed": true
+    }
+  ],
+  "passed": false,
+  "uiInspected": false,
+  "externalWalletInspected": false,
+  "chainContext": {
+    "chainId": 31337,
+    "registryAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "forwarderAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "genesisHash": "0xb5cfd3e380040b019df62771c82db46e60bed80b390a58c5575f652f1b679fe9"
+  },
+  "batchCode": "HC-2026-LOCA-88C72B",
+  "batchId": "cmvj8et8b00021n6zgcwbyko3",
+  "failedAt": "Real lab PDF upload and signed commitment",
+  "failureType": "AssertionError",
+  "failureSummary": "Unexpected HTTP status during Real lab PDF upload and signed commitment",
+  "actual": 503,
+  "expected": 202
+}

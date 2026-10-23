@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-10-22T06:37:10.239Z",
+  "scope": "Actual Windows production HTTP proxy, session guard, password login and protected operation response; client navigation and visual inspection not performed",
+  "passed": true,
+  "checks": [
+    "Anonymous and invalid-cookie approval links retain their destination",
+    "Real password session can open the preserved protected operation",
+    "Signed but revoked account session retains safe return target"
+  ],
+  "visualInspected": false
+}

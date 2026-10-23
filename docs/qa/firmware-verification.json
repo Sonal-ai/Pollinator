@@ -1,0 +1,174 @@
+{
+  "recordedAt": "2026-10-21T12:48:56.660Z",
+  "scope": "reference ESP32 compilation, host protocol/fault model, USB utility and synthetic local TLS/database integration",
+  "sharedCppHostTests": {
+    "passed": 15,
+    "failed": 0,
+    "persistenceModel": "in-memory durable-state and interruption model; not flash or real process power loss"
+  },
+  "pythonUsbUtilityTests": {
+    "passed": 6,
+    "failed": 0,
+    "hardwareOpened": false
+  },
+  "cppPhoneTlsPostgresIntegration": {
+    "passed": 1,
+    "failed": 0,
+    "queue": "fake-indexeddb",
+    "journal": "same shared C++ core with in-memory store",
+    "transport": "real TLS MQTT v5 and PostgreSQL, handler session identity injected",
+    "source": "SIMULATED",
+    "checked": [
+      "reboot retains exact original bytes",
+      "broker-only acceptance has no storage receipt",
+      "invalid acknowledgement retains journal",
+      "database commit precedes receipt acceptance and deletion",
+      "duplicate retry stores exactly one row",
+      "post-ack reboot remains empty"
+    ]
+  },
+  "freshFirmwareTestsPassed": 22,
+  "toolchain": {
+    "arduinoCli": "1.5.1",
+    "esp32Core": "3.3.12",
+    "arduinoJson": "7.4.3",
+    "nimbleArduino": "2.5.1",
+    "bme280": "2.3.0",
+    "rtcLib": "2.1.4",
+    "adafruitBusIo": "1.17.4",
+    "adafruitUnifiedSensor": "1.1.15",
+    "hostCpp": "MinGW GCC 15.2 with Windows CNG"
+  },
+  "targetBuilds": {
+    "live": {
+      "result": "passed",
+      "fqbn": "esp32:esp32:esp32:PartitionScheme=no_ota",
+      "buildProperties": "",
+      "programBytes": 759561,
+      "programPartitionBytes": 2097152,
+      "staticGlobalBytes": 47640,
+      "runtimeHeapMeasured": false,
+      "logSha256": "158d0ace06e1571038227d090b9499cf34d4a022403358774ddb7065939de7dc",
+      "artifacts": [
+        {
+          "file": ".local-data/firmware-esp32/live/HoneyChainHive.ino.bin",
+          "bytes": 759712,
+          "sha256": "749a4eab6c0aab619fa5958a8f9262f995b818293f3191da8ac409a00989aa5e"
+        },
+        {
+          "file": ".local-data/firmware-esp32/live/HoneyChainHive.ino.elf",
+          "bytes": 13479036,
+          "sha256": "bd95dfe3567832d671ad7174b772fb498f6f982315b65eaad4ec9433d55498ec"
+        }
+      ]
+    },
+    "simulation": {
+      "result": "passed",
+      "fqbn": "esp32:esp32:esp32:PartitionScheme=no_ota",
+      "buildProperties": "compiler.cpp.extra_flags=-DHC_SENSOR_SIMULATION=1",
+      "programBytes": 758121,
+      "programPartitionBytes": 2097152,
+      "staticGlobalBytes": 47640,
+      "runtimeHeapMeasured": false,
+      "logSha256": "ca99d39286fd49d3b8b3ec28db7f2f74496670b05461bf13924c42f5fafcff3a",
+      "artifacts": [
+        {
+          "file": ".local-data/firmware-esp32/simulation/HoneyChainHive.ino.bin",
+          "bytes": 758272,
+          "sha256": "839108ba2e118ba39604d8f604da21b82b3a326704e412a2a697477dc1f5da91"
+        },
+        {
+          "file": ".local-data/firmware-esp32/simulation/HoneyChainHive.ino.elf",
+          "bytes": 13483304,
+          "sha256": "84aace66fe0c7dad0e6559c0f1a2a52dcb7b80a0c2a9cebd88a08a4f15868c6f"
+        }
+      ]
+    }
+  },
+  "lint": {
+    "files": 5,
+    "errors": 0,
+    "warnings": 0
+  },
+  "sourceHashes": [
+    {
+      "file": "firmware/HoneyChainHive/HoneyChainHive.ino",
+      "sha256": "03ad576c47bb850c422d21f7c8f4a87c82eb1a75710fdf7d8d796fb12994f0b3"
+    },
+    {
+      "file": "firmware/HoneyChainHive/sketch.yaml",
+      "sha256": "750f28148ac2d22c54a88216e6188c2a7011846898e221ae88d9f6869473ade4"
+    },
+    {
+      "file": "firmware/HoneyChainHive/src/honeychain/core.hpp",
+      "sha256": "196c900e3db4fa26ff784b4a9b639df5af022e900630be80cf70f7138f030ba1"
+    },
+    {
+      "file": "firmware/HoneyChainHive/src/honeychain/core.cpp",
+      "sha256": "8c620e2adfef7f4da7c5930ee14c86c909565f1fa1e0f22c29bbd1962534a150"
+    },
+    {
+      "file": "firmware/HoneyChainHive/src/honeychain/esp_platform.hpp",
+      "sha256": "f9e627ba4df425e63ff9aa9bc7297666e94afc28da56b1f2370f544ab1679eee"
+    },
+    {
+      "file": "firmware/tools/provision.py",
+      "sha256": "5b0e3d8f92e03e5c8b0e5e7cad67e3ebf21c69f66356a1dc5a8b2636b9c8de09"
+    },
+    {
+      "file": "firmware/tools/requirements.txt",
+      "sha256": "0b81718d1cbe8a7696e45a9388c9205272b5e345cd79d0cf1ccfb7a9fd1925e9"
+    },
+    {
+      "file": "firmware/test/core-driver.cpp",
+      "sha256": "68fc2c543b1919f02dc25fdd44f78f6a644b251f51d059ed36ab67bb508acb3f"
+    },
+    {
+      "file": "firmware/test/test_provision.py",
+      "sha256": "ff50d94d144ca16109ea693b6ef9b180848875b04b41779b527ed84a0d4785e8"
+    },
+    {
+      "file": "scripts/build-firmware-host.cjs",
+      "sha256": "431e5314dffaaeaf897e4762b6f3eac0d69ab4f2695213b5b476aca0358d2b5a"
+    },
+    {
+      "file": "scripts/build-firmware.ps1",
+      "sha256": "846291b37d209631fcd43e6a473c858089ee0e866bc3d6128160e4c89cb1a9cb"
+    },
+    {
+      "file": "scripts/setup-firmware-tools.ps1",
+      "sha256": "49d8c762009df20fad181d12faeae1ca82838b513c82fedd7329b9791a585c03"
+    },
+    {
+      "file": "scripts/test-firmware.cjs",
+      "sha256": "63ac04fa4d1a5722b23d26b75261eb577a4bd04efce8986cff566909efed3674"
+    },
+    {
+      "file": "test/helpers/firmware-driver.cjs",
+      "sha256": "df9297215d385a51b02fdb858f8ea46444183e89a5ab023e2962c4f0fc2de4c1"
+    },
+    {
+      "file": "test/firmware-core.test.cjs",
+      "sha256": "e32c716532d1b3d0dc064ced1aa855cd13a5f0df7815aeb0962a95ea68b24257"
+    },
+    {
+      "file": "test/firmware-integration.test.cjs",
+      "sha256": "d815c3d59794d2d3e12c6d1b6e8da345b50cede8dea8351cde036f523f6a87a8"
+    }
+  ],
+  "previousApplicationCheckpoint": "132 unit and 12 telemetry/gateway integration tests, worker compile and Linux web build passed previously; not rerun for firmware-only source",
+  "physicalHardwareValidated": false,
+  "usbSerialOpened": false,
+  "hardwareFlashed": false,
+  "physicalBlePairingValidated": false,
+  "actualFlashPowerLossValidated": false,
+  "physicalSensorsCalibrated": false,
+  "batteryOrRangeMeasured": false,
+  "ordinaryNvsStoresDeviceSecret": true,
+  "browserUiInspected": false,
+  "browserBlock": "previous automatic approval review usage limit; UI inspection not retried or bypassed",
+  "fieldwork": "not started; team, institution, pilot location, interviews, photographs, hardware and budget unconfirmed",
+  "publicDeploymentOrSubmission": false,
+  "overallApplicationComplete": false,
+  "resources": "project QA broker, isolated PostgreSQL and otherwise idle Podman machine stopped; EVM/chain writer stayed stopped; data and images preserved"
+}

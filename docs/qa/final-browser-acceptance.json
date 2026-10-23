@@ -1,0 +1,67 @@
+{
+  "checkedAt": "2026-10-22T07:56:19.240Z",
+  "passed": true,
+  "scope": "Synthetic localhost production browser acceptance; public deployment and IoT excluded",
+  "batchCode": "HC-2026-LOCA-BC9D8F",
+  "confirmedOperationsEvidence": "final-ui-operations.json",
+  "signedInRoles": [
+    "beekeeper",
+    "processor",
+    "lab",
+    "distributor",
+    "retailer",
+    "admin"
+  ],
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 900
+    },
+    {
+      "width": 390,
+      "height": 844
+    },
+    {
+      "width": 320,
+      "height": 680
+    }
+  ],
+  "checks": [
+    "Desktop and mobile landing/navigation; expanded mobile menu closes on selection",
+    "Light/dark switching and persistence after reload",
+    "Nonexistent batch shows no substituted demo record",
+    "Invalid and valid password login; sign-out; protected approval returns after login",
+    "Harvest native modal, named fields, keyboard movement, Escape and focus return",
+    "Browser harvest prepares a saved approval; missing-wallet feedback preserves operation",
+    "Farmer, processor and laboratory custody and processing through UI forms",
+    "Oversized PDF rejected before hashing; clearly synthetic PDF selected and uploaded",
+    "500 g preset yields 50 jars; 27500 g packaging rejected for 25000 g harvest; 10 x 2500 g accepted",
+    "Ten QR images render and signed links remain identical on reprint",
+    "Distribution and retail handover forms",
+    "Consumer signed label shows four evidence matches; batch-only lookup remains distinct",
+    "Retailer lab-page access redirects to its registry",
+    "Administrator recall control exists on an alert-free batch and fits 320 px width",
+    "Public signed label warns before the recall signature",
+    "Ten actual local-chain receipts confirmed; corrected final recall message observed after rebuild",
+    "Public warning remains after chain confirmation and sign-out"
+  ],
+  "keyboardBoundaryNote": "Native modal and inside-dialog Tab movement verified; browser-chrome focus traversal was not treated as a background-page focus failure.",
+  "externalWalletExtensionTested": false,
+  "syntheticSignaturesViaAuthenticatedApi": true,
+  "realPhoneDeliveryTested": false,
+  "physicalPrintingTested": false,
+  "emptyFileBrowserSelectionTested": false,
+  "printStylesReviewedInSource": true,
+  "consoleErrorsOrWarnings": 0,
+  "finalViewportOverrideReset": true,
+  "screenshots": [
+    "final-home-desktop.jpg",
+    "final-home-mobile.jpg",
+    "final-harvest-mobile.jpg",
+    "final-operation-confirmed.jpg",
+    "final-labels-desktop.jpg",
+    "final-consumer-mobile.jpg",
+    "final-recall-form-mobile.jpg",
+    "final-recall-confirmed-desktop.jpg"
+  ]
+}

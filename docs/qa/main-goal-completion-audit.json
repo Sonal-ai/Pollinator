@@ -1,0 +1,51 @@
+{
+  "checkedAt": "2026-10-21T20:27:31.834477+00:00",
+  "objectiveComplete": false,
+  "verifiedSourceChangesSinceCheckpoint": [],
+  "requirements": [
+    {
+      "requirement": "Verify blockchain contract and connection",
+      "local": "32 contract tests, exact Windows/Linux bytecode and ABI identity, PostgreSQL/local-EVM and HTTP receipts verified",
+      "live": "Incomplete: actual main Amoy contract does not establish registry v2; six role addresses and relayer signing unconfigured",
+      "evidence": [
+        "onboarding-checkpoint.json",
+        "main-chain-diagnosis.json",
+        "amoy-deployment-readiness.json"
+      ]
+    },
+    {
+      "requirement": "Verify WhatsApp integration and testing",
+      "local": "Durable inbox/outbox, recovery, enrolled-farmer registration, signed HTTP webhook and local actor approval verified; Meta transport/translation mocked in rehearsal",
+      "live": "Incomplete: live callback/WABA, phone delivery and real incoming harvest not proven; earlier authorized send outcome UNKNOWN",
+      "evidence": [
+        "whatsapp-http-acceptance.json",
+        "meta-subscription-check.json",
+        "whatsapp-authorized-send.json"
+      ]
+    },
+    {
+      "requirement": "Verify backend and presentation flow",
+      "local": "71 application checks, 19-step real-IPFS HTTP lifecycle, safe login-return HTTP and Linux release authentication/outage acceptance; timed presentation sequence and draft deck available",
+      "live": "Incomplete: intended release activation and actual browser/wallet screens not verified",
+      "evidence": [
+        "main-http-acceptance.json",
+        "login-return-http.json",
+        "onboarding-container-http.json"
+      ]
+    },
+    {
+      "requirement": "Verify full integration",
+      "local": "Local synthetic web/WhatsApp/API/PostgreSQL/Redis/EVM/IPFS flow verified within recorded scopes",
+      "live": "Incomplete: public Amoy, intended backend/callback and real phone/browser acceptance required"
+    }
+  ],
+  "blocker": "User-controlled live setup and acceptance inputs remain unavailable: six public role addresses, administrator wallet signatures, relayer setup, intended callback authorization, phone confirmation and permitted browser/MetaMask acceptance",
+  "blockerRepeatedAcrossAtLeastThreeConsecutiveGoalTurns": true,
+  "noPendingBuildOrTestJob": true,
+  "localPreviewPort": 3100,
+  "productionDependencyAdvisories": 0,
+  "developmentDependencyAdvisories": 29,
+  "noPublicTransactionBroadcast": true,
+  "noRealMessageResent": true,
+  "nextInput": "Separate public addresses for relayer, beekeeper, lab, processor, distributor and retailer; never private keys"
+}

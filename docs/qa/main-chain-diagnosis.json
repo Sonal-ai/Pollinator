@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-21T20:24:28.125Z",
+  "readOnly": true,
+  "configuration": ".env",
+  "registryAddress": "0x4B650a3d926A8f777f96422d790B0e36eB29b47a",
+  "rpcChainId": 80002,
+  "deployedBytecodeBytes": 13407,
+  "deployedBytecodeHash": "0x2485a8bc55039cfe701b49039b2a141086eb3b94e0113da03f3f9369354219e6",
+  "registryVersionCall": {
+    "code": "CALL_EXCEPTION",
+    "returnedData": "0x"
+  },
+  "trustedForwarderCall": {
+    "code": "CALL_EXCEPTION"
+  },
+  "conclusion": "DEPLOYED_CODE_DOES_NOT_ESTABLISH_REGISTRY_V2",
+  "relayerConfigured": false
+}

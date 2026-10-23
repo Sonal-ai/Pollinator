@@ -1,0 +1,27 @@
+{
+  "recordedDate": "2026-10-21",
+  "scope": "Actual localhost production HTTP integration and actual IPFS, with read-only public-chain diagnosis",
+  "allLocalHttpChecksPassed": true,
+  "realIpfsExactBytesPassed": true,
+  "publicChainVerified": false,
+  "liveWhatsAppDelivered": false,
+  "browserAccepted": false,
+  "externalWalletAccepted": false,
+  "browserBlock": "Browser security URL policy rejected observation; no workaround attempted",
+  "evidence": {
+    "docs/qa/main-http-acceptance.json": "71ee76bc178f63e7c8bd0b8c99eabeffea38fddd027b03e669a153653689de95",
+    "docs/qa/whatsapp-http-acceptance.json": "92e6f8cb540cbfc90a1fe0d83664457862383eb7ddf9e497c26b6913a457bc7b",
+    "docs/qa/http-redis-failure-recovery.json": "58262234fe0c65dc43424adb8fc4241ae04d01e1204d67469b1dfeb3fcbc56ef",
+    "docs/qa/live-ipfs-roundtrip.json": "85074218355c57f4bb89d2a7dd178b9756dbd9e904ebc8dc5c5e2c7679e1fd03",
+    "docs/qa/main-chain-diagnosis.json": "8f24f04fd363ae294f1f5bcab038a9c54dbc3e9e37630c61e6773b3b3922eac0",
+    "docs/qa/amoy-deployment-readiness.json": "aa490833b621db5f1f7bfba3caa5166b7acca9acaac4670c87bd79881e42c299"
+  },
+  "remaining": [
+    "User-controlled public signer/actor addresses and relayer funding",
+    "Reviewed v2 Amoy deployment and actor approvals",
+    "Production container/migration/worker/callback activation",
+    "Confirm live phone delivery and incoming callback",
+    "Permitted browser, mobile/theme and external-wallet acceptance",
+    "Presentation screen rehearsal and real field/team evidence"
+  ]
+}

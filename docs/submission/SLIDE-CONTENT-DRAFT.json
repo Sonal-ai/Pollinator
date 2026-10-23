@@ -1,0 +1,213 @@
+{
+  "title": "Honey Chain",
+  "status": "Content draft focused on web, WhatsApp and blockchain; live deployment, official template and field evidence pending",
+  "artifactRef": "artifact_UkAKw9r4EQl3RTfBmUkoY09pDlWXvMiu",
+  "date": "2026-10-21",
+  "slides": [
+    {
+      "title": "Honey Chain",
+      "subtitle": "WhatsApp harvests, lab evidence and honey recall",
+      "status": "Working local prototype. Live deployment pending.",
+      "pending": "Institution and team pending. Official presentation template pending.",
+      "note": "Current scope: cooperative honey provenance and recall. IoT is deferred to a teammate. Institution, team and official presentation template remain pending. Sources: docs/15-MAIN-FLOW-VERIFICATION.md and docs/17-HTTP-REHEARSAL-AND-AMOY-HANDOFF.md. No public deployment or field outcome is claimed."
+    },
+    {
+      "title": "Problem and proposed pilot location",
+      "rows": [
+        [
+          "The problem",
+          "A buyer needs a way to check a honey batch’s recorded origin, laboratory evidence and recall status."
+        ],
+        [
+          "The proposed use case",
+          "A beekeeper cooperative records harvests and custody. Each packaged jar links to the same batch evidence."
+        ],
+        [
+          "Observation still pending",
+          "The pilot location and cooperative remain unconfirmed. Local observations and the problem baseline remain unverified."
+        ]
+      ],
+      "note": "Submission fields 1 and 2. Problem framing is a project hypothesis based on the supplied problem statement. No local field observation, partnership or interview is claimed."
+    },
+    {
+      "title": "Beneficiaries and field evidence",
+      "rows": [
+        [
+          "Proposed participants",
+          "Beekeepers, cooperative operators, independent laboratories, processors and consumers."
+        ],
+        [
+          "Evidence to collect",
+          "Consent-based interviews, a description of the present workflow and photos only where participants permit them."
+        ],
+        [
+          "Current evidence status",
+          "Fieldwork has not started. Participant counts, income impact, photographs and interview findings are pending."
+        ]
+      ],
+      "note": "Submission fields 3, 4 and 5. User explicitly confirmed fieldwork has not started. Beneficiary roles are proposed, not enrolled or counted."
+    },
+    {
+      "title": "Existing workflow and gaps to verify",
+      "rows": [
+        [
+          "Working hypothesis",
+          "Paper logs and isolated reports may make it hard to connect a jar to its harvest, transfers and laboratory report."
+        ],
+        [
+          "Questions for the cooperative",
+          "Who records a handover? Who can amend a record? How does a buyer check a report or learn of a recall?"
+        ],
+        [
+          "Comparison for the pilot",
+          "Compare the prototype with the cooperative’s actual process. Include a simpler signed database as a baseline."
+        ]
+      ],
+      "note": "Submission field 6. These are hypotheses to validate with participants. Do not present paper-based practice as an observed fact. Blockchain must earn its complexity through independent verification needs."
+    },
+    {
+      "title": "Honey Chain workflow",
+      "rows": [
+        [
+          "Harvest and actor approval",
+          "A beekeeper records 2.5 kg in WhatsApp, then approves the saved request from an enrolled wallet."
+        ],
+        [
+          "Laboratory and packaging",
+          "Independent actors sign custody and report commitments. Packaging stays within the confirmed harvest."
+        ],
+        [
+          "Consumer verification and recall",
+          "Stable jar labels show evidence and recalls. A signature does not prove physical honey purity."
+        ]
+      ],
+      "note": "Demonstration flow and boundaries: docs/17-HTTP-REHEARSAL-AND-AMOY-HANDOFF.md. The chat fixture used 2.5 kg = 2500 grams. The full HTTP lifecycle used a separate 25000-gram batch and ten 2500-gram jars. Do not conflate those two test records. Synthetic PDFs are not real laboratory results. A new batch is needed to show a live pre-recall sequence."
+    },
+    {
+      "title": "Web, WhatsApp and blockchain",
+      "rows": [
+        [
+          "Durable chat and web requests",
+          "Signed webhooks are stored before acknowledgement. Saved harvest drafts open a web approval link."
+        ],
+        [
+          "Independent actor signatures",
+          "PostgreSQL tracks each operation. A separate relayer submits actor-approved requests and verifies receipts."
+        ],
+        [
+          "Evidence and serialized jars",
+          "Actual IPFS uploads and retrieval match exact bytes. The local HTTP flow passed harvest through recall."
+        ]
+      ],
+      "note": "Sources: docs/qa/main-http-acceptance.json, docs/qa/whatsapp-http-acceptance.json, docs/qa/live-ipfs-roundtrip.json and docs/qa/main-flow-checkpoint-4.json. The production localhost HTTP build, actual PostgreSQL/Redis/local EVM and actual IPFS passed. In the signed-webhook HTTP test, Meta sending and translation were mocked. These results do not establish public Amoy connectivity or an external browser wallet."
+    },
+    {
+      "title": "What blockchain contributes",
+      "rows": [
+        [
+          "Independent approval",
+          "Actors approve typed requests with their own wallets. A separate relayer pays gas without gaining their business roles."
+        ],
+        [
+          "Durable transaction status",
+          "The system persists signed bytes and checks receipts before presenting an operation as confirmed."
+        ],
+        [
+          "Limits of the evidence",
+          "A commitment proves what an actor recorded. Laboratory practice, sensor placement and physical jar handling still need independent checks."
+        ]
+      ],
+      "note": "Source: contracts/HoneyChain.sol, docs/02-TARGET-ARCHITECTURE.md and docs/09-OPERATIONS-AND-LOCAL-INTEGRATION.md. ERC-2771 prototype. No public chain deployment, external wallet acceptance study or fraud-elimination claim."
+    },
+    {
+      "title": "WhatsApp delivery and release status",
+      "rows": [
+        [
+          "Protected processing",
+          "Duplicate incoming events are deduplicated. Interrupted harvest processing reuses the saved request."
+        ],
+        [
+          "Uncertain sends stay visible",
+          "Provider acceptance differs from delivery. An UNKNOWN send is held for review and is not retried automatically."
+        ],
+        [
+          "Live phone check pending",
+          "Meta token and app subscription checks pass. A real incoming harvest and confirmed phone delivery remain open."
+        ]
+      ],
+      "note": "Sources: docs/16-WHATSAPP-DELIVERY-RUNBOOK.md, docs/qa/whatsapp-http-acceptance.json and docs/qa/meta-subscription-check.json, 21 October 2026. The token is valid and the Meta app has an active WhatsApp subscription including messages. WABA-level subscription and the callback route to this build are not proven. The registered callback origin differs from main configuration. The one authorized real template send remains UNKNOWN; the recipient cannot check yet and no resend was made."
+    },
+    {
+      "title": "Verified software and remaining gates",
+      "rows": [
+        [
+          "Local integration",
+          "Real HTTP login, custody, lab, packaging, QR and recall passed on local PostgreSQL, Redis and EVM."
+        ],
+        [
+          "Evidence and release",
+          "Actual IPFS bytes match. Fresh Linux images, restricted database grants and worker health/shutdown passed."
+        ],
+        [
+          "Public acceptance pending",
+          "Amoy v2 deployment, live WhatsApp delivery and browser/wallet checks remain open. Fieldwork has not started."
+        ]
+      ],
+      "note": "Sources: docs/15-MAIN-FLOW-VERIFICATION.md, docs/17-HTTP-REHEARSAL-AND-AMOY-HANDOFF.md, docs/18-RELEASE-CONTAINER-CHECKPOINT.md and their QA JSON files. Fresh focused tests: 22 application/webhook/admin/readiness/deployment checks, 12 real-PostgreSQL durability checks and one handler/API/PostgreSQL/local-EVM test. Counts overlap earlier suites and must not be summed. Additional actual HTTP rehearsals and Linux image checks passed. Main Amoy fails the v2 interface check. Browser visual and external-wallet acceptance remain blocked. No fieldwork or measured farmer impact is claimed."
+    },
+    {
+      "title": "Cost and benefits to measure",
+      "rows": [
+        [
+          "Budget inputs still pending",
+          "Obtain quotes for sensors, controller, power, enclosure, connectivity, hosting, laboratory work and labels."
+        ],
+        [
+          "Benefit measures for a pilot",
+          "Measure record-entry time, traceability completeness, recall lookup success and farmer task completion."
+        ],
+        [
+          "Claims need a baseline",
+          "Hardware availability and total cost are unknown. Revenue gains, loss reduction and AI accuracy remain unmeasured."
+        ]
+      ],
+      "note": "Submission field 9. No hardware quote, rupee total or measured benefit was supplied. Use local quotes and a stated sample/method before filling cost-benefit figures."
+    },
+    {
+      "title": "Proposed 75-day work plan",
+      "rows": [
+        [
+          "Days 1–25",
+          "Days 1–10: confirm the cooperative, baseline and actor roles. Days 11–25: finish live web, wallet and WhatsApp acceptance."
+        ],
+        [
+          "Days 26–55",
+          "Days 26–40: run a consent-based provenance and recall pilot. Days 41–55: address privacy, recovery and usability findings."
+        ],
+        [
+          "Days 56–75",
+          "Measure results and prepare the demonstration. IoT/AI trials follow the core workflow and depend on the teammate’s hardware plan."
+        ]
+      ],
+      "note": "Proposed relative schedule only, not completed activity or an official competition timetable. Core web, WhatsApp, actor signing and provenance/recall acceptance precede optional IoT/AI work. Field consent, team availability, actual hardware and budget must be confirmed. Sources: docs/17-HTTP-REHEARSAL-AND-AMOY-HANDOFF.md and the user’s stated priority."
+    },
+    {
+      "title": "Team, facilities and submission readiness",
+      "rows": [
+        [
+          "Team and institution",
+          "Names, institution and member roles are pending. Proposed responsibilities include field research, hardware, contracts and application testing."
+        ],
+        [
+          "Facilities and readiness level",
+          "Available hardware, laboratory access, mentor support and budget remain unconfirmed. Select TRL using the organiser’s definition."
+        ],
+        [
+          "Before submission",
+          "Transfer content into the official institution template. Add verified field evidence and quotes. Confirm eligibility, upload limits and the current deadline."
+        ]
+      ],
+      "note": "Submission fields 11 and 12 plus upload requirements in docs/07-SUBMISSION-REQUIREMENTS-AND-DOSSIER.md. ZIP screenshots require official college/university presentation template and PPT/PPTX/PDF up to 20 MB. Optional supporting archive up to 20 MB. Recheck live rules before upload. No form has been submitted. Names, facilities, registration status and TRL must not be invented."
+    }
+  ]
+}

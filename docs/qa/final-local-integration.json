@@ -1,0 +1,155 @@
+{
+  "checkedAt": "2026-10-22T07:57:00.329Z",
+  "scope": "Final local core web, synthetic WhatsApp and local blockchain integration; public deployment and IoT excluded by user",
+  "supersedesScopeOf": "main-goal-completion-audit.json",
+  "objectiveComplete": true,
+  "coreIntegrationVerified": true,
+  "tests": {
+    "application": {
+      "passed": 71,
+      "failed": 0
+    },
+    "contracts": {
+      "passed": 32,
+      "failed": 0
+    },
+    "whatsapp": {
+      "passed": 12,
+      "failed": 0,
+      "overlapsApplicationSuite": true
+    },
+    "whatsappDurablePostgres": {
+      "passed": 13,
+      "failed": 0
+    }
+  },
+  "productionBuild": {
+    "passed": true,
+    "next": "16.4.2",
+    "mode": "webpack standalone",
+    "buildId": "A2DoogKqDbAJotWoveOec",
+    "typecheckPassed": true,
+    "sealedEnvironmentFiles": true,
+    "privateLocalDataAbsent": true,
+    "finalSourceIncluded": true,
+    "finalRecallMessageBrowserVerified": true,
+    "priorBuildId": "MFLEQJhMjT_Fce10Plv68"
+  },
+  "lint": {
+    "files": 12,
+    "errors": 0,
+    "warnings": 7,
+    "warning": "Existing unused imports/variable in batch dossier; new focus-return ref warning resolved; final changed operation view and four QA scripts lint clean."
+  },
+  "http": {
+    "core": {
+      "passed": true,
+      "checks": 19,
+      "evidence": "main-http-acceptance.json",
+      "finalBackendAndRecallControlBuild": true
+    },
+    "whatsapp": {
+      "passed": true,
+      "checks": 7,
+      "evidence": "whatsapp-http-acceptance.json"
+    },
+    "loginReturn": {
+      "passed": true,
+      "checks": 3,
+      "evidence": "login-return-http.json"
+    },
+    "serverRenderedViews": {
+      "passed": true,
+      "checks": 48,
+      "evidence": "core-views-http.json",
+      "clientJavaScriptExecuted": false
+    },
+    "finalRebuildChange": "Only the confirmed-recall explanatory sentence changed after the final 19/7/48 acceptance run; latest production build, TypeScript, browser reload and corrected sentence verified."
+  },
+  "browserAcceptance": {
+    "passed": true,
+    "evidence": "final-browser-acceptance.json",
+    "checks": 17,
+    "actualLocalReceipts": 10,
+    "receiptEvidence": "final-ui-operations.json",
+    "syntheticSignaturesViaAuthenticatedApi": true,
+    "externalMetaMaskVerified": false,
+    "physicalPrintingVerified": false,
+    "realPhoneDeliveryProven": false,
+    "screenshots": [
+      "final-home-desktop.jpg",
+      "final-home-mobile.jpg",
+      "final-harvest-mobile.jpg",
+      "final-operation-confirmed.jpg",
+      "final-labels-desktop.jpg",
+      "final-consumer-mobile.jpg",
+      "final-recall-form-mobile.jpg",
+      "final-recall-confirmed-desktop.jpg"
+    ],
+    "priorEncodedErrorPageBlockResolvedByUserRequestedFreshHttpTab": true
+  },
+  "runtime": {
+    "appUrl": "http://127.0.0.1:3100/",
+    "homepageHttpStatus": 200,
+    "readinessHttpStatus": 200,
+    "localChainHistoryPreserved": true,
+    "chainContext": {
+      "chainId": 31337,
+      "registryAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "forwarderAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "genesisHash": "0xb5cfd3e380040b019df62771c82db46e60bed80b390a58c5575f652f1b679fe9"
+    },
+    "compiledLocalChainWorkerStarted": true,
+    "realWhatsAppWorkerNotStarted": true,
+    "compiledChainWorkerOncePassed": true,
+    "previewSession": 73440,
+    "chainWorkerSession": 8840,
+    "browserTabLeftOpen": true,
+    "demoAccountSignedOut": true,
+    "viewportOverrideReset": true,
+    "finalReadinessVerified": true
+  },
+  "boundaries": {
+    "publicDeploymentExcluded": true,
+    "iotExcluded": true,
+    "syntheticAccountsAndRecords": true,
+    "realIPFS": true,
+    "metaSendingAndTranslationMocked": true,
+    "realPhoneDeliveryProven": false,
+    "realWhatsAppMessagesSentThisPass": 0,
+    "publicTransactionsBroadcast": 0,
+    "mainEnvUnchanged": true
+  },
+  "sourceSha256": {
+    "src/components/home/product-journey.tsx": "245ce87ae723a6bb18b690d8efeb463457d814ab578aba32f0bb9c064bd05c64",
+    "src/app/dashboard/batch/new-harvest-modal.tsx": "53a776946ef0768ced99ebb643ac54dc121c68a2dbe56373fecfdf65f3c1b603",
+    "src/app/dashboard/lab/upload-form.tsx": "4969cf4dbe8e5296d10f0ff349faca72cbd7fd1c8b57e5f05ee1234dd9446cb3",
+    "src/app/dashboard/processor/packaging-form.tsx": "1d7b396f626b43145ce92b7357cf135fbfc3eb1b2be6248e877dfeb70387996c",
+    "src/app/dashboard/custody/custody-form.tsx": "84c81f91407a1aa7faf737e8586e833b6fae102c014a215c6b002b29e3e08127",
+    "scripts/verify-core-views-http.cjs": "1b29dc71933b42d17b7ae7704075dfdd50223844f6be7b6a169744143b4df91a",
+    "docs/20-FINAL-LOCAL-INTEGRATION.md": "054a9581070f3ee545e1101246f8f42ed487dd86dc689fdb32ac699d980f1b05",
+    "src/app/dashboard/batch/[batchCode]/page.tsx": "e0bb92925373103c09907cd7170e81c736d0e6a823d6c743973e3a3bc2b46e19",
+    "src/app/dashboard/recall/page.tsx": "e1add99b9b66d4485910305fb2109515e9bfdebe6ac595e4167d35531695b913",
+    "src/app/dashboard/operations/[operationId]/operation-view.tsx": "736355ea8efdc37b3427683f11b2132ac74252630e83e010173ddc669b84c851",
+    "scripts/verify-main-http.cjs": "049c15a3e4b02c3301c4be7b17e8dbca49965ad51ab8392c94f16107237e56c5",
+    "scripts/verify-whatsapp-http.cjs": "646a95be23b49a5634da1e3220db5922e7ce9710f0081ace622157de8503c406",
+    "scripts/approve-local-ui-fixture.cjs": "bd821fba562bf75372064e1e4e972bf1436066df15878f0acef5c5928e95e8fe"
+  },
+  "completionScope": "User-revised local software integration and synthetic browser acceptance only; public deployment and IoT excluded",
+  "qaFailuresResolved": [
+    {
+      "evidence": "core-http-ipfs-outage.json",
+      "cause": "Pinata connection timeout",
+      "resolution": "Fail-closed HTTP 503 observed; storage recovered and full HTTP acceptance passed"
+    },
+    {
+      "evidence": "core-http-fixture-race.json",
+      "cause": "Test runner changed updatedAt while background worker signed",
+      "resolution": "Removed test-only timestamp mutations from both HTTP runners; discarded only the verified unsigned synthetic operation; corrected acceptance passed"
+    }
+  ],
+  "fixtureHelperReplayGuardPassed": true,
+  "goalStatus": "complete",
+  "goalStatusAppliesToUserRevisedLocalScope": true,
+  "recordedGoalTimeUsedSeconds": 11632
+}

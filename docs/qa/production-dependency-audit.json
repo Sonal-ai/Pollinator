@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-21T19:52:54.315Z",
+  "scope": "npm audit --omit=dev; production dependencies only",
+  "vulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "patchedPackage": {
+    "name": "follow-redirects",
+    "version": "1.16.1"
+  },
+  "regressionTests": 2,
+  "advisories": [
+    "https://github.com/advisories/GHSA-q3jh-wrc6-jgq8",
+    "https://github.com/advisories/GHSA-8r9p-f939-6h3c"
+  ],
+  "developmentToolchainAudit": "Linux full install still reports 59 advisories; not included in production-only zero count"
+}

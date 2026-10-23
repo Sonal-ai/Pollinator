@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-10-21T20:24:28.669Z",
+  "readOnly": true,
+  "broadcastPerformed": false,
+  "readyForDeploymentApproval": false,
+  "walletAssignmentsComplete": false,
+  "requirements": [
+    "Supply the separate public RELAYER_ADDRESS",
+    "Configure the matching separate relayer key securely on the intended server before backend activation",
+    "Supply BEEKEEPER actor public address",
+    "Supply LAB actor public address",
+    "Supply PROCESSOR actor public address",
+    "Supply DISTRIBUTOR actor public address",
+    "Supply RETAILER actor public address",
+    "Review fresh v2 registry/forwarder transaction data and gas estimates in the administrator deployment page before each MetaMask signature",
+    "Retain historical deployment identity; a new registry requires a new binding or explicitly reviewed migration"
+  ],
+  "actors": {},
+  "chainId": 80002,
+  "feeQuote": {
+    "maxFeePerGasWei": "97026782370",
+    "maxPriorityFeePerGasWei": "40073185582",
+    "gasPriceWei": "68549983976"
+  },
+  "relayerSigningConfigured": false,
+  "deployer": {
+    "address": "0x06a7E556dA2e1e7C40d0C3a19DDB6ED7cC7e4607",
+    "signing": "USER_METAMASK",
+    "balanceWei": "203092935293762866",
+    "pendingNonce": 16
+  }
+}

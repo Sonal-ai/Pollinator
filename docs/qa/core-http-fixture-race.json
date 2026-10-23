@@ -1,0 +1,68 @@
+{
+  "checkedAt": "2026-10-22T07:42:47.859Z",
+  "scope": "Actual Windows production standalone HTTP app, real local PostgreSQL/Redis/EVM and configured IPFS; synthetic accounts/data and fixture wallet signing",
+  "steps": [
+    {
+      "name": "Readiness, liveness and anonymous denial",
+      "passed": true
+    },
+    {
+      "name": "Real password login for all six roles with secure HttpOnly cookies",
+      "passed": true
+    },
+    {
+      "name": "Confirmed CREATE_BATCH",
+      "passed": true,
+      "operationId": "cmvj8hqal000i1n6z39ni5a7t",
+      "transactionHash": "0x1870d7a948f6ec7c4b728decc7c39b0c74f24a547dd021c004f3dfbf4ae8bc76"
+    },
+    {
+      "name": "HTTP harvest, pending signature, idempotency and role boundaries",
+      "passed": true
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8hro2000l1n6zasa5rpjf",
+      "transactionHash": "0x43ab080864e4a4889b43458b2fbd54359c967fbb8667b12194ba348003b318a8"
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8hsnu000o1n6z5o3ml8lk",
+      "transactionHash": "0xd173d2f8999314ed9e21651dbd3866bea4c8e43537271d63eb6e6f89fa2655b4"
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8htkf000r1n6ze53gcxyh",
+      "transactionHash": "0x759456f1b533029ca57604256f99e9932c963aeef372143d2d04fa73b09a0a3f"
+    },
+    {
+      "name": "Processor custody and processing, then independent lab custody",
+      "passed": true
+    },
+    {
+      "name": "Confirmed VERIFY_LAB",
+      "passed": true,
+      "operationId": "cmvj8hwo7000u1n6z7f0a2p4q",
+      "transactionHash": "0x67e400dc1ef4facaf30fe97a4740730dd85bd5037495df905c4401bf56e002e4"
+    }
+  ],
+  "passed": false,
+  "uiInspected": false,
+  "externalWalletInspected": false,
+  "chainContext": {
+    "chainId": 31337,
+    "registryAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "forwarderAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "genesisHash": "0xb5cfd3e380040b019df62771c82db46e60bed80b390a58c5575f652f1b679fe9"
+  },
+  "batchCode": "HC-2026-LOCA-D50395",
+  "batchId": "cmvj8hqaf000g1n6zz3auwnvj",
+  "failedAt": "Real lab PDF upload and signed commitment",
+  "failureType": "AssertionError",
+  "failureSummary": "Chain operation needs review during Real lab PDF upload and signed commitment",
+  "actual": false,
+  "expected": true
+}

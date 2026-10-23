@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-22T07:46:59.719Z",
+  "scope": "Actual signed localhost webhook HTTP -> compiled durable WhatsApp worker -> actual HTTP batch API -> PostgreSQL -> HTTP wallet approval -> local EVM",
+  "syntheticMetaInbound": true,
+  "providerSendMocked": true,
+  "translationMocked": true,
+  "ipfsMocked": false,
+  "realPhoneDeliveryProven": false,
+  "passed": true,
+  "steps": [
+    "Signed webhook message 1",
+    "Signed webhook message 2",
+    "Signed webhook message 3",
+    "Signed webhook message 4",
+    "Staged approval link and pending chain intent",
+    "Mock provider acceptance and actual signed receipt HTTP reconciliation",
+    "Real HTTP login and actor wallet approval"
+  ],
+  "operationId": "cmvj8muhg002l1n6zo30l6dlf",
+  "batchId": "cmvj8muhc002j1n6zn457mze4",
+  "mockSendCount": 5,
+  "transactionHash": "0x8070c5df21a4963d2e3beee6e57305821b5cd72442e24e27815fa5fd3c8ac923",
+  "batchCode": "HC-2026-LOCA-F0EDB6"
+}

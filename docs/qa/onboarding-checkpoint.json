@@ -1,0 +1,143 @@
+{
+  "checkedAt": "2026-10-21T20:25:16.223Z",
+  "scope": "Trusted first-farmer enrollment and safe sign-in return, exact compiler identity, production builds and local HTTP acceptance; no public deployment",
+  "images": [
+    {
+      "id": "04e18d73b437de1a8b876878013306921b0d67709af914433fa9b1fe08705c28",
+      "tags": [
+        "localhost/honeychain-web:onboarding-review"
+      ],
+      "user": "1001:1001"
+    },
+    {
+      "id": "ce03f0cf3d709ba37ebcdbb99c4f9535cdf6c8a211fa4611cec1bd41969a88df",
+      "tags": [
+        "localhost/honeychain-worker:onboarding-review",
+        "localhost/honeychain-worker:wallet-flow-review"
+      ],
+      "user": "1001:1001"
+    },
+    {
+      "id": "bf0bb235a71bf257b2f2fe41f95af801750f88a21f9a63279cee0c66ad038ecb",
+      "tags": [
+        "localhost/honeychain-migrator:onboarding-review",
+        "localhost/honeychain-migrator:wallet-flow-review"
+      ],
+      "user": "1001:1001"
+    }
+  ],
+  "windowsProductionBuildPassed": true,
+  "linuxBuildsPassed": true,
+  "workersBuildPassed": true,
+  "typecheckPassed": true,
+  "lint": {
+    "files": 11,
+    "errors": 0,
+    "warnings": 0
+  },
+  "toolchain": {
+    "unusedPackagesRemoved": 259,
+    "advisoriesBefore": 59,
+    "advisoriesAfter": {
+      "info": 0,
+      "low": 11,
+      "moderate": 4,
+      "high": 14,
+      "critical": 0,
+      "total": 29
+    },
+    "productionVulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "solidity": "0.8.26",
+    "hardhat": "2.29.1",
+    "compilerArtifactIdentity": {
+      "passed": true,
+      "scope": "Clean Linux compiler artifacts compared with saved Windows pre-toolchain-change artifacts",
+      "solidity": "0.8.26",
+      "contracts": {
+        "HoneyChain": {
+          "creationSha256": "7c72a8693ac93d107c8e6db2c7e84ce1272e231cf6b63fa616a7c17a5e17e751",
+          "runtimeSha256": "331fc1d1b948b824c17e72b6708c1706e43bc7cb5bca384404fd9095182f496d"
+        },
+        "HoneyChainForwarder": {
+          "creationSha256": "710793bc72c61dac49ced0cbeafc17527049be907575f23581aa486e7ead2106",
+          "runtimeSha256": "7b434a50432339247d0340dcbdab3383a17384ad65b449c32e602aba662868d7"
+        }
+      }
+    },
+    "hostArtifactsExcludedFromDocker": true
+  },
+  "tests": {
+    "app": 71,
+    "contracts": 32,
+    "enrollmentPostgresEvm": 7,
+    "enhancedEnrolledFarmerWhatsAppIntegration": 1,
+    "safeReturnFocused": 5,
+    "focusedReturnChecksIncludedInApp": true,
+    "actualCliAdminNonceUnchanged": true
+  },
+  "http": {
+    "core": {
+      "passed": true,
+      "checks": 19,
+      "evidence": "main-http-acceptance.json",
+      "realIPFS": true
+    },
+    "whatsapp": {
+      "passed": true,
+      "checks": 7,
+      "evidence": "whatsapp-http-acceptance.json",
+      "metaSendingAndTranslationMocked": true,
+      "realIPFS": true
+    },
+    "loginReturn": {
+      "passed": true,
+      "evidence": "login-return-http.json",
+      "clientNavigationNotInspected": true
+    },
+    "linux": {
+      "passed": true,
+      "evidence": "onboarding-container-http.json",
+      "deliberatelyUnavailableRPC": true
+    }
+  },
+  "cleanup": {
+    "qaAdministratorDisabled": true,
+    "qaTestSessionsRevoked": true,
+    "qaWebStopped": true,
+    "qaWebExitCode": 143,
+    "qaDatabaseAndRedisStopped": true,
+    "preservedQaEvmRestarted": false,
+    "podmanReturnedToStopped": true,
+    "nativePreviewHealthy": true,
+    "nativePreviewPort": 3100
+  },
+  "actualMainChain": {
+    "diagnosisEvidence": "main-chain-diagnosis.json",
+    "registryV2Established": false,
+    "readinessEvidence": "amoy-deployment-readiness.json",
+    "sixRoleAddressesConfigured": false,
+    "relayerSigningConfigured": false
+  },
+  "publicBroadcast": false,
+  "realMetaMessagesSent": 0,
+  "browserAndExternalWalletAcceptance": false,
+  "sourceSha256": {
+    "package.json": "344fdc54135fe2516e50795a8b2c784d5c5f4787f4b7f48c24ba632032cd5675",
+    "package-lock.json": "051d9dcb4197ed9c0e852f266f2e926ff81095c3a04c527c5cf288f1c74db496",
+    "hardhat.config.js": "2af011a9f6fe621c16cc8cd1f79d2cc74eedb58fab753c44005a79cf8131639c",
+    ".dockerignore": "20cd0f3d48dcd139b722a3431741dabed2e53b15d2319a76111ddab5444842b7",
+    "src/lib/beekeeper-enrollment.ts": "5959ba7de71c5235c278a2c33b9526870a4bfa14ee84670dd75e720e6e2412ab",
+    "src/lib/login-return.ts": "aab36345c85372a71671e18b90e6706eee41b7b9768f1f939565cbdd53e6a739",
+    "src/lib/auth.ts": "fa619a7d42510e1faa788f7b41670926756686e364a44c2403d6d9635cb12774",
+    "src/proxy.ts": "730deb990de5c8aac6a11e3f5c6f260c79878397fd1d97db10b5d84e45b39ff8",
+    "src/app/dashboard/login/page.tsx": "d3868fdbff014ff25d2bc4a8a70724713c9fed02593fc515786e330ff61aafd4",
+    "scripts/provision-account.cjs": "d98b121e61fdd8e78aa9e4e6a4ae21ba87708551ee920e564a540b657154b19a"
+  }
+}

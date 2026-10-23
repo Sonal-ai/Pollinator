@@ -1,0 +1,103 @@
+{
+  "checkedAt": "2026-10-21T19:34:12.647Z",
+  "scope": "Actual Next development HTTP routes on port 3101, local PostgreSQL/Redis/EVM, synthetic accounts and test-wallet signing",
+  "passed": true,
+  "uiInspected": false,
+  "externalWalletInspected": false,
+  "publicBroadcast": false,
+  "steps": [
+    {
+      "name": "Readiness, anonymous denial and real password login",
+      "passed": true
+    },
+    {
+      "name": "Wrong role, foreign origin and invalid enrollment rejected",
+      "passed": true
+    },
+    {
+      "name": "Administrator deployment page and public configuration render over HTTP",
+      "passed": true
+    },
+    {
+      "name": "Unused plan cancellation permits corrected enrollment",
+      "passed": true
+    },
+    {
+      "name": "Idempotent saved enrollment and incomplete export denied",
+      "passed": true
+    },
+    {
+      "kind": "DEPLOY_FORWARDER",
+      "txHash": "0xda5c15ae1cbc703df2425e10ce20deadf1d994cb84cdf222ea8d9497f1956733",
+      "passed": true
+    },
+    {
+      "name": "Wallet-approved local 0",
+      "passed": true
+    },
+    {
+      "kind": "DEPLOY_REGISTRY",
+      "txHash": "0x6e636c1a79a9baac51915aa04d50f15c01371b1af448bd02fd92b15ea9fe2d48",
+      "passed": true
+    },
+    {
+      "name": "Wallet-approved local 1",
+      "passed": true
+    },
+    {
+      "kind": "GRANT_beekeeper",
+      "txHash": "0x4bd909b0a0d1c5a24ba07b1d51bb32a0eb6f04a44796124077ffda651785daa9",
+      "passed": true
+    },
+    {
+      "name": "Wallet-approved local 2",
+      "passed": true
+    },
+    {
+      "kind": "GRANT_lab",
+      "txHash": "0x9d85f97f0d974ee609b062043fc8b60b418d723d2ea970f36ef2ad9b5c89bbcc",
+      "passed": true
+    },
+    {
+      "name": "Wallet-approved local 3",
+      "passed": true
+    },
+    {
+      "kind": "GRANT_processor",
+      "txHash": "0xa78b0625f37d912284bf39ef71070f4fb7c6c0bdea50b4bdf88b4ddb85225d88",
+      "passed": true
+    },
+    {
+      "name": "Wallet-approved local 4",
+      "passed": true
+    },
+    {
+      "kind": "GRANT_distributor",
+      "txHash": "0xf6844166111a0ed15ffe653306d5354af76b810aadd35997420aac4aad6db3ef",
+      "passed": true
+    },
+    {
+      "name": "Wallet-approved local 5",
+      "passed": true
+    },
+    {
+      "kind": "GRANT_retailer",
+      "txHash": "0x766d29108353b318d37cd650ac7319f792dfda0c91eb0b54143046cab95c52d4",
+      "passed": true
+    },
+    {
+      "name": "Wallet-approved local 6",
+      "passed": true
+    },
+    {
+      "name": "Live role verification exports manifest without replacing active registry",
+      "passed": true
+    }
+  ],
+  "deployment": {
+    "id": "cmviiihms000bl6q66sv68yhx",
+    "registryAddress": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+    "forwarderAddress": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
+    "chainId": 31337
+  }
+}

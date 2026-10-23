@@ -1,0 +1,52 @@
+{
+  "checkedAt": "2026-10-21T15:46:56.538Z",
+  "readOnly": true,
+  "messagesSent": 0,
+  "settingsChanged": false,
+  "tokenInspection": {
+    "httpStatus": 200,
+    "apiErrorCode": null,
+    "valid": true,
+    "permissions": [
+      "business_management",
+      "whatsapp_business_management",
+      "whatsapp_business_messaging"
+    ]
+  },
+  "accessibleBusinessTargetCount": 0,
+  "appSubscriptions": {
+    "httpStatus": 200,
+    "apiErrorCode": null,
+    "entries": [
+      {
+        "object": "whatsapp_business_account",
+        "active": true,
+        "fields": [
+          "account_alerts",
+          "account_review_update",
+          "account_update",
+          "calls",
+          "message_template_quality_update",
+          "message_template_status_update",
+          "messages",
+          "phone_number_name_update",
+          "phone_number_quality_update",
+          "security",
+          "message_template_components_update",
+          "automatic_events"
+        ],
+        "callbackConfigured": true,
+        "callbackUsesHttps": true
+      }
+    ]
+  },
+  "callbackCheck": {
+    "matchesConfiguredOrigin": false,
+    "pathMatchesCurrentRoute": true,
+    "readOnly": true,
+    "registeredOriginAndPath": "https://100.24.80.15.sslip.io/api/webhook/whatsapp",
+    "credentialProbePerformed": false,
+    "probeSkipped": "Automatic approval review rejected verification-token egress to the callback; no retry or workaround"
+  },
+  "businessSubscriptions": []
+}

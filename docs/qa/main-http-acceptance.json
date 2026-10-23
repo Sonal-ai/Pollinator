@@ -1,0 +1,114 @@
+{
+  "checkedAt": "2026-10-22T07:46:04.685Z",
+  "scope": "Actual Windows production standalone HTTP app, real local PostgreSQL/Redis/EVM and configured IPFS; synthetic accounts/data and fixture wallet signing",
+  "steps": [
+    {
+      "name": "Readiness, liveness and anonymous denial",
+      "passed": true
+    },
+    {
+      "name": "Real password login for all six roles with secure HttpOnly cookies",
+      "passed": true
+    },
+    {
+      "name": "Confirmed CREATE_BATCH",
+      "passed": true,
+      "operationId": "cmvj8lqs700121n6znz2pp3yw",
+      "transactionHash": "0x9ed5515573150bd5635ed678a7e5b1bfcea14d42d8f079d49f99ce68912082a4"
+    },
+    {
+      "name": "HTTP harvest, pending signature, idempotency and role boundaries",
+      "passed": true
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8lsis00151n6zi07nwpeq",
+      "transactionHash": "0x4635296842b1ea2355791ec1449004296d1d2c34ca9a0fc049c559542bb11f33"
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8ltva00181n6zzbz0r6ka",
+      "transactionHash": "0x62e29bd600af7b9154bb59a9f061bf6b32e920341fcba7c2c4f8d97928a0cbfb"
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8lv9i001b1n6zlq83es23",
+      "transactionHash": "0x54cc6e0dc7d62bd60ed77fc40cb2080358c156c828abdfac955a8781ad76b07e"
+    },
+    {
+      "name": "Processor custody and processing, then independent lab custody",
+      "passed": true
+    },
+    {
+      "name": "Confirmed VERIFY_LAB",
+      "passed": true,
+      "operationId": "cmvj8lyr1001e1n6zhwvu8rnc",
+      "transactionHash": "0x48fb98d7aecc20ec9a46a8cfb061e047b9e0046c33cccf5dd98ea99c2edcdfc7"
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8m06w001h1n6z6z9lez8e",
+      "transactionHash": "0xb54744d706b19136d25f0e0c29f7e35c896c780f77e3c05f935704a8fa2b3303"
+    },
+    {
+      "name": "Real lab PDF upload and signed commitment",
+      "passed": true
+    },
+    {
+      "name": "Confirmed PACKAGE_BATCH",
+      "passed": true,
+      "operationId": "cmvj8m8dq001k1n6z9rlwln33",
+      "transactionHash": "0xcebd50a90c808416209222f59721b1144419a8a033afe6a954692f207e495567"
+    },
+    {
+      "name": "Packaging bounds, real IPFS metadata and stable serialized reprints",
+      "passed": true
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8mar9001z1n6zz8n0erck",
+      "transactionHash": "0xac408875ff3b8de8739b326255112b22bb596cd9a43c5660f0e5cbc59ca5c5a8"
+    },
+    {
+      "name": "Confirmed TRANSFER_CUSTODY",
+      "passed": true,
+      "operationId": "cmvj8mc9k00221n6z0tsmzed1",
+      "transactionHash": "0x4a0af4bfe3c56810faa057070e6587e1d0a1216ac5943612bbd320ad355fdcd5"
+    },
+    {
+      "name": "Distribution and retail custody",
+      "passed": true
+    },
+    {
+      "name": "Public consumer page verifies matching evidence over actual HTTP",
+      "passed": true
+    },
+    {
+      "name": "Confirmed RECALL_BATCH",
+      "passed": true,
+      "operationId": "cmvj8mhg400281n6ztpw8ptcw",
+      "transactionHash": "0xa03dadee30e9afef02a1a3a687725cba8f2218c5540458b5e04b58294b838526"
+    },
+    {
+      "name": "Recall withdraws labels before chain approval and confirms on chain",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "uiInspected": false,
+  "externalWalletInspected": false,
+  "chainContext": {
+    "chainId": 31337,
+    "registryAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "forwarderAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "genesisHash": "0xb5cfd3e380040b019df62771c82db46e60bed80b390a58c5575f652f1b679fe9"
+  },
+  "batchCode": "HC-2026-LOCA-EBB77A",
+  "batchId": "cmvj8lqs100101n6z148ozy75",
+  "serializedConsumerPath": "/verify?b=HC-2026-LOCA-EBB77A&n=ccca6fb8-fd86-463e-a3c0-df9fe18cf5a0&sig=adaa072db398d3048fa2198013155812926e280c8fde67ee77ebafcbb2d119f7"
+}

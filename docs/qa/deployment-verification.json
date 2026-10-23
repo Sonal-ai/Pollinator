@@ -1,0 +1,62 @@
+{
+  "recordedAt": "2026-10-20",
+  "scope": "local prototype deployment checkpoint, uncommitted source",
+  "latestSource": {
+    "unitTests": { "passed": 103, "failed": 0 },
+    "contractTests": { "passed": 32, "failed": 0 },
+    "postgresEvmIntegrationTests": { "passed": 10, "failed": 0 },
+    "postgresMqttIntegrationTests": { "passed": 6, "failed": 0 },
+    "totalAutomatedTestsPassed": 151,
+    "workerCompilation": "passed",
+    "typescript": "passed",
+    "lint": { "errors": 0, "warnings": 49, "files": 155 },
+    "nativeWebBuild": {
+      "status": "failed",
+      "reason": "EPERM creating .next/server/app/api/operations/[operationId]/authorization",
+      "sourceCompilationFailureEstablished": false
+    },
+    "linuxProductionWebBuild": "passed",
+    "standaloneReleaseSealing": "passed",
+    "latestWebImageRebuilt": true,
+    "latestWorkerAndMigratorImagesRebuilt": true
+  },
+  "executedContainerChecks": {
+    "initialImagesBuilt": ["qa-evm", "worker", "migrator", "web"],
+    "workerRuntimeExcludesDevelopmentToolsAndPrivateFiles": true,
+    "freshDatabasesWithAllThreeOrderedMigrations": 2,
+    "independentDatabaseRegistryBindings": 2,
+    "network": "synthetic local EVM using chain ID 80002, not Polygon Amoy",
+    "httpsReadinessLoginOriginAndCrossClusterIsolation": "passed for both clusters",
+    "applicationCannotChangeBindingOrReadMigrationHistory": "passed for both clusters",
+    "chainWorkerHeartbeat": "passed for both clusters before shutdown",
+    "mqttTlsSignedDeliveryDuplicateSuppressionAndInvalidSignatureRejection": "passed; SIMULATED device",
+    "encryptedDatabaseBackupAndSeparateEmptyRestore": "passed; restored canary count 1",
+    "repeatRestoreIntoNonemptySchema": "correctly refused"
+  },
+  "unverified": [
+    "final post-approval browser confirmation",
+    "BLE gateway, firmware and persistent offline delivery",
+    "physical hardware, AI calibration and field outcomes",
+    "external wallet acceptance and assisted farmer signing",
+    "post-snapshot chain-event recovery before restored-writer activation",
+    "public chain deployment and production performance"
+  ],
+  "earlierReviewCapacityBlock": {
+    "action": "stop restarting QA web/proxy containers and rebuild web image",
+    "initialAttemptExecuted": false,
+    "reason": "automatic approval review account usage limit",
+    "reportedRetryTime": "22:45 Asia/Kolkata",
+    "retryThroughNormalApprovalAfterReportedTime": "accepted; command executed and rebuild passed",
+    "resolved": true,
+    "workaroundUsed": false
+  },
+  "resources": {
+    "finalObservedState": "owned QA stacks, recovery fixture, QA EVM, native integration PostgreSQL and Podman machine stopped; stored data, images and logs preserved",
+    "nativeHardhatStartedOnUnusedPort8545AndStoppedAfterTests": true,
+    "shutdownHelper": "scripts/stop-owned-qa.ps1",
+    "shutdownHelperExecuted": true,
+    "shutdownHelperSyntaxParsed": true
+  },
+  "fieldwork": "not started; institution, team, location, interviews, photos, hardware and budget unconfirmed",
+  "integrationResults": "refreshed suites: 10 PostgreSQL/EVM and 6 PostgreSQL/MQTT passed; earlier unreachable-database attempt was a failed setup prerequisite and was subsequently rerun successfully"
+}

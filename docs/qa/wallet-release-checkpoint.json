@@ -1,0 +1,110 @@
+{
+  "checkedAt": "2026-10-21T19:58:59.911Z",
+  "scope": "Final patched Linux images, new migration, restricted-role persistence and actual release web HTTP; synthetic local QA only",
+  "images": [
+    {
+      "id": "ce03f0cf3d709ba37ebcdbb99c4f9535cdf6c8a211fa4611cec1bd41969a88df",
+      "tags": [
+        "localhost/honeychain-worker:wallet-flow-review"
+      ],
+      "user": "1001:1001"
+    },
+    {
+      "id": "bf0bb235a71bf257b2f2fe41f95af801750f88a21f9a63279cee0c66ad038ecb",
+      "tags": [
+        "localhost/honeychain-migrator:wallet-flow-review"
+      ],
+      "user": "1001:1001"
+    },
+    {
+      "id": "4c0962799facb8cde1cda4dc62df5bafddc25a2ae4f7fc82fcffe38f438fedfd",
+      "tags": [
+        "localhost/honeychain-web:wallet-flow-review"
+      ],
+      "user": "1001:1001"
+    }
+  ],
+  "allBuildsPassed": true,
+  "imagePrivateFilesAbsent": true,
+  "deploymentPagePresent": true,
+  "runtimeUID": 1001,
+  "redirectLibrary": "1.16.1",
+  "productionAuditKnownVulnerabilities": 0,
+  "developmentToolchainAdvisories": 59,
+  "windowsProductionBuildPassed": true,
+  "workersBuildPassed": true,
+  "typecheckPassed": true,
+  "lint": {
+    "files": 9,
+    "errors": 0,
+    "warnings": 0
+  },
+  "tests": {
+    "application": 66,
+    "walletApi": 7,
+    "deploymentPostgresEvm": 7,
+    "whatsAppConversationWebhookReview": 12,
+    "whatsAppDurablePostgres": 13,
+    "publicAmoyInspector": 4,
+    "redirectLocalHttp": 2,
+    "countsOverlap": true
+  },
+  "migration": {
+    "name": "20261022000000_wallet_registry_deployments",
+    "privateBackupMade": true,
+    "appliedToOwnedContainerQaOnly": true,
+    "restrictedRoleHarness": {
+      "scope": "Fresh Linux image, real restricted PostgreSQL application role; database permission checks only, no RPC or provider send",
+      "passed": true,
+      "checks": [
+        "Application role remains restricted",
+        "Deployment, seven steps and advisory lock writes",
+        "Locked uncertainty transition persists",
+        "One-active-administrator uniqueness enforced"
+      ]
+    }
+  },
+  "httpEvidence": "wallet-container-http.json",
+  "composeEvidence": "wallet-flow-compose.json",
+  "cleanup": {
+    "syntheticAdministratorDisabled": true,
+    "sessionsRevoked": true,
+    "qaWebStopped": true,
+    "qaWebExitCode": 143,
+    "qaRedisStopped": true,
+    "qaRedisExitCode": 0,
+    "qaPostgresStopped": true,
+    "qaPostgresExitCode": 0,
+    "preservedQaEvmRestarted": false,
+    "podmanReturnedToStopped": true,
+    "nativePreviewPort": 3100
+  },
+  "publicBroadcast": false,
+  "realMetaMessagesSent": 0,
+  "visualAcceptance": false,
+  "externalWalletAcceptance": false,
+  "sourceSha256": {
+    "package-lock.json": "603ef4d8a2f1892c9f9218e8cc055bec0dee78114fed5457c455e59edaa340f4",
+    "Dockerfile": "4cd596531bf8f0ec08c155c534e894582a9d7f07d0c92ddcb1d10a915acb2986",
+    "prisma/schema.prisma": "e3df671698a01ae26643931d652fb95260a3b05754a7d8fc03e33308dbc1dac8",
+    "src/lib/deployment/wallet-deployment.ts": "fecc42a42caec9bbfa16819b579c685e9e2ec9c0db0b79967e33565113966418",
+    "src/lib/whatsapp/client.ts": "eeceba87a8916f0361fc3a4684faa800c2e4f2444f9da8b575339614af83ec52"
+  },
+  "finalHttpRehearsals": {
+    "core": {
+      "passed": true,
+      "checks": 19,
+      "checkedAt": "2026-10-21T19:59:52.432Z",
+      "evidence": "main-http-acceptance.json",
+      "realIPFS": true
+    },
+    "whatsapp": {
+      "passed": true,
+      "checks": 7,
+      "checkedAt": "2026-10-21T20:00:38.509Z",
+      "evidence": "whatsapp-http-acceptance.json",
+      "realIPFS": true,
+      "metaTransportMocked": true
+    }
+  }
+}

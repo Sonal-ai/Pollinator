@@ -1,0 +1,15 @@
+{
+  "scope": "Actual production localhost HTTP readiness/login while owned test Redis is stopped and restored",
+  "unavailable": {
+    "checkedAt": "2026-10-21T15:21:29.158Z",
+    "readinessStatus": 503,
+    "loginStatus": 503,
+    "passed": true
+  },
+  "restored": {
+    "checkedAt": "2026-10-21T15:21:57.667Z",
+    "readinessStatus": 200,
+    "loginStatus": 200,
+    "passed": true
+  }
+}

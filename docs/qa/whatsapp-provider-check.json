@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-21T14:00:39.640Z",
+  "operation": "read-only phone configuration check",
+  "requestedVersion": "v26.0",
+  "reportedVersion": "v26.0",
+  "httpStatus": 200,
+  "phoneIdMatches": true,
+  "hasDisplayNumber": true,
+  "hasVerifiedName": true,
+  "apiErrorCode": null,
+  "apiErrorSubcode": null,
+  "messagesSent": 0
+}

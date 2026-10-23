@@ -1,0 +1,60 @@
+{
+  "checkedAt": "2026-10-21T14:19:57.240Z",
+  "phase": "main-flow checkpoint 1; IoT deferred",
+  "appTests": 65,
+  "contractTests": 32,
+  "postgresEvmTests": 10,
+  "whatsappApiPostgresEvmTests": 1,
+  "totalDistinctTests": 108,
+  "typescript": "passed",
+  "targetedLint": {
+    "files": 7,
+    "errors": 0,
+    "warnings": 0
+  },
+  "liveMetaConnection": "HTTP 200, phone identity matches, v26.0 reported",
+  "liveSend": "one authorized attempt; outcome unknown, user cannot check; no automatic resend",
+  "mainEnvironment": "Amoy registry-v2 context failed with CALL_EXCEPTION",
+  "localEnvironment": "31337 registry/forwarder and actor-approved flow passed",
+  "mocks": [
+    "WhatsApp transport and session in conversation tests",
+    "IPFS pinning in WhatsApp/EVM test"
+  ],
+  "remaining": [
+    "durable webhook inbox/outbox and per-sender ordering",
+    "current-build HTTP/browser/external-wallet acceptance",
+    "live inbound callback and message delivery tracking",
+    "resolve main Amoy v2 compatibility and verify real IPFS",
+    "production rebuild and presentation rehearsal"
+  ],
+  "sourceHashes": [
+    {
+      "file": "src/lib/whatsapp/client.ts",
+      "sha256": "e53f8416acfc78509acb2cb6028fcbf4976cb4c7e02d08f8ea8ea66d01a768d2"
+    },
+    {
+      "file": "src/lib/whatsapp/handler.ts",
+      "sha256": "c50610cc57042269c75deac15494acb35c5142326271c93babc613496f97daa3"
+    },
+    {
+      "file": "src/lib/env.ts",
+      "sha256": "28f41df965d56c166e52d85aa74da3b033bf12a03a58b8fabf1799bb0ba83044"
+    },
+    {
+      "file": "scripts/setup-local-demo.cjs",
+      "sha256": "b2731aed101a86c9e383f08e9982424c61ede825780517b9b080bb9f56773fac"
+    },
+    {
+      "file": "test/whatsapp.test.cjs",
+      "sha256": "2744bdae82e223c3e1004141198626583e2dc14997ac7ef27d415575da4d526d"
+    },
+    {
+      "file": "test/whatsapp-integration.test.cjs",
+      "sha256": "fafe67b232c6e69bc18af3cf5ec3f4b4890a31a3304a270af59995afe5c18bec"
+    },
+    {
+      "file": "test/helpers/load-ts.cjs",
+      "sha256": "ac9f384d596332bacb36b320601f4067b211bf63d37ec3f155980a17d1cd0aae"
+    }
+  ]
+}
