@@ -1,3 +1,6 @@
+import type { Prisma } from '@prisma/client';
+import { requireSession } from '@/lib/auth';
+import { batchScope, beekeeperScope } from '@/lib/access-policy';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { ShieldCheck, AlertTriangle, Layers, QrCode, ArrowRight, Filter, Search } from 'lucide-react';
@@ -12,12 +15,12 @@ function statusBadge(status: string) {
     LAB_VERIFIED:    { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30' },
     PACKAGED:        { bg: 'bg-teal-500/15', text: 'text-teal-400', border: 'border-teal-500/30' },
     IN_DISTRIBUTION: { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/30' },
-    AT_RETAIL:       { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/30' },
-    SOLD:            { bg: 'bg-slate-500/15', text: 'text-slate-400', border: 'border-slate-500/30' },
+    AT_RETAIL:       { bg: 'bg-amber-500/15', text: 'text-[var(--accent-ink)]', border: 'border-amber-500/30' },
+    SOLD:            { bg: 'bg-slate-500/15', text: 'text-[var(--text-muted)]', border: 'border-slate-500/30' },
     RECALLED:        { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/30' },
-    PENDING_CHAIN:   { bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/30' },
+    PENDING_CHAIN:   { bg: 'bg-yellow-500/15', text: 'text-[var(--accent-ink)]', border: 'border-yellow-500/30' },
   };
-  return map[status] ?? { bg: 'bg-slate-500/15', text: 'text-slate-400', border: 'border-slate-500/30' };
+  return map[status] ?? { bg: 'bg-slate-500/15', text: 'text-[var(--text-muted)]', border: 'border-slate-500/30' };
 }
 
 export default async function DashboardPage({
@@ -30,45 +33,9 @@ export default async function DashboardPage({
   const status = sp.status;
   const limit  = 20;
 
-  const { getSession } = await import('@/lib/auth');
-  const session = await getSession();
-  
-  const walletAddress = session?.walletAddress ?? null;
-  const role = session?.role ?? 'admin';
-
-  const where: any = status ? { status } : {};
-  let currentBeekeeperId: string | undefined;
-
-  if (role === 'beekeeper') {
-    const beekeeperOrConditions: any[] = [
-      { beekeeper: { name: 'Sonal' } },
-    ];
-    if (walletAddress) {
-      beekeeperOrConditions.push(
-        { beekeeper: { wallet: walletAddress } },
-        { beekeeper: { wallet: walletAddress.toLowerCase() } },
-        { current_custodian: walletAddress },
-        { current_custodian: walletAddress.toLowerCase() },
-      );
-    }
-    where.OR = beekeeperOrConditions;
-
-    const currentBeekeeper = await prisma.beekeeper.findFirst({
-      where: {
-        OR: [
-          ...(walletAddress ? [
-            { wallet: walletAddress },
-            { wallet: walletAddress.toLowerCase() },
-          ] : []),
-          { phone: '8882218036' },
-          { name: 'Sonal' },
-        ],
-      },
-    });
-    if (currentBeekeeper) {
-      currentBeekeeperId = currentBeekeeper.id;
-    }
-  }
+  const session = await requireSession();
+  const where: Prisma.HoneyBatchWhereInput = { AND: [batchScope(session), status ? { status } : {}] };
+  const currentBeekeeperId = session.beekeeperId ?? undefined;
 
   const [batches, total, verifiedCount, alertCount, beekeepersRaw] = await Promise.all([
     prisma.honeyBatch.findMany({
@@ -82,9 +49,10 @@ export default async function DashboardPage({
       },
     }),
     prisma.honeyBatch.count({ where }),
-    prisma.honeyBatch.count({ where: { lab_verified: true } }),
-    prisma.scanAlert.count({ where: { resolved: false } }),
+    prisma.honeyBatch.count({ where: { AND: [batchScope(session), { lab_verified: true }] } }),
+    prisma.scanAlert.count({ where: { resolved: false, batch: { is: batchScope(session) } } }),
     prisma.beekeeper.findMany({
+      where: beekeeperScope(session),
       select: { id: true, name: true, region: true },
       orderBy: { createdAt: 'desc' },
     }),
@@ -103,26 +71,26 @@ export default async function DashboardPage({
       {/* Header & Metric Summary */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
             Batch Registry
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Real-time supply chain ledger • {total} batches recorded on Polygon Amoy
+          <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1">
+            {total} batch records • Check each operation for network and confirmation status
           </p>
         </div>
 
         {/* Actions & Filter Badges */}
         <div className="flex items-center gap-2 flex-wrap">
-          <NewHarvestModal beekeepers={beekeepers} defaultBeekeeperId={currentBeekeeperId} />
+          {['admin', 'beekeeper'].includes(session.role) && <NewHarvestModal beekeepers={beekeepers} defaultBeekeeperId={currentBeekeeperId} />}
 
-          <div className="h-4 w-px bg-white/10 hidden sm:block" />
+          <div className="h-4 w-px bg-[var(--surface-subtle)] hidden sm:block" />
 
           <Link
             href="/dashboard"
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
               !status
-                ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                ? 'bg-amber-500/20 border-amber-500/50 text-[var(--accent-ink)]'
+                : 'bg-[var(--surface-subtle)] border-[var(--surface-border)] text-[var(--text-muted)] hover:text-foreground'
             }`}
           >
             All Batches ({total})
@@ -132,7 +100,7 @@ export default async function DashboardPage({
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
               status === 'LAB_VERIFIED'
                 ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+                : 'bg-[var(--surface-subtle)] border-[var(--surface-border)] text-[var(--text-muted)] hover:text-foreground'
             }`}
           >
             Lab Verified ({verifiedCount})
@@ -142,7 +110,7 @@ export default async function DashboardPage({
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
               status === 'RECALLED'
                 ? 'bg-red-500/20 border-red-500/50 text-red-300'
-                : 'bg-white/5 border-white/10 text-slate-400 hover:text-red-400'
+                : 'bg-[var(--surface-subtle)] border-[var(--surface-border)] text-[var(--text-muted)] hover:text-red-400'
             }`}
           >
             Recalled
@@ -151,11 +119,11 @@ export default async function DashboardPage({
       </div>
 
       {/* Main Table Card */}
-      <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl overflow-hidden shadow-2xl">
+      <div className="rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-solid)] backdrop-blur-2xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/10 bg-black/40 text-[11px] font-mono uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-[var(--surface-border)] bg-[var(--surface-subtle)] text-[11px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
                 <th className="px-6 py-4">Batch Code</th>
                 <th className="px-6 py-4">Honey Type & Origin</th>
                 <th className="px-6 py-4">Quantity</th>
@@ -167,11 +135,11 @@ export default async function DashboardPage({
             <tbody className="divide-y divide-white/5 text-xs font-sans">
               {batches.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-16 text-center text-[var(--text-muted)]">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <span className="text-3xl">🍯</span>
-                      <p className="font-semibold text-slate-300">No batches match this filter</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-semibold text-foreground">No batches match this filter</p>
+                      <p className="text-xs text-[var(--text-muted)]">
                         New harvests will register automatically via the WhatsApp Bot.
                       </p>
                     </div>
@@ -187,26 +155,26 @@ export default async function DashboardPage({
                     >
                       {/* Batch Code */}
                       <td className="px-6 py-4">
-                        <div className="font-mono text-xs font-bold text-white bg-black/50 px-2.5 py-1 rounded-lg border border-white/10 w-fit">
+                        <div className="font-mono text-xs font-bold text-foreground bg-[var(--surface-subtle)] px-2.5 py-1 rounded-lg border border-[var(--surface-border)] w-fit">
                           {b.batchCode}
                         </div>
-                        <p className="text-[10px] font-mono text-slate-500 mt-1">
+                        <p className="text-[10px] font-mono text-[var(--text-muted)] mt-1">
                           ID: {b.id.slice(-8)}
                         </p>
                       </td>
 
                       {/* Honey Type & Origin */}
                       <td className="px-6 py-4">
-                        <p className="font-bold text-slate-200">{b.honey_type}</p>
-                        <p className="text-slate-400 text-[11px] mt-0.5">
-                          {b.beekeeper?.name ?? 'KVIC Producer'} · {(b as any).region ?? b.beekeeper?.region ?? 'India'}
+                        <p className="font-bold text-foreground">{b.honey_type}</p>
+                        <p className="text-[var(--text-muted)] text-[11px] mt-0.5">
+                          {b.beekeeper?.name ?? 'Producer'} · {b.region ?? b.beekeeper?.region ?? 'India'}
                         </p>
                       </td>
 
                       {/* Quantity & Jars */}
                       <td className="px-6 py-4">
-                        <p className="font-mono font-semibold text-slate-200">
-                          {(b.quantity_grams / 1000).toFixed(1)} <span className="text-slate-500 text-[10px]">KG</span>
+                        <p className="font-mono font-semibold text-foreground">
+                          {(b.quantity_grams / 1000).toFixed(1)} <span className="text-[var(--text-muted)] text-[10px]">KG</span>
                         </p>
                         {b._count.qrTokens > 0 && (
                           <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-300 border border-teal-500/20">
@@ -231,7 +199,7 @@ export default async function DashboardPage({
                             {b._count.scanAlerts}
                           </span>
                         ) : (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-[var(--text-muted)]">—</span>
                         )}
                       </td>
 
@@ -239,7 +207,7 @@ export default async function DashboardPage({
                       <td className="px-6 py-4 text-right">
                         <Link
                           href={`/dashboard/batch/${b.batchCode}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/40 text-xs font-semibold text-slate-300 hover:text-amber-300 transition-all"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface-subtle)] hover:bg-amber-500/20 border border-[var(--surface-border)] hover:border-amber-500/40 text-xs font-semibold text-foreground hover:text-[var(--accent-ink)] transition-all"
                         >
                           Dossier
                           <ArrowRight className="w-3 h-3" />
@@ -255,23 +223,23 @@ export default async function DashboardPage({
 
         {/* Pagination */}
         {pages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-black/40 text-xs text-slate-400">
+          <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--surface-border)] bg-[var(--surface-subtle)] text-xs text-[var(--text-muted)]">
             <span>
               Page {page} of {pages}
             </span>
             <div className="flex gap-2">
               <Link
                 href={`/dashboard?page=${page - 1}${status ? `&status=${status}` : ''}`}
-                className={`px-3 py-1.5 rounded-lg border border-white/10 transition-colors ${
-                  page <= 1 ? 'opacity-30 pointer-events-none' : 'hover:bg-white/5 hover:text-white'
+                className={`px-3 py-1.5 rounded-lg border border-[var(--surface-border)] transition-colors ${
+                  page <= 1 ? 'opacity-30 pointer-events-none' : 'hover:bg-[var(--surface-subtle)] hover:text-foreground'
                 }`}
               >
                 Previous
               </Link>
               <Link
                 href={`/dashboard?page=${page + 1}${status ? `&status=${status}` : ''}`}
-                className={`px-3 py-1.5 rounded-lg border border-white/10 transition-colors ${
-                  page >= pages ? 'opacity-30 pointer-events-none' : 'hover:bg-white/5 hover:text-white'
+                className={`px-3 py-1.5 rounded-lg border border-[var(--surface-border)] transition-colors ${
+                  page >= pages ? 'opacity-30 pointer-events-none' : 'hover:bg-[var(--surface-subtle)] hover:text-foreground'
                 }`}
               >
                 Next

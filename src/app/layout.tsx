@@ -1,82 +1,18 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
+import type { Metadata } from 'next';
+import Script from 'next/script';
+import './globals.css';
+import { ThemeProvider } from '@/components/theme-provider';
 export const metadata: Metadata = {
-  title: "Pollinators — Cryptographic Honey Supply Chain & Provenance",
-  description: "Next-generation honey supply chain verification powered by Polygon Amoy smart contracts, IPFS metadata anchoring, ESP32 IoT hive monitoring, and AWS Bedrock multilingual AI.",
-  icons: {
-    icon: [
-      { url: "/favicon.svg?v=3", type: "image/svg+xml" },
-      { url: "/favicon-32x32.png?v=3", type: "image/png", sizes: "32x32" },
-      { url: "/favicon-16x16.png?v=3", type: "image/png", sizes: "16x16" },
-      { url: "/favicon.ico?v=3" },
-    ],
-    shortcut: "/favicon.ico?v=3",
-    apple: [
-      { url: "/apple-icon.png?v=3", sizes: "180x180", type: "image/png" },
-    ],
-  },
+  title: 'Pollinator — Honey Chain',
+  description: 'Smart hive monitoring, honey batch provenance, laboratory evidence and consumer QR verification for beekeeper clusters.',
+  icons: { icon: '/favicon.svg', apple: '/apple-icon.png' },
 };
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
-      suppressHydrationWarning
-    >
-      <head>
-        {/* Explicit Favicon Links with Cache-Busting Query */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=3" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png?v=3" />
-        <link rel="shortcut icon" href="/favicon.ico?v=3" />
-      </head>
-      <body className="min-h-full flex flex-col bg-[#fbf9f4] dark:bg-[#080a0f] text-slate-900 dark:text-slate-100 selection:bg-yellow-400 selection:text-black transition-colors duration-300">
-        {/* Prevent flash of wrong theme using Next.js Script */}
-        <Script
-          id="pollinator-theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var stored = localStorage.getItem('pollinator-theme');
-                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (stored === 'light') {
-                    document.documentElement.classList.remove('dark');
-                    document.documentElement.classList.add('light');
-                  } else {
-                    document.documentElement.classList.add('dark');
-                    document.documentElement.classList.remove('light');
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return <html lang="en" className="h-full antialiased" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <body className="min-h-full flex flex-col bg-background text-foreground">
+      <Script id="pollinator-theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html:
+        "(function(){var t;try{t=localStorage.getItem('pollinator-theme')}catch(e){}if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.classList.toggle('dark',t==='dark');document.documentElement.classList.toggle('light',t==='light');document.documentElement.style.colorScheme=t})()" }} />
+      <ThemeProvider>{children}</ThemeProvider>
+    </body>
+  </html>;
 }

@@ -1,69 +1,46 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-
+import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react';
 type Theme = 'light' | 'dark';
-
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
+const EVENT = 'pollinator-theme-change';
+function readTheme(): Theme {
+  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 }
-
-const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
-  toggleTheme: () => {},
-  setTheme: () => {},
-});
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem('pollinator-theme') as Theme | null;
-    if (stored === 'light' || stored === 'dark') {
-      setThemeState(stored);
-      applyTheme(stored);
-    } else {
-      // Default to dark for Web3 prestige, but respect prefers-color-scheme if set to light
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initial = prefersDark ? 'dark' : 'dark'; // default dark
-      setThemeState(initial);
-      applyTheme(initial);
-    }
-  }, []);
-
-  const applyTheme = (t: Theme) => {
-    const root = document.documentElement;
-    if (t === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    } else {
-      root.classList.remove('dark');
-      root.classList.add('light');
-    }
+function subscribe(callback: () => void) {
+  window.addEventListener(EVENT, callback);
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  const storage = (event: StorageEvent) => {
+    if (event.key !== 'pollinator-theme' && event.key !== null) return;
+    const next = event.newValue === 'dark' || event.newValue === 'light'
+      ? event.newValue : media.matches ? 'dark' : 'light';
+    applyTheme(next, false);
   };
-
-  const setTheme = (t: Theme) => {
-    setThemeState(t);
-    localStorage.setItem('pollinator-theme', t);
-    applyTheme(t);
+  window.addEventListener('storage', storage);
+  const sync = () => {
+    try { if (!localStorage.getItem('pollinator-theme')) applyTheme(media.matches ? 'dark' : 'light', false); }
+    catch { /* Browser storage can be disabled. */ }
+    callback();
   };
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
+  media.addEventListener('change', sync);
+  return () => {
+    window.removeEventListener(EVENT, callback);
+    window.removeEventListener('storage', storage);
+    media.removeEventListener('change', sync);
   };
-
-  return (
-    <ThemeContext.Provider value={{ theme: mounted ? theme : 'dark', toggleTheme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
 }
-
-export function useTheme() {
-  return useContext(ThemeContext);
+function applyTheme(theme: Theme, persist = true) {
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.documentElement.classList.toggle('light', theme === 'light');
+  document.documentElement.style.colorScheme = theme;
+  if (persist) { try { localStorage.setItem('pollinator-theme', theme); } catch {} }
+  window.dispatchEvent(new Event(EVENT));
 }
+const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void; setTheme: (theme: Theme) => void }>({ theme: 'light', toggleTheme: () => {}, setTheme: () => {} });
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const theme = useSyncExternalStore(subscribe, readTheme, () => 'light' as Theme);
+  return <ThemeContext.Provider value={{
+    theme, setTheme: (value: Theme) => applyTheme(value),
+    toggleTheme: () => applyTheme(readTheme() === 'dark' ? 'light' : 'dark'),
+  }}>{children}</ThemeContext.Provider>;
+}
+export function useTheme() { return useContext(ThemeContext); }

@@ -1,3 +1,4 @@
+import { requireSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import Link from 'next/link';
 import { 
@@ -14,6 +15,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function AnalyticsPage() {
+  await requireSession(['admin']);
   const [totalScans, recentAlerts, topScannedBatches] = await Promise.all([
     prisma.qRScan.count(),
     prisma.scanAlert.findMany({
@@ -55,11 +57,11 @@ export default async function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <Radar className="w-7 h-7 text-amber-400" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
+            <Radar className="w-7 h-7 text-[var(--accent-ink)]" />
             Anti-Clone QR Radar & Analytics
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1">
             Real-time duplicate scan anomaly detection and consumer engagement telemetry
           </p>
         </div>
@@ -73,7 +75,7 @@ export default async function AnalyticsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Verified Scans', value: totalScans, icon: Smartphone, color: 'text-amber-400', glow: 'border-amber-500/30' },
+          { label: 'Total Verified Scans', value: totalScans, icon: Smartphone, color: 'text-[var(--accent-ink)]', glow: 'border-amber-500/30' },
           { label: 'Scans Today', value: todayScans, icon: Calendar, color: 'text-cyan-400', glow: 'border-cyan-500/30' },
           { label: 'Unresolved Alerts', value: unresolvedCount, icon: ShieldAlert, color: 'text-red-400', glow: 'border-red-500/30' },
           { label: 'Monitored Regions', value: geoDistribution.length, icon: Globe2, color: 'text-emerald-400', glow: 'border-emerald-500/30' },
@@ -82,10 +84,10 @@ export default async function AnalyticsPage() {
           return (
             <div
               key={stat.label}
-              className={`rounded-3xl border ${stat.glow} bg-[#0d111a]/80 backdrop-blur-2xl p-5 space-y-2 shadow-xl`}
+              className={`rounded-3xl border ${stat.glow} bg-[var(--surface-solid)] backdrop-blur-2xl p-5 space-y-2 shadow-xl`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-medium">{stat.label}</span>
+                <span className="text-xs text-[var(--text-muted)] font-medium">{stat.label}</span>
                 <Icon className={`w-4 h-4 ${stat.color}`} />
               </div>
               <p className={`text-2xl sm:text-3xl font-extrabold font-mono ${stat.color}`}>{stat.value}</p>
@@ -97,24 +99,24 @@ export default async function AnalyticsPage() {
       {/* 2 Column Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Unresolved Alerts */}
-        <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <div className="rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-solid)] backdrop-blur-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--surface-border)]">
             <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
               <ShieldAlert className="w-4 h-4" /> Anomaly Alerts ({unresolvedCount})
             </h2>
             <Link
               href="/dashboard/recall"
-              className="text-xs text-slate-400 hover:text-white transition-colors"
+              className="text-xs text-[var(--text-muted)] hover:text-foreground transition-colors"
             >
               Manage Recalls →
             </Link>
           </div>
 
           {recentAlerts.length === 0 ? (
-            <div className="p-12 text-center text-xs text-slate-500 space-y-2">
+            <div className="p-12 text-center text-xs text-[var(--text-muted)] space-y-2">
               <p className="text-2xl">🛡️</p>
-              <p className="font-semibold text-slate-300">No duplicate scan anomalies detected</p>
-              <p className="text-slate-500">Every scanned QR is geographically coherent.</p>
+              <p className="font-semibold text-foreground">No duplicate scan anomalies detected</p>
+              <p className="text-[var(--text-muted)]">Every scanned QR is geographically coherent.</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
@@ -127,10 +129,10 @@ export default async function AnalyticsPage() {
                     <p className="font-bold text-red-300 uppercase font-mono text-[11px]">
                       {alert.alertType.replace(/_/g, ' ')}
                     </p>
-                    <p className="text-slate-400">
-                      Batch: <span className="font-mono text-white">{alert.batch?.batchCode}</span>
+                    <p className="text-[var(--text-muted)]">
+                      Batch: <span className="font-mono text-foreground">{alert.batch?.batchCode}</span>
                     </p>
-                    <p className="text-[10px] text-slate-500 font-mono">
+                    <p className="text-[10px] text-[var(--text-muted)] font-mono">
                       {new Date(alert.createdAt).toLocaleString('en-IN')}
                     </p>
                   </div>
@@ -147,16 +149,16 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Scan Geography */}
-        <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <div className="rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-solid)] backdrop-blur-2xl p-6 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--surface-border)]">
             <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
               <Globe2 className="w-4 h-4" /> Scan Distribution by Region
             </h2>
-            <span className="text-[10px] font-mono text-slate-500">IP Geolocation</span>
+            <span className="text-[10px] font-mono text-[var(--text-muted)]">IP Geolocation</span>
           </div>
 
           {geoDistribution.length === 0 ? (
-            <div className="p-12 text-center text-xs text-slate-500">
+            <div className="p-12 text-center text-xs text-[var(--text-muted)]">
               Awaiting consumer QR scan events...
             </div>
           ) : (
@@ -167,10 +169,10 @@ export default async function AnalyticsPage() {
                 return (
                   <div key={i} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-300">{row.ipRegion ?? 'Unknown'}, {row.ipCountry}</span>
-                      <span className="font-mono text-slate-400 font-bold">{row._count.id} scans</span>
+                      <span className="text-foreground">{row.ipRegion ?? 'Unknown'}, {row.ipCountry}</span>
+                      <span className="font-mono text-[var(--text-muted)] font-bold">{row._count.id} scans</span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                    <div className="h-2 rounded-full bg-[var(--surface-subtle)] overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
                         style={{ width: `${pct}%` }}
@@ -184,14 +186,14 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Top Scanned Tokens */}
-        <div className="lg:col-span-2 rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 space-y-4 shadow-xl">
-          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Smartphone className="w-4 h-4 text-amber-400" /> High-Velocity QR Tokens
+        <div className="lg:col-span-2 rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-solid)] backdrop-blur-2xl p-6 space-y-4 shadow-xl">
+          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-[var(--accent-ink)]" /> High-Velocity QR Tokens
           </h2>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="text-[10px] uppercase text-slate-500 border-b border-white/5">
+              <thead className="text-[10px] uppercase text-[var(--text-muted)] border-b border-[var(--surface-border)]">
                 <tr>
                   <th className="py-2.5 px-3">Batch Code</th>
                   <th className="py-2.5 px-3">Type</th>
@@ -202,14 +204,14 @@ export default async function AnalyticsPage() {
               <tbody className="divide-y divide-white/5">
                 {topScannedBatches.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-slate-500">No token activity recorded yet.</td>
+                    <td colSpan={4} className="py-8 text-center text-[var(--text-muted)]">No token activity recorded yet.</td>
                   </tr>
                 ) : (
                   topScannedBatches.map((token) => (
                     <tr key={token.id} className="hover:bg-white/[0.02]">
-                      <td className="py-2.5 px-3 font-bold text-white">{token.batch.batchCode}</td>
-                      <td className="py-2.5 px-3 text-slate-400 font-sans">{token.batch.honey_type}</td>
-                      <td className="py-2.5 px-3 text-center font-bold text-amber-300">
+                      <td className="py-2.5 px-3 font-bold text-foreground">{token.batch.batchCode}</td>
+                      <td className="py-2.5 px-3 text-[var(--text-muted)] font-sans">{token.batch.honey_type}</td>
+                      <td className="py-2.5 px-3 text-center font-bold text-[var(--accent-ink)]">
                         {token._count.scans}
                       </td>
                       <td className="py-2.5 px-3 text-right">

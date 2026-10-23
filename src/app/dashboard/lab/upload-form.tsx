@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Upload, FileText, CheckCircle2, AlertCircle, ExternalLink, ShieldCheck } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useOperationRequest } from '@/components/use-operation-request';
+import { Upload, FileText, AlertCircle } from 'lucide-react';
 
 type PendingBatch = {
   id: string;
@@ -11,16 +13,21 @@ type PendingBatch = {
 };
 
 export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch[] }) {
+  const router = useRouter();
+  const postOperation = useOperationRequest();
   const [batchId, setBatchId] = useState(pendingBatches[0]?.id ?? '');
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
-  const [result, setResult] = useState<{
-    certificateHash?: string; ipfsCID?: string; txHash?: string; polygonscanUrl?: string; error?: string;
-  } | null>(null);
+  const [status, setStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
+  const [result, setResult] = useState<{ error?: string } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!batchId || !file) return;
+    if (file.size === 0 || file.size > 10 * 1024 * 1024) {
+      setStatus('error');
+      setResult({ error: 'Choose a nonempty PDF no larger than 10 MB.' });
+      return;
+    }
 
     setStatus('uploading');
     setResult(null);
@@ -30,19 +37,15 @@ export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/certificate', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json() as typeof result;
+      const fileHash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await file.arrayBuffer()))).map(byte => byte.toString(16).padStart(2, '0')).join('');
+      const response = await postOperation('/api/certificate', formData, batchId + ':' + fileHash);
+      const data = await response.json() as NonNullable<typeof result> & { operationId?: string };
       if (response.ok) {
-        setStatus('success');
-        setResult(data);
-        setBatchId('');
-        setFile(null);
+        if (!data.operationId) throw new Error('Prepared operation was not returned');
+        router.push('/dashboard/operations/' + data.operationId);
       } else {
         setStatus('error');
-        setResult(data);
+        setResult({ error: data.error || 'The certificate could not be prepared.' });
       }
     } catch {
       setStatus('error');
@@ -52,10 +55,10 @@ export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch
 
   if (pendingBatches.length === 0) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-12 text-center text-slate-400 space-y-3 shadow-xl">
+      <div className="rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-solid)] backdrop-blur-2xl p-12 text-center text-[var(--text-muted)] space-y-3 shadow-xl">
         <p className="text-3xl">🍯</p>
-        <h3 className="text-base font-bold text-white">All Batches Verified</h3>
-        <p className="text-xs text-slate-500">There are currently no raw harvest batches awaiting lab certification.</p>
+        <h3 className="text-base font-bold text-foreground">No Batches Awaiting Your Report</h3>
+        <p className="text-xs text-[var(--text-muted)]">A processed batch must be assigned to your laboratory before you can prepare its certificate approval.</p>
       </div>
     );
   }
@@ -64,23 +67,24 @@ export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch
     <div className="space-y-5">
       <form
         onSubmit={handleSubmit}
-        className="rounded-3xl border border-white/10 bg-[#0d111a]/80 backdrop-blur-2xl p-6 sm:p-8 space-y-5 shadow-xl"
+        className="rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-solid)] backdrop-blur-2xl p-6 sm:p-8 space-y-5 shadow-xl"
       >
         <div>
-          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+          <label htmlFor="certificate-batch" className="block text-xs font-mono font-bold uppercase tracking-wider text-foreground mb-2">
             Select Harvest Batch
           </label>
           <select
+            id="certificate-batch"
             value={batchId}
             onChange={(e) => setBatchId(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-amber-400 transition-colors"
+            className="w-full px-4 py-3 rounded-xl bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-xs text-foreground focus:outline-none focus:border-amber-400 transition-colors"
             required
           >
-            <option value="" disabled className="bg-[#0d111a] text-slate-500">
+            <option value="" disabled className="bg-[var(--surface-solid)] text-[var(--text-muted)]">
               -- Choose a pending batch --
             </option>
             {pendingBatches.map((b) => (
-              <option key={b.id} value={b.id} className="bg-[#0d111a] text-white">
+              <option key={b.id} value={b.id} className="bg-[var(--surface-solid)] text-foreground">
                 {b.batchCode} — {b.honey_type} ({(b.quantity_grams / 1000).toFixed(1)} kg)
               </option>
             ))}
@@ -88,111 +92,52 @@ export function LabUploadForm({ pendingBatches }: { pendingBatches: PendingBatch
         </div>
 
         <div>
-          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-300 mb-2">
+          <label htmlFor="pdf-upload" className="block text-xs font-mono font-bold uppercase tracking-wider text-foreground mb-2">
             Laboratory Certificate PDF
           </label>
-          <div className="border-2 border-dashed border-white/15 rounded-2xl p-8 text-center hover:border-amber-400/50 transition-colors bg-black/30">
+          <p className="mb-3 text-xs leading-relaxed text-[var(--text-muted)]">The report will be published to content-addressed storage for consumer verification. Remove personal details that do not belong in a public report before uploading.</p>
+          <div className="border-2 border-dashed border-[var(--surface-border)] rounded-2xl p-8 text-center hover:border-amber-400/50 transition-colors bg-[var(--surface-subtle)]">
             <input
               type="file"
               accept=".pdf,application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="hidden"
+              className="sr-only peer"
               id="pdf-upload"
             />
-            <label htmlFor="pdf-upload" className="cursor-pointer block space-y-2">
+            <label htmlFor="pdf-upload" className="cursor-pointer block space-y-2 rounded-lg peer-focus-visible:outline-2 peer-focus-visible:outline-amber-400">
               {file ? (
                 <div>
-                  <FileText className="w-8 h-8 text-amber-400 mx-auto mb-1" />
-                  <p className="text-xs font-bold text-white font-mono">{file.name}</p>
-                  <p className="text-[10px] text-slate-400">{(file.size / 1024).toFixed(0)} KB · Ready to hash</p>
+                  <FileText className="w-8 h-8 text-[var(--accent-ink)] mx-auto mb-1" />
+                  <p className="text-xs font-bold text-foreground font-mono">{file.name}</p>
+                  <p className="text-[10px] text-[var(--text-muted)]">{(file.size / 1024).toFixed(0)} KB · Ready to hash</p>
                 </div>
               ) : (
                 <div>
-                  <Upload className="w-8 h-8 text-slate-500 mx-auto mb-1" />
-                  <p className="text-xs font-semibold text-slate-300">Click to select lab certificate PDF</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Maximum size: 10MB</p>
+                  <Upload className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-1" />
+                  <p className="text-xs font-semibold text-foreground">Click to select lab certificate PDF</p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5">Maximum size: 10MB</p>
                 </div>
               )}
             </label>
           </div>
 
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-[10px] text-slate-500">Presentation Demo:</span>
-            <button
-              type="button"
-              onClick={() => {
-                const samplePdfContent = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 595 842]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF`;
-                const blob = new Blob([samplePdfContent], { type: 'application/pdf' });
-                const sampleFile = new File([blob], `NABL-Purity-Report-${batchId ? batchId.slice(-6) : 'Demo'}.pdf`, { type: 'application/pdf' });
-                setFile(sampleFile);
-              }}
-              className="text-[11px] font-mono text-amber-400 hover:text-amber-300 underline flex items-center gap-1"
-            >
-              📄 Auto-Generate Sample NABL Certificate
-            </button>
-          </div>
         </div>
 
         <button
           type="submit"
           disabled={status === 'uploading' || !batchId || !file}
-          className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all active:scale-95 disabled:opacity-40"
+          className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-foreground text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all active:scale-95 disabled:opacity-40"
         >
           {status === 'uploading'
-            ? 'Anchoring to IPFS & Committing On-Chain...'
-            : 'Commit Certificate to Blockchain'}
+            ? 'Uploading PDF & Preparing Approval...'
+            : 'Review Certificate for Approval'}
         </button>
       </form>
 
-      {/* Result feedback */}
-      {result && (
-        <div
-          className={`p-5 rounded-3xl border ${
-            status === 'success'
-              ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300'
-              : 'bg-red-950/20 border-red-500/40 text-red-400'
-          } shadow-xl`}
-        >
-          {status === 'success' ? (
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2 font-bold text-sm text-white">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                Certificate successfully anchored on Polygon Amoy!
-              </div>
-              <p className="text-slate-300">
-                SHA-256 Hash:{' '}
-                <span className="font-mono text-amber-300 break-all">{result.certificateHash}</span>
-              </p>
-              {result.ipfsCID && (
-                <p className="text-slate-300">
-                  IPFS CID:{' '}
-                  <a
-                    href={`https://gateway.pinata.cloud/ipfs/${result.ipfsCID}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-cyan-400 hover:underline font-mono inline-flex items-center gap-1 ml-1"
-                  >
-                    {result.ipfsCID.slice(0, 16)}... <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                </p>
-              )}
-              {result.polygonscanUrl && (
-                <a
-                  href={result.polygonscanUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-amber-400 hover:underline font-semibold mt-1"
-                >
-                  View on Polygonscan Amoy <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-xs">
-              <AlertCircle className="w-4 h-4 text-red-400" />
-              <span>{result.error}</span>
-            </div>
-          )}
+      {result?.error && (
+        <div role="alert" className="flex items-center gap-2 rounded-3xl border border-red-500/40 p-5 text-xs text-red-400 shadow-xl">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{result.error}</span>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { HomeView } from '@/components/home/home-view';
+import { connection } from 'next/server';
 import {
   getActiveContractAddress,
   getActiveNetworkName,
@@ -6,12 +7,13 @@ import {
   isLocalChain,
 } from '@/lib/blockchain';
 
-export default function HomePage() {
-  const contractAddress = getActiveContractAddress() || '0x4B650a3d926A8f777f96422d790B0e36eB29b47a';
+export default async function HomePage() {
+  await connection(); // Registry and contact details belong to this running cluster, not the build machine.
+  const contractAddress = getActiveContractAddress() || '';
   const networkName = getActiveNetworkName();
   const isLocal = isLocalChain();
   const explorerUrl = getExplorerAddressUrl(contractAddress);
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '918882291014';
+  const whatsappNumber = process.env.WHATSAPP_PUBLIC_NUMBER || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
 
   return (
     <HomeView

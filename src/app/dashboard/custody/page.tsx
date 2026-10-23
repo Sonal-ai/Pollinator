@@ -1,70 +1,24 @@
+import type { Prisma } from '@prisma/client';
+import { requireSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { cookies } from 'next/headers';
 import { CustodyTransferForm } from './custody-form';
 import { Truck } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CustodyPage() {
-  const { getSession } = await import('@/lib/auth');
-  const session = await getSession();
-  
-  const walletAddress = session?.walletAddress ?? null;
-  const isAdmin = session?.role === 'admin';
-  const isBeekeeper = session?.role === 'beekeeper';
-
-  let where: any = { recalled: false };
-
-  if (!isAdmin) {
-    if (isBeekeeper) {
-      const beekeepers = await prisma.beekeeper.findMany({
-        where: {
-          OR: [
-            ...(walletAddress ? [{ wallet: walletAddress }, { wallet: walletAddress.toLowerCase() }] : []),
-            { phone: '8882218036' },
-            { name: 'Sonal' },
-          ],
-        },
-        select: { id: true, wallet: true },
-      });
-
-      const beekeeperWallets = new Set<string>();
-      if (walletAddress) {
-        beekeeperWallets.add(walletAddress);
-        beekeeperWallets.add(walletAddress.toLowerCase());
-      }
-      for (const b of beekeepers) {
-        if (b.wallet) {
-          beekeeperWallets.add(b.wallet);
-          beekeeperWallets.add(b.wallet.toLowerCase());
-        }
-      }
-
-      const walletList = Array.from(beekeeperWallets);
-      const beekeeperIds = beekeepers.map((b) => b.id);
-
-      // Beekeeper can ONLY transfer batches currently in their custody (not yet handed over)
-      where = {
-        recalled: false,
-        status: { in: ['HARVESTED', 'PENDING_CHAIN'] },
-        OR: [
-          ...(walletList.length > 0 ? [{ current_custodian: { in: walletList } }] : []),
-          { current_custodian: null, beekeeperId: { in: beekeeperIds } },
-          { current_custodian: null, beekeeper: { name: 'Sonal' } },
-        ],
-      };
-    } else if (walletAddress) {
-      where = {
-        recalled: false,
-        OR: [
-          { current_custodian: walletAddress },
-          { current_custodian: walletAddress.toLowerCase() },
-        ],
-      };
-    } else {
-      where = { id: '__none__' };
-    }
-  }
+  const session = await requireSession();
+  const walletAddress = session.walletAddress;
+  const isAdmin = session.role === 'admin';
+  const isBeekeeper = session.role === 'beekeeper';
+  const where: Prisma.HoneyBatchWhereInput = {
+    recalled: false,
+    status: { notIn: ['PENDING_CHAIN', 'CREATED', 'SOLD', 'RECALLED'] },
+    OR: [
+      { current_custodian: { equals: walletAddress, mode: 'insensitive' } },
+      ...(isBeekeeper && session.beekeeperId ? [{ current_custodian: null, beekeeperId: session.beekeeperId, status: { in: ['HARVESTED', 'PENDING_CHAIN'] } }] : []),
+    ],
+  };
 
   const myBatches = await prisma.honeyBatch.findMany({
     where,
@@ -77,16 +31,17 @@ export default async function CustodyPage() {
     },
     orderBy: { createdAt: 'desc' },
   });
+  const actors = await prisma.dashboardAccount.findMany({ where: { active: true, role: { not: 'admin' } }, select: { walletAddress: true, role: true } });
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-          <Truck className="w-7 h-7 text-amber-400" />
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
+          <Truck className="w-7 h-7 text-[var(--accent-ink)]" />
           Custody Transfer Protocol
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Transfer custody of honey batches to the next supply chain actor. Each handover triggers a cryptographic state transition signed on Polygon Amoy.
+        <p className="text-xs sm:text-sm text-[var(--text-muted)] mt-1">
+          Hand over a registered batch while preserving its laboratory and packaging evidence. A transaction is confirmed only after a successful receipt.
         </p>
       </div>
 
@@ -95,7 +50,7 @@ export default async function CustodyPage() {
           Please log in to manage batch custody.
         </div>
       ) : (
-        <CustodyTransferForm myBatches={myBatches} />
+        <CustodyTransferForm myBatches={myBatches} role={session.role} actors={actors} />
       )}
     </div>
   );

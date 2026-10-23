@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { useOperationRequest } from '@/components/use-operation-request';
 import { useRouter } from 'next/navigation';
-import { Plus, Loader2, CheckCircle2, ArrowRight, X } from 'lucide-react';
+import { Plus, Loader2, ArrowRight, X } from 'lucide-react';
 
 interface BeekeeperOption {
   id: string;
@@ -27,7 +28,19 @@ export function NewHarvestModal({
   const [quantityKg, setQuantityKg] = useState('50.0');
   const [hivesHarvested, setHivesHarvested] = useState('4');
   const [region, setRegion] = useState(initialBeekeeper?.region ?? 'Wardha, Maharashtra');
-  const [result, setResult] = useState<{ success?: boolean; batchCode?: string; txHash?: string; error?: string } | null>(null);
+  const [result, setResult] = useState<{ error: string } | null>(null);
+  const postOperation = useOperationRequest();
+  const harvestTime = useRef('');
+  const dialog = useRef<HTMLDialogElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const formId = useId();
+
+  useEffect(() => {
+    if (!isOpen || !dialog.current) return;
+    const focusTarget = trigger.current;
+    dialog.current.showModal();
+    return () => { focusTarget?.focus(); };
+  }, [isOpen]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,27 +49,21 @@ export function NewHarvestModal({
 
     try {
       const quantityGrams = Math.round(parseFloat(quantityKg) * 1000);
-      const res = await fetch('/api/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (!harvestTime.current) harvestTime.current = new Date().toISOString();
+      const res = await postOperation('/api/batch', {
           beekeeperId,
           honeyType,
           quantityGrams,
           hivesHarvested: parseInt(hivesHarvested, 10) || 1,
-          harvestDate: new Date().toISOString(),
+          harvestDate: harvestTime.current,
           region,
-        }),
       });
 
       const data = await res.json();
       if (res.ok) {
-        setResult({
-          success: true,
-          batchCode: data.batchCode,
-          txHash: data.txHash,
-        });
-        router.refresh();
+        if (!data.operationId) throw new Error('Prepared operation was not returned');
+        setIsOpen(false);
+        router.push('/dashboard/operations/' + data.operationId);
       } else {
         setResult({ error: data.error || 'Failed to create batch' });
       }
@@ -70,8 +77,10 @@ export function NewHarvestModal({
   return (
     <>
       <button
+        ref={trigger}
         onClick={() => {
           setIsOpen(true);
+          harvestTime.current = '';
           setResult(null);
         }}
         className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 hover:from-yellow-300 hover:to-amber-400 text-black text-xs font-extrabold shadow-md shadow-yellow-500/20 transition-all active:scale-95 cursor-pointer"
@@ -81,75 +90,47 @@ export function NewHarvestModal({
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-3xl border border-yellow-400/30 bg-[#0d1017] p-6 sm:p-7 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <dialog ref={dialog} aria-labelledby={formId + '-title'} onClose={() => setIsOpen(false)} onCancel={event => { if (loading) event.preventDefault(); }} className="fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-3xl border border-yellow-400/30 bg-[var(--surface-solid)] p-6 sm:p-7 text-foreground shadow-2xl space-y-4 backdrop:bg-black/80 backdrop:backdrop-blur-md">
+            <div className="flex items-center justify-between border-b border-[var(--surface-border)] pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🌾</span>
-                <h3 className="text-base font-extrabold text-white">Log Fresh Honey Harvest</h3>
+                <h3 id={formId + '-title'} className="text-base font-extrabold text-foreground">Log Fresh Honey Harvest</h3>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                type="button"
+                aria-label="Close harvest form"
+                disabled={loading}
+                className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-foreground hover:bg-[var(--surface-subtle)] transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {result?.success ? (
-              <div className="p-5 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-center space-y-3">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto animate-bounce" />
-                <h4 className="text-sm font-bold text-white">Harvest Anchored to Blockchain!</h4>
-                <p className="text-xs text-slate-300 font-mono">
-                  Batch Code: <strong className="text-yellow-400">{result.batchCode}</strong>
-                </p>
-                {result.txHash && (
-                  <p className="text-[10px] text-slate-400 font-mono truncate">
-                    Tx: {result.txHash}
-                  </p>
-                )}
-                <div className="pt-2 flex justify-center gap-3">
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      router.push('/dashboard/custody');
-                    }}
-                    className="px-4 py-2 rounded-xl bg-yellow-400 text-black text-xs font-bold hover:bg-yellow-300 transition-colors"
-                  >
-                    Transfer Custody Now →
-                  </button>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 rounded-xl bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-colors"
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            ) : (
               <form onSubmit={handleSubmit} className="space-y-3.5 text-left text-xs font-mono">
                 {result?.error && (
-                  <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-[11px]">
+                  <div role="alert" className="p-3 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-[11px]">
                     ⚠️ {result.error}
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                  <label htmlFor={formId + '-beekeeper'} className="block text-[10px] uppercase font-bold text-[var(--text-muted)] mb-1">
                     Select Beekeeper
                   </label>
                   <select
+                    id={formId + '-beekeeper'}
                     value={beekeeperId}
                     onChange={(e) => {
                       setBeekeeperId(e.target.value);
                       const selected = beekeepers.find((b) => b.id === e.target.value);
                       if (selected) setRegion(selected.region);
                     }}
-                    className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-yellow-400"
+                    className="w-full px-3 py-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-xs text-foreground focus:outline-none focus:border-yellow-400"
                     required
                   >
                     {beekeepers.map((b) => (
-                      <option key={b.id} value={b.id} className="bg-[#0d1017] text-white">
+                      <option key={b.id} value={b.id} className="bg-[var(--surface-solid)] text-foreground">
                         {b.name} ({b.region})
                       </option>
                     ))}
@@ -158,31 +139,33 @@ export function NewHarvestModal({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                    <label htmlFor={formId + '-honey'} className="block text-[10px] uppercase font-bold text-[var(--text-muted)] mb-1">
                       Honey Variety
                     </label>
                     <input
+                      id={formId + '-honey'}
                       type="text"
                       value={honeyType}
                       onChange={(e) => setHoneyType(e.target.value)}
                       placeholder="e.g. Mustard, Multiflora"
-                      className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-xs text-foreground focus:outline-none focus:border-yellow-400"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                    <label htmlFor={formId + '-weight'} className="block text-[10px] uppercase font-bold text-[var(--text-muted)] mb-1">
                       Harvest Weight (kg)
                     </label>
                     <input
+                      id={formId + '-weight'}
                       type="number"
                       step="0.5"
                       min="1"
                       value={quantityKg}
                       onChange={(e) => setQuantityKg(e.target.value)}
                       placeholder="e.g. 50"
-                      className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-yellow-300 font-bold focus:outline-none focus:border-yellow-400"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-xs text-[var(--accent-ink)] font-bold focus:outline-none focus:border-yellow-400"
                       required
                     />
                   </div>
@@ -190,28 +173,30 @@ export function NewHarvestModal({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                    <label htmlFor={formId + '-hives'} className="block text-[10px] uppercase font-bold text-[var(--text-muted)] mb-1">
                       Hives Harvested
                     </label>
                     <input
+                      id={formId + '-hives'}
                       type="number"
                       min="1"
                       value={hivesHarvested}
                       onChange={(e) => setHivesHarvested(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-xs text-foreground focus:outline-none focus:border-yellow-400"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
+                    <label htmlFor={formId + '-region'} className="block text-[10px] uppercase font-bold text-[var(--text-muted)] mb-1">
                       Origin Region
                     </label>
                     <input
+                      id={formId + '-region'}
                       type="text"
                       value={region}
                       onChange={(e) => setRegion(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/10 text-xs text-white focus:outline-none focus:border-yellow-400"
+                      className="w-full px-3 py-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-xs text-foreground focus:outline-none focus:border-yellow-400"
                       required
                     />
                   </div>
@@ -226,20 +211,18 @@ export function NewHarvestModal({
                     {loading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Minting On Polygon Amoy...</span>
+                        <span>Preparing harvest for approval...</span>
                       </>
                     ) : (
                       <>
-                        <span>Submit Harvest to Blockchain</span>
+                        <span>Review Harvest for Approval</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
                   </button>
                 </div>
               </form>
-            )}
-          </div>
-        </div>
+          </dialog>
       )}
     </>
   );
