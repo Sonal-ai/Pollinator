@@ -47,4 +47,10 @@ artifacts/
 cache/
 
 # temporary
+.local-tools/
+.local-data/
 canva_*
+
+# firmware operator tool caches
+/firmware/**/__pycache__/
+/firmware/**/*.pyc

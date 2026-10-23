@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  outputFileTracingExcludes: {
+    '/*': ['.local-data/**/*', '.local-tools/**/*', '.env*', 'docs/qa/**/*', 'test/**/*'],
+  },
   // ── Security Headers ──────────────────────────────────────
   async headers() {
     return [
@@ -52,7 +55,7 @@ const nextConfig: NextConfig = {
   // ── Logging ──────────────────────────────────────────────
   logging: {
     fetches: {
-      fullUrl: true,
+      fullUrl: false,
     },
   },
 };
