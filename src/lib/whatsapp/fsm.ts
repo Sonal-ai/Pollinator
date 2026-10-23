@@ -42,6 +42,8 @@ export interface HarvestDraft {
   honeyType?: string;
   quantityGrams?: number;
   hivesHarvested?: number;
+  requestKey?: string;
+  harvestDate?: string;
 }
 
 export interface SessionData {
@@ -156,7 +158,7 @@ export class RedisService {
       const key = `msg:${msgId}`;
       const result = await getRedis().set(key, '1', 'EX', MSG_DEDUP_TTL_SECONDS, 'NX');
       return result === null;
-    } catch (err) {
+    } catch {
       return false; // don't block messages if redis is unavailable
     }
   }
