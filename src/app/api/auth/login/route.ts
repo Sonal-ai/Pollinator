@@ -1,138 +1,64 @@
 import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
+import { authenticatePassword, LoginSchema } from '@/lib/account-auth';
+import { normalizeLoginIdentifier } from '@/lib/identity';
+import { createSessionToken } from '@/lib/session-token';
+import { consumeLoginAttempt } from '@/lib/login-rate-limit';
+import { prisma } from '@/lib/db';
+import { allowedRequestOrigin } from '@/lib/request-origin';
 
-// ============================================================
-// POST /api/auth/login — Set session cookie
-// ============================================================
-
-export async function POST(request: NextRequest) {
-  let body: { email?: string; password?: string; role?: string };
-  try { body = await request.json(); } catch {
-    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const rawIdentifier = (body.email || (body as { identifier?: string }).identifier || '').trim();
-  const password = (body.password || '').trim();
-  let role = body.role || 'admin';
-
-  if (!rawIdentifier) {
-    return Response.json({ error: 'Please provide an email address or phone number' }, { status: 400 });
-  }
-
-  const isPhone = /^\+?[0-9\s-]{7,15}$/.test(rawIdentifier);
-  let walletAddress: string;
-
-  const { createHmac } = await import('crypto');
-  const { ethers } = await import('ethers');
-  const { prisma } = await import('@/lib/db');
-  const secret = process.env.WHATSAPP_APP_SECRET || process.env.JWT_SECRET || 'pollinator-fallback-secret';
-
-  if (isPhone) {
-    // Phone Number Login (WhatsApp Beekeeper Direct Access - No Password Required)
-    const normalizedPhone = rawIdentifier.replace(/[\s-]/g, '');
-    let beekeeper = await prisma.beekeeper.findFirst({
-      where: {
-        OR: [
-          { phone: normalizedPhone },
-          { phone: normalizedPhone.replace(/^\+/, '') },
-          { phone: `+${normalizedPhone.replace(/^\+/, '')}` },
-        ],
-      },
-    });
-
-    // Derive deterministic wallet from phone number (matching WhatsApp onboarding)
-    const privateKeyHex = '0x' + createHmac('sha256', secret).update(normalizedPhone).digest('hex');
-    const derivedWallet = new ethers.Wallet(privateKeyHex).address;
-
-    if (!beekeeper) {
-      // Auto-register beekeeper if first time visiting web dashboard via phone
-      beekeeper = await prisma.beekeeper.create({
-        data: {
-          phone: normalizedPhone,
-          name: `Farmer (${normalizedPhone.slice(-4)})`,
-          region: 'India Regional Cluster',
-          wallet: derivedWallet,
-        },
-      });
+async function readLoginBody(request: Request): Promise<string | null> {
+  if (Number(request.headers.get('content-length')) > 4096) return null;
+  const reader = request.body?.getReader();
+  if (!reader) return '';
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const result = await reader.read();
+      if (result.done) break;
+      bytes += result.value.byteLength;
+      if (bytes > 4096) { await reader.cancel(); return null; }
+      chunks.push(result.value);
     }
-
-    walletAddress = beekeeper.wallet || derivedWallet;
-    role = 'beekeeper';
-  } else {
-    // Standard Enterprise Email Login (requires password)
-    if (!rawIdentifier.includes('@')) {
-      return Response.json({ error: 'Invalid email address or phone number' }, { status: 400 });
-    }
-
-    if (!password || password.length < 6) {
-      return Response.json({ error: 'Password must be at least 6 characters for email login' }, { status: 400 });
-    }
-
-    const validRoles = ['admin', 'processor', 'lab', 'distributor', 'retailer', 'beekeeper'];
-    const emailKey = rawIdentifier.toLowerCase();
-
-    // Friendly persona mapping
-    let walletIdentifier = emailKey;
-    if (emailKey === 'transporter@pollinator.com' || emailKey === 'distributor@pollinator.com') {
-      role = 'distributor';
-      walletIdentifier = 'distributor@pollinator.com';
-    } else if (emailKey === 'producer@pollinator.com' || emailKey === 'processor@pollinator.com') {
-      role = 'processor';
-      walletIdentifier = 'processor@pollinator.com';
-    } else if (emailKey === 'lab@pollinator.com') {
-      role = 'lab';
-      walletIdentifier = 'lab@pollinator.com';
-    } else if (emailKey === 'admin@pollinator.com') {
-      role = 'admin';
-      walletIdentifier = 'admin@pollinator.com';
-    } else if (emailKey === 'beekeeper@pollinator.com' || emailKey === 'sonal@pollinator.com') {
-      role = 'beekeeper';
-      walletIdentifier = '8882218036';
-    }
-
-    if (!role || !validRoles.includes(role)) {
-      return Response.json({ error: 'Invalid role' }, { status: 400 });
-    }
-
-    const privateKeyHex = '0x' + createHmac('sha256', secret).update(walletIdentifier).digest('hex');
-    walletAddress = new ethers.Wallet(privateKeyHex).address;
-
-    if (role === 'beekeeper') {
-      const beekeeperRecord = await prisma.beekeeper.findFirst({
-        where: {
-          OR: [
-            { phone: '8882218036' },
-            { name: 'Sonal' },
-          ],
-        },
-      });
-      if (beekeeperRecord?.wallet) {
-        walletAddress = beekeeperRecord.wallet;
-      }
-    }
-  }
-
-  const { createSessionToken } = await import('@/lib/auth');
-  const token = await createSessionToken({ walletAddress, role });
-
-  const cookieStore = await cookies();
-  cookieStore.set('pollinator_session', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24, // 24 hours
-    path: '/',
-  });
-
-  return Response.json({ success: true, role, walletAddress, isPhone });
+    return Buffer.concat(chunks).toString('utf8');
+  } finally { reader.releaseLock(); }
 }
 
-// ============================================================
-// POST /api/auth/logout
-// ============================================================
-
-export async function DELETE(_request: NextRequest) {
-  const cookieStore = await cookies();
-  cookieStore.delete('pollinator_session');
+export async function POST(request: NextRequest) {
+  if (!allowedRequestOrigin(request)) return Response.json({ error: 'Forbidden origin' }, { status: 403 });
+  let body: unknown;
+  try {
+    const raw = await readLoginBody(request);
+    if (raw === null) return Response.json({ error: 'Request too large' }, { status: 413 });
+    body = JSON.parse(raw);
+  } catch {
+    return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+  const parsed = LoginSchema.safeParse(body);
+  if (!parsed.success) return Response.json({ error: 'Identifier and password are required.' }, { status: 400 });
+  const identifier = normalizeLoginIdentifier(parsed.data.identifier);
+  if (!identifier) return Response.json({ error: 'Invalid identifier or password.' }, { status: 401 });
+  try {
+    if (!await consumeLoginAttempt(identifier)) {
+      return Response.json({ error: 'Too many sign-in attempts. Please try again later.' }, {
+        status: 429, headers: { 'Retry-After': '900', 'Cache-Control': 'no-store' },
+      });
+    }
+    const account = await authenticatePassword(parsed.data, (value) =>
+      prisma.dashboardAccount.findUnique({ where: { identifier: value } }));
+    if (!account) return Response.json({ error: 'Invalid identifier or password.' }, { status: 401 });
+    const token = await createSessionToken(account);
+    (await cookies()).set('pollinator_session', token, {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax',
+      maxAge: 8 * 60 * 60, path: '/',
+    });
+    return Response.json({ success: true }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch {
+    return Response.json({ error: 'Sign-in is temporarily unavailable. Contact the platform administrator.' }, { status: 503 });
+  }
+}
+export async function DELETE() {
+  (await cookies()).delete('pollinator_session');
   return Response.json({ success: true });
 }

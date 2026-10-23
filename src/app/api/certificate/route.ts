@@ -1,8 +1,10 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { uploadFileToPinata, computeFileHash } from '@/lib/ipfs';
-import { verifyLabOnChain, hashBatchCode, getExplorerTxUrl } from '@/lib/blockchain';
+import { requestFingerprint } from '@/lib/chain/protocol';
+import { operationRequestKey, operationResponse, operationFailure, sameOrigin, readCertificateForm } from '@/lib/chain/http';
 import { env } from '@/lib/env';
+import { canAttestBatch } from '@/lib/access-policy';
 
 // ============================================================
 // POST /api/certificate — Upload lab certificate and commit hash on-chain
@@ -22,17 +24,17 @@ export async function POST(request: NextRequest) {
 
   let formData: FormData;
   try {
-    formData = await request.formData();
-  } catch {
-    return Response.json({ error: 'Expected multipart/form-data' }, { status: 400 });
+    formData = await readCertificateForm(request);
+  } catch (error) {
+    return operationFailure(error);
   }
 
   const batchId = formData.get('batchId')?.toString();
   // Securely assign the labActorId from the session, or fallback to formData if using admin API key
   const labActorId = session?.walletAddress ?? formData.get('labActorId')?.toString();
-  const file = formData.get('file') as File | null;
+  const file = formData.get('file');
 
-  if (!batchId || !labActorId || !file) {
+  if (!batchId || !labActorId || !file || typeof file === 'string') {
     return Response.json(
       { error: 'batchId, labActorId (from session), and file are required' },
       { status: 422 }
@@ -49,10 +51,25 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Certificate file must be under 10MB' }, { status: 413 });
   }
 
+  try {
+  sameOrigin(request);
+  const key = operationRequestKey(request);
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
+  if (fileBuffer.subarray(0, 5).toString('ascii') !== '%PDF-') return Response.json({ error: 'The file does not contain a PDF header.' }, { status: 415 });
+  const certificateHash = computeFileHash(fileBuffer);
+  const initiatedBy = session?.accountId ?? 'api:lab:' + labActorId.toLowerCase();
+  const requestHash = requestFingerprint('VERIFY_LAB', { batchId, labActorId, certificateHash });
+  const { operationService } = await import('@/lib/chain/operations');
+  const previous = await operationService.existing(initiatedBy, key, requestHash);
+  if (previous) return operationResponse(previous);
   // Fetch the batch
   const batch = await prisma.honeyBatch.findUnique({ where: { id: batchId } });
   if (!batch) {
     return Response.json({ error: 'Batch not found' }, { status: 404 });
+  }
+
+  if (!isAdminKey && (!session || !canAttestBatch(session, batch))) {
+    return Response.json({ error: 'Forbidden. This batch is not assigned to your lab.' }, { status: 403 });
   }
 
   if (batch.recalled) {
@@ -62,10 +79,9 @@ export async function POST(request: NextRequest) {
   if (batch.lab_verified) {
     return Response.json({ error: 'Batch already has a lab certificate' }, { status: 409 });
   }
+  if (batch.status !== 'PROCESSED') return Response.json({ error: 'The batch must be processed and held by this lab before approval.' }, { status: 409 });
 
   // Hash and upload PDF to IPFS
-  const fileBuffer = Buffer.from(await file.arrayBuffer());
-  const certificateHash = computeFileHash(fileBuffer);
 
   let ipfsCID: string;
   try {
@@ -76,47 +92,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'IPFS upload failed — please retry' }, { status: 503 });
   }
 
-  // Commit hash on-chain
-  let txHash: string | null = null;
-  try {
-    txHash = await verifyLabOnChain({
-      batchCode: batch.batchCode,
-      labReportHash: certificateHash,
-    });
-  } catch (err) {
-    console.error('[api/certificate] Blockchain tx failed:', err);
-    // Continue — save to DB with null txHash, can retry
-  }
-
-  // Persist certificate record
-  const certificate = await prisma.certificate.create({
-    data: {
-      batchId,
-      labActorId,
-      certificateHash,
-      ipfsCID,
-      txHash,
-    },
-  });
-
-  // Update batch status
-  await prisma.honeyBatch.update({
-    where: { id: batchId },
-    data: {
-      lab_verified: true,
-      status: 'LAB_VERIFIED',
-    },
-  });
-
-  return Response.json(
-    {
-      certificateId:   certificate.id,
-      certificateHash,
-      ipfsCID,
-      txHash,
-      ipfsUrl:         `${process.env.IPFS_GATEWAY}${ipfsCID}`,
-      polygonscanUrl:  getExplorerTxUrl(txHash),
-    },
-    { status: 201 }
-  );
+  const operation = await operationService.enqueue({ initiatedBy, key, requestHash, actorAddress: labActorId, batchId, expectedVersion: batch.version,
+    payload: { kind: 'VERIFY_LAB', batchCode: batch.batchCode, labActorId, certificateHash, ipfsCID } });
+  return operationResponse(operation);
+  } catch (error) { return operationFailure(error); }
 }

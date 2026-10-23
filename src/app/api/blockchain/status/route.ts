@@ -19,8 +19,8 @@ export async function GET() {
     const pk = getActivePrivateKey();
 
     let walletAddress: string | null = null;
-    let balanceFormatted = '0 POL';
-    let balanceRaw = '0';
+    let balanceFormatted = 'Unavailable';
+    let balanceRaw: string | null = null;
 
     if (pk) {
       try {
@@ -52,9 +52,9 @@ export async function GET() {
           ? `https://amoy.polygonscan.com/address/${walletAddress}`
           : null,
     });
-  } catch (error: any) {
+  } catch {
     return NextResponse.json(
-      { error: error?.message || 'Failed to retrieve blockchain status' },
+      { error: 'Failed to retrieve blockchain status' },
       { status: 500 }
     );
   }

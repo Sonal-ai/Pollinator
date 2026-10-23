@@ -1,25 +1,27 @@
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { computeMetadataHash, uploadBatchMetadata, type BatchMetadata } from '@/lib/ipfs';
-import { createBatchOnChain, hashBatchCode, getExplorerTxUrl } from '@/lib/blockchain';
+import { uploadBatchMetadata, type BatchMetadata } from '@/lib/ipfs';
+import { requestFingerprint, OperationError } from '@/lib/chain/protocol';
+import { operationRequestKey, operationResponse, operationFailure, sameOrigin } from '@/lib/chain/http';
 import crypto from 'crypto';
+import { getSession } from '@/lib/auth';
+import { batchScope } from '@/lib/access-policy';
 
 // ============================================================
 // POST /api/batch — Create a new honey batch
 // ============================================================
 
 const CreateBatchSchema = z.object({
-  beekeeperId:    z.string().min(1),
-  honeyType:      z.string().min(1),
+  beekeeperId:    z.string().min(1).max(150),
+  honeyType:      z.string().min(1).max(100),
   quantityGrams:  z.number().int().positive().max(10_000_000), // max 10 tonnes
-  hivesHarvested: z.number().int().positive(),
+  hivesHarvested: z.number().int().positive().max(100000),
   harvestDate:    z.string().datetime({ offset: true }),
-  region:         z.string().min(1),
+  region:         z.string().min(1).max(150),
 });
 
 export async function POST(request: NextRequest) {
-  const { getSession } = await import('@/lib/auth');
   const session = await getSession();
   const apiKey = request.headers.get('x-admin-api-key') ??
     request.headers.get('authorization')?.replace('Bearer ', '');
@@ -48,11 +50,25 @@ export async function POST(request: NextRequest) {
 
   const { beekeeperId, honeyType, quantityGrams, hivesHarvested, harvestDate, region } = parsed.data;
 
+  if (!isAdminKey && session?.role !== 'admin' && session?.beekeeperId !== beekeeperId) {
+    return Response.json({ error: 'Forbidden. This beekeeper is not linked to your account.' }, { status: 403 });
+  }
+
   // Verify beekeeper exists
   const beekeeper = await prisma.beekeeper.findUnique({ where: { id: beekeeperId } });
   if (!beekeeper) {
     return Response.json({ error: 'Beekeeper not found' }, { status: 404 });
   }
+  try {
+  sameOrigin(request);
+  if (new Date(harvestDate).getTime() > Date.now()) throw new OperationError('Harvest time cannot be in the future', 422);
+  if (!beekeeper.wallet) throw new OperationError('This beekeeper needs wallet enrollment before chain registration. Contact the cooperative operator.');
+  const key = operationRequestKey(request);
+  const initiatedBy = session?.accountId ?? 'whatsapp:' + beekeeperId;
+  const requestHash = requestFingerprint('CREATE_BATCH', parsed.data);
+  const { operationService } = await import('@/lib/chain/operations');
+  const previous = await operationService.existing(initiatedBy, key, requestHash);
+  if (previous) return operationResponse(previous);
 
   // Generate batch code: "HC-{YEAR}-{REGION_CODE}-{SEQUENCE}"
   const year = new Date(harvestDate).getFullYear();
@@ -66,7 +82,6 @@ export async function POST(request: NextRequest) {
   const batchCode = `HC-${year}-${regionCode}-${randomSuffix}`;
 
   // Compute the batch ID hash (used as the blockchain key)
-  const batchIdHash = hashBatchCode(batchCode);
 
   // Build IPFS metadata
   const metadata: BatchMetadata = {
@@ -76,7 +91,7 @@ export async function POST(request: NextRequest) {
     honeyType,
     harvestDate: new Date(harvestDate).toISOString().split('T')[0],
     quantityGrams,
-    version: '1.0',
+    version: '2.0',
   };
 
   // Upload to IPFS — do this BEFORE blockchain so we have the CID
@@ -94,52 +109,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Register on blockchain
-  let txHash: string | null = null;
-  try {
-    txHash = await createBatchOnChain({
-      batchCode,
-      harvestTimestamp: Math.floor(new Date(harvestDate).getTime() / 1000),
-      quantityGrams,
-      metadataCID,
-      metadataHash,
-    });
-  } catch (err) {
-    console.error('[api/batch] Blockchain tx failed:', err);
-    // We continue and store in DB with PENDING_CHAIN status
-    // The batch can be retried later via a background job
-  }
-
-  // Persist to database
-  const batch = await prisma.honeyBatch.create({
-    data: {
-      batch_id_hash:    batchIdHash,
-      batchCode,
-      beekeeperId,
-      quantity_grams:   quantityGrams,
-      honey_type:       honeyType,
-      hives_harvested:  hivesHarvested,
-      harvest_timestamp: new Date(harvestDate),
-      region,
-      status:           txHash ? 'HARVESTED' : 'PENDING_CHAIN',
-      current_custodian: beekeeper.wallet ?? null,
-      metadataCID,
-      metadataHash,
-      txHash,
-    },
-  });
-
-  return Response.json(
-    {
-      batchId:    batch.id,
-      batchCode,
-      status:     batch.status,
-      txHash,
-      metadataCID,
-      polygonscanUrl: getExplorerTxUrl(txHash),
-    },
-    { status: 201 }
-  );
+  const operation = await operationService.enqueue({ initiatedBy, key, requestHash, actorAddress: beekeeper.wallet, payload: {
+    kind: 'CREATE_BATCH', batchCode, beekeeperId, honeyType, quantityGrams, hivesHarvested,
+    harvestTimestamp: Math.floor(new Date(harvestDate).getTime() / 1000), region: metadata.region, metadataCID, metadataHash,
+  } });
+  return operationResponse(operation);
+  } catch (error) { return operationFailure(error); }
 }
 
 // ============================================================
@@ -147,12 +122,14 @@ export async function POST(request: NextRequest) {
 // ============================================================
 
 export async function GET(request: NextRequest) {
+  const session = await getSession();
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const searchParams = request.nextUrl.searchParams;
   const page   = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
   const limit  = Math.min(50, parseInt(searchParams.get('limit') ?? '20', 10));
   const status = searchParams.get('status') ?? undefined;
 
-  const where = status ? { status } : {};
+  const where = { AND: [batchScope(session), status ? { status } : {}] };
 
   const [batches, total] = await Promise.all([
     prisma.honeyBatch.findMany({

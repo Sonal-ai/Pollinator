@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySessionToken } from './lib/auth';
+import { verifySessionToken } from './lib/session-token';
+import { serverAppOrigin } from './lib/app-origin';
+import {dashboardLoginPath,safeDashboardReturn,DASHBOARD_RETURN_HEADER} from './lib/login-return';
 
 // ============================================================
 // Middleware — Rate Limiting + Dashboard Auth Guard
@@ -40,12 +42,8 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 function getBaseUrl(request: NextRequest): URL {
-  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
-  const forwardedProto = request.headers.get('x-forwarded-proto') || (request.url.startsWith('https') ? 'https' : 'http');
-  if (forwardedHost) {
-    return new URL(`${forwardedProto}://${forwardedHost}`);
-  }
-  return new URL(request.url);
+  if (process.env.NODE_ENV === 'development') return new URL(request.url);
+  return new URL(serverAppOrigin(request.url));
 }
 
 export async function proxy(request: NextRequest) {
@@ -56,26 +54,18 @@ export async function proxy(request: NextRequest) {
 
   const baseUrl = getBaseUrl(request);
 
-  // ── Redirect authenticated users away from login page ──
-  if (pathname === '/dashboard/login') {
-    const sessionCookie = request.cookies.get('pollinator_session');
-    if (sessionCookie?.value) {
-      const session = await verifySessionToken(sessionCookie.value);
-      if (session) {
-        return NextResponse.redirect(new URL('/dashboard', baseUrl));
-      }
-    }
-  }
+  // Login remains reachable after account revocation. Protected pages/APIs reload
+  // the active account; this signature check is only an optimistic guard.
 
   // ── Auth guard: protect all /dashboard/* except /dashboard/login ──
   if (pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/login')) {
     const sessionCookie = request.cookies.get('pollinator_session');
     if (!sessionCookie?.value) {
-      return NextResponse.redirect(new URL('/dashboard/login', baseUrl));
+      return NextResponse.redirect(new URL(dashboardLoginPath(pathname+request.nextUrl.search), baseUrl));
     }
     const session = await verifySessionToken(sessionCookie.value);
     if (!session) {
-      const response = NextResponse.redirect(new URL('/dashboard/login', baseUrl));
+      const response = NextResponse.redirect(new URL(dashboardLoginPath(pathname+request.nextUrl.search), baseUrl));
       response.cookies.delete('pollinator_session');
       return response;
     }
@@ -105,7 +95,10 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const requestHeaders=new Headers(request.headers);
+  requestHeaders.delete(DASHBOARD_RETURN_HEADER);
+  if(pathname.startsWith('/dashboard'))requestHeaders.set(DASHBOARD_RETURN_HEADER,safeDashboardReturn(pathname+request.nextUrl.search));
+  return NextResponse.next({request:{headers:requestHeaders}});
 }
 
 export const config = {

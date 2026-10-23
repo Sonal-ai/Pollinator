@@ -1,26 +1,16 @@
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { transferCustodyOnChain, getExplorerTxUrl } from '@/lib/blockchain';
-
-// Batch status values that map to Solidity enum indices
-const BATCH_STATUS_MAP: Record<string, number> = {
-  CREATED:         0,
-  HARVESTED:       1,
-  PROCESSED:       2,
-  LAB_VERIFIED:    3,
-  PACKAGED:        4,
-  IN_DISTRIBUTION: 5,
-  AT_RETAIL:       6,
-  SOLD:            7,
-  RECALLED:        8,
-};
+import { requestFingerprint } from '@/lib/chain/protocol';
+import { operationRequestKey, operationResponse, operationFailure, sameOrigin } from '@/lib/chain/http';
+import { canTransferBatch, batchScope } from '@/lib/access-policy';
+import { custodyStageOptions } from '@/lib/batch-workflow';
 
 const CustodyTransferSchema = z.object({
   batchId:   z.string().min(1),
   toAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'toAddress must be a valid EVM wallet address'),
   newStatus: z.enum([
-    'PROCESSED', 'LAB_VERIFIED', 'PACKAGED', 'IN_DISTRIBUTION', 'AT_RETAIL', 'SOLD',
+    'HARVESTED', 'PROCESSED', 'LAB_VERIFIED', 'PACKAGED', 'IN_DISTRIBUTION', 'AT_RETAIL', 'SOLD',
   ]),
   note: z.string().max(500).optional(),
 });
@@ -30,6 +20,9 @@ const CustodyTransferSchema = z.object({
 // ============================================================
 
 export async function POST(request: NextRequest) {
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   let body: unknown;
   try {
     body = await request.json();
@@ -45,8 +38,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { batchId, toAddress, newStatus, note } = parsed.data;
+  const { batchId, toAddress, newStatus } = parsed.data;
 
+  try {
+  sameOrigin(request);
+  const key = operationRequestKey(request);
+  const requestHash = requestFingerprint('TRANSFER_CUSTODY', parsed.data);
+  const { operationService } = await import('@/lib/chain/operations');
+  const previous = await operationService.existing(session.accountId, key, requestHash);
+  if (previous) return operationResponse(previous);
   const batch = await prisma.honeyBatch.findUnique({ where: { id: batchId } });
   if (!batch) {
     return Response.json({ error: 'Batch not found' }, { status: 404 });
@@ -59,89 +59,20 @@ export async function POST(request: NextRequest) {
   // --------------------------------------------------------
   // Strict Authorization: Only the current custodian or an admin can transfer custody
   // --------------------------------------------------------
-  const { getSession } = await import('@/lib/auth');
-  const session = await getSession();
-
-  const isAdmin = session?.role === 'admin';
-  const isCurrentCustodian = session?.walletAddress && session.walletAddress.toLowerCase() === batch.current_custodian?.toLowerCase();
-
-  let isAuthorizedBeekeeper = false;
-  if (session?.role === 'beekeeper') {
-    const beekeeper = await prisma.beekeeper.findFirst({
-      where: {
-        OR: [
-          ...(session.walletAddress ? [
-            { wallet: session.walletAddress },
-            { wallet: session.walletAddress.toLowerCase() },
-          ] : []),
-          { phone: '8882218036' },
-          { name: 'Sonal' },
-        ],
-      },
-    });
-
-    const isCurrentHolder = 
-      (batch.current_custodian && beekeeper?.wallet && batch.current_custodian.toLowerCase() === beekeeper.wallet.toLowerCase()) ||
-      (session.walletAddress && batch.current_custodian && session.walletAddress.toLowerCase() === batch.current_custodian.toLowerCase()) ||
-      (!batch.current_custodian && (batch.status === 'HARVESTED' || batch.status === 'PENDING_CHAIN'));
-
-    if (beekeeper && isCurrentHolder && ['HARVESTED', 'PENDING_CHAIN'].includes(batch.status)) {
-      isAuthorizedBeekeeper = true;
-    }
-  }
-
-  if (!isAdmin && !isCurrentCustodian && !isAuthorizedBeekeeper) {
-    return Response.json({ 
-      error: 'Unauthorized. Only the current custodian, owner beekeeper, or an admin can transfer this batch.' 
-    }, { status: 403 });
+  if (!canTransferBatch(session, batch)) {
+    return Response.json({ error: 'Forbidden. Only the current custodian or owner can transfer this batch.' }, { status: 403 });
   }
 
   const fromAddress = batch.current_custodian ?? 'unknown';
-  const requestedStatusIndex = BATCH_STATUS_MAP[newStatus] ?? 1;
-  const currentStatusIndex = BATCH_STATUS_MAP[batch.status] ?? 1;
-  const statusIndex = Math.max(requestedStatusIndex, currentStatusIndex);
 
-  // Commit on-chain
-  let txHash: string | null = null;
-  try {
-    txHash = await transferCustodyOnChain({
-      batchCode: batch.batchCode,
-      toAddress,
-      newStatus: statusIndex,
-    });
-  } catch (err) {
-    console.error('[api/custody] Blockchain tx failed:', err);
-    // Continue — store event with null txHash
-  }
+  const allowed = custodyStageOptions(batch.status, session.role).includes(newStatus) &&
+    (newStatus !== 'SOLD' || toAddress.toLowerCase() === session.walletAddress.toLowerCase());
+  if (!allowed) return Response.json({ error: 'Invalid stage transition. Laboratory approval and packaging use their dedicated workflows.' }, { status: 409 });
 
-  // Record custody event in DB
-  await prisma.custodyEvent.create({
-    data: {
-      batchId,
-      from: fromAddress,
-      to: toAddress,
-      stage: newStatus,
-      txHash,
-    },
-  });
-
-  // Update batch current_custodian and status
-  await prisma.honeyBatch.update({
-    where: { id: batchId },
-    data: {
-      current_custodian: toAddress,
-      status: newStatus,
-    },
-  });
-
-  return Response.json({
-    success: true,
-    from: fromAddress,
-    to: toAddress,
-    newStatus,
-    txHash,
-    polygonscanUrl: getExplorerTxUrl(txHash),
-  });
+  const operation = await operationService.enqueue({ initiatedBy: session.accountId, key, requestHash, actorAddress: session.walletAddress,
+    batchId, expectedVersion: batch.version, payload: { kind: 'TRANSFER_CUSTODY', batchCode: batch.batchCode, fromAddress, toAddress, newStatus, note: parsed.data.note } });
+  return operationResponse(operation);
+  } catch (error) { return operationFailure(error); }
 }
 
 // ============================================================
@@ -149,10 +80,16 @@ export async function POST(request: NextRequest) {
 // ============================================================
 
 export async function GET(request: NextRequest) {
+  const { getSession } = await import('@/lib/auth');
+  const session = await getSession();
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const batchId = request.nextUrl.searchParams.get('batchId');
   if (!batchId) {
     return Response.json({ error: 'batchId query parameter required' }, { status: 400 });
   }
+
+  const batch = await prisma.honeyBatch.findFirst({ where: { AND: [{ id: batchId }, batchScope(session)] }, select: { id: true } });
+  if (!batch) return Response.json({ error: 'Batch not found' }, { status: 404 });
 
   const events = await prisma.custodyEvent.findMany({
     where: { batchId },

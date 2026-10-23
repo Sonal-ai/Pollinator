@@ -3,6 +3,8 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateQRTokensForBatch } from '@/lib/qr';
 import QRCode from 'qrcode';
+import { getSession } from '@/lib/auth';
+import { canManagePackaging } from '@/lib/access-policy';
 
 const GenerateQRSchema = z.object({
   batchCode:    z.string().min(1),
@@ -25,7 +27,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors }, { status: 422 });
   }
 
-  const { getSession } = await import('@/lib/auth');
   const session = await getSession();
 
   if (session?.role !== 'admin' && session?.role !== 'processor') {
@@ -36,18 +37,21 @@ export async function POST(request: NextRequest) {
 
   const batch = await prisma.honeyBatch.findUnique({ where: { batchCode } });
   if (!batch) return Response.json({ error: 'Batch not found' }, { status: 404 });
+  if (!session || !canManagePackaging(session, batch)) {
+    return Response.json({ error: 'Forbidden. This batch is not in your custody.' }, { status: 403 });
+  }
   if (batch.recalled) return Response.json({ error: 'Cannot generate QR for recalled batch' }, { status: 409 });
   if (batch.status !== 'PACKAGED') {
     return Response.json({ error: 'QR can only be generated for PACKAGED batches' }, { status: 400 });
   }
 
   // Generate QR tokens (nonces + signatures)
-  const tokens = await generateQRTokensForBatch({
-    batchId: batch.id,
-    batchCode,
-    jarCount,
-    jarSizeGrams,
-  });
+  let tokens;
+  try {
+    tokens = await generateQRTokensForBatch({ batchId: batch.id, batchCode, jarCount, jarSizeGrams });
+  } catch {
+    return Response.json({ error: 'Labels must match confirmed packaging inventory. Retry after any concurrent issuance finishes; existing labels are retained.' }, { status: 409 });
+  }
 
   // Generate QR code images as base64 data URLs in chunks to prevent OOM / Event Loop DoS (GAP-11 fix)
   const results: Array<{ jarIndex: number; nonce: string; verifyUrl: string; qrImageBase64: string }> = [];
@@ -86,6 +90,8 @@ export async function POST(request: NextRequest) {
 // ============================================================
 
 export async function GET(request: NextRequest) {
+  const session = await getSession();
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const batchCode = request.nextUrl.searchParams.get('batchCode');
   if (!batchCode) return Response.json({ error: 'batchCode is required' }, { status: 400 });
 
@@ -102,6 +108,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!batch) return Response.json({ error: 'Batch not found' }, { status: 404 });
+  if (!canManagePackaging(session, batch)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   return Response.json({ batchCode, qrTokens: batch.qrTokens });
 }

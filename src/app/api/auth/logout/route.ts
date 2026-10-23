@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
+import { allowedRequestOrigin } from '@/lib/request-origin';
+import { serverAppOrigin } from '@/lib/app-origin';
 
 export async function POST(request: Request) {
-  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host');
-  const forwardedProto = request.headers.get('x-forwarded-proto') || (request.url.startsWith('https') ? 'https' : 'http');
-  const baseUrl = forwardedHost ? `${forwardedProto}://${forwardedHost}` : request.url;
-
-  const url = new URL('/dashboard/login', baseUrl);
-  const response = NextResponse.redirect(url, { status: 303 });
-  
-  // Clear the session cookie
+  const baseUrl = new URL(process.env.NODE_ENV === 'development' ? request.url : serverAppOrigin(request.url));
+  if (!allowedRequestOrigin(request)) {
+    return Response.json({ error: 'Forbidden origin' }, { status: 403 });
+  }
+  const response = NextResponse.redirect(new URL('/dashboard/login', baseUrl), { status: 303 });
   response.cookies.delete('pollinator_session');
-  
   return response;
 }
 
-export async function GET(request: Request) {
-  return POST(request);
+export async function GET() {
+  return Response.json({ error: 'Use POST to sign out.' }, { status: 405, headers: { Allow: 'POST' } });
 }

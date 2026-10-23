@@ -1,85 +1,38 @@
-import { NextRequest } from 'next/server';
+import { z } from 'zod';
+import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { recallBatchOnChain, getExplorerTxUrl } from '@/lib/blockchain';
 import { uploadBatchMetadata, type BatchMetadata } from '@/lib/ipfs';
-import { env } from '@/lib/env';
-
-// ============================================================
-// POST /api/batch/[batchCode]/recall — Admin-only recall
-// ============================================================
-
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ batchCode: string }> }
-) {
-  const apiKey = request.headers.get('x-admin-api-key') ??
-    request.headers.get('authorization')?.replace('Bearer ', '');
-  const isAdminKey = Boolean(apiKey && env.ADMIN_API_KEY && apiKey === env.ADMIN_API_KEY);
-
-  const { getSession } = await import('@/lib/auth');
+import { requestFingerprint } from '@/lib/chain/protocol';
+import { operationRequestKey, operationResponse, operationFailure, sameOrigin } from '@/lib/chain/http';
+const Recall = z.object({ reason: z.string().trim().min(3).max(2000) });
+export async function POST(request: Request, { params }: { params: Promise<{ batchCode: string }> }) {
   const session = await getSession();
-
-  if (!isAdminKey && session?.role !== 'admin') {
-    return new Response('Unauthorized. Admin role required.', { status: 401 });
-  }
-
-  const { batchCode } = await params;
-
-  let body: { reason?: string } = {};
-  try { body = await request.json(); } catch { /* reason is optional */ }
-
-  const reason = body.reason ?? 'Recalled by administrator';
-
-  const batch = await prisma.honeyBatch.findUnique({ where: { batchCode } });
-  if (!batch) return Response.json({ error: 'Batch not found' }, { status: 404 });
-  if (batch.recalled) return Response.json({ error: 'Batch is already recalled' }, { status: 409 });
-
-  // Build recall reason document and upload to IPFS
-  const recallDocument = {
-    batchCode,
-    reason,
-    recalledAt: new Date().toISOString(),
-    recalledBy: 'PLATFORM_ADMIN',
-  };
-
-  let reasonCID: string;
+  if (session?.role !== 'admin') return Response.json({ error: 'An administrator account must approve a recall.' }, { status: 401 });
   try {
-    // Upload as a simple metadata document
-    const result = await uploadBatchMetadata(recallDocument as unknown as BatchMetadata);
-    reasonCID = result.cid;
-  } catch {
-    // If IPFS fails, use a placeholder — recall must still proceed
-    reasonCID = 'recall-reason-unavailable';
-  }
-
-  // Commit recall on-chain
-  let txHash: string | null = null;
-  try {
-    txHash = await recallBatchOnChain({ batchCode, reasonCID });
-  } catch (err) {
-    console.error('[api/recall] Blockchain recall failed:', err);
-    // Still update DB — better to have local recall than none
-  }
-
-  // Mark recalled in DB
-  await prisma.honeyBatch.update({
-    where: { batchCode },
-    data: { recalled: true, status: 'RECALLED' },
-  });
-
-  // Deactivate all QR tokens for this batch
-  await prisma.qRToken.updateMany({
-    where: { batchId: batch.id },
-    data: { active: false },
-  });
-
-  console.warn(`[RECALL] Batch ${batchCode} recalled. Reason: ${reason}. TxHash: ${txHash}`);
-
-  return Response.json({
-    batchCode,
-    recalled: true,
-    reason,
-    txHash,
-    polygonscanUrl: getExplorerTxUrl(txHash),
-  });
+    sameOrigin(request);
+    const body = Recall.safeParse(await request.json());
+    if (!body.success) return Response.json({ error: 'Provide a recall reason (3–2000 characters).' }, { status: 422 });
+    const key = operationRequestKey(request);
+    const { batchCode } = await params;
+    const requestHash = requestFingerprint('RECALL_BATCH', { batchCode, reason: body.data.reason });
+    const { operationService } = await import('@/lib/chain/operations');
+    const previous = await operationService.existing(session.accountId, key, requestHash);
+    if (previous) return operationResponse(previous);
+    const original = await prisma.honeyBatch.findUnique({ where: { batchCode } });
+    if (!original) return Response.json({ error: 'Batch not found' }, { status: 404 });
+    if (original.recallTxHash) return Response.json({ error: 'This batch already has a confirmed chain recall.' }, { status: 409 });
+    // Safety flag and token withdrawal are immediate, even if evidence storage or wallet approval fails.
+    const batch = await prisma.$transaction(async tx => {
+      const updated = await tx.honeyBatch.update({ where: { id: original.id }, data: { recalled: true, status: 'RECALLED', recallReason: body.data.reason,
+        ...(!original.recalled ? { version: { increment: 1 } } : {}) } });
+      await tx.qRToken.updateMany({ where: { batchId: original.id }, data: { active: false } });
+      return updated;
+    });
+    let reasonCID: string;
+    try { reasonCID = (await uploadBatchMetadata({ batchCode, reason: body.data.reason, recalledBy: session.walletAddress } as unknown as BatchMetadata)).cid; }
+    catch { return Response.json({ recalled: true, chainConfirmed: false, error: 'Local safety recall is active. Evidence storage is unavailable; retry with the same key to prepare the chain recall.' }, { status: 503 }); }
+    const operation = await operationService.enqueue({ initiatedBy: session.accountId, key, requestHash, actorAddress: session.walletAddress,
+      batchId: batch.id, expectedVersion: batch.version, payload: { kind: 'RECALL_BATCH', batchCode, reasonCID, reason: body.data.reason } });
+    return operationResponse(operation);
+  } catch (error) { return operationFailure(error); }
 }

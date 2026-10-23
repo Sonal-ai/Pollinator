@@ -1,7 +1,8 @@
-import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getBatchFromChain, getExplorerTxUrl } from '@/lib/blockchain';
+import { getSession } from '@/lib/auth';
+import { batchScope } from '@/lib/access-policy';
 
 // ============================================================
 // GET /api/batch/[batchCode] — Get full batch details
@@ -11,10 +12,12 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ batchCode: string }> }
 ) {
+  const session = await getSession();
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { batchCode } = await params;
 
-  const batch = await prisma.honeyBatch.findUnique({
-    where: { batchCode },
+  const batch = await prisma.honeyBatch.findFirst({
+    where: { AND: [{ batchCode }, batchScope(session)] },
     include: {
       beekeeper: { select: { name: true, region: true, kvicId: true } },
       certificates: true,

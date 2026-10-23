@@ -1,12 +1,14 @@
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { packageBatchOnChain, getExplorerTxUrl } from '@/lib/blockchain';
-import { uploadBatchMetadata, fetchMetadata, type BatchMetadata } from '@/lib/ipfs';
+import { requestFingerprint } from '@/lib/chain/protocol';
+import { operationRequestKey, operationResponse, operationFailure, sameOrigin } from '@/lib/chain/http';
+import { uploadBatchMetadata, verifyMetadataIntegrity, type BatchMetadata } from '@/lib/ipfs';
+import { canManagePackaging } from '@/lib/access-policy';
 
 const PackageSchema = z.object({
-  jarCount:        z.number().int().positive(),
-  jarSizeGrams:    z.number().int().positive(),
+  jarCount:        z.number().int().positive().max(10_000),
+  jarSizeGrams:    z.number().int().positive().max(1_000_000),
   processorWallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/).optional(),
 });
 
@@ -40,9 +42,20 @@ export async function POST(
   const { jarCount, jarSizeGrams } = parsed.data;
   const processorWallet = session?.walletAddress ?? parsed.data.processorWallet;
 
+  try {
+  sameOrigin(request);
+  const key = operationRequestKey(request);
+  const requestHash = requestFingerprint('PACKAGE_BATCH', { batchCode, jarCount, jarSizeGrams });
+  const { operationService } = await import('@/lib/chain/operations');
+  const previous = await operationService.existing(session.accountId, key, requestHash);
+  if (previous) return operationResponse(previous);
   const batch = await prisma.honeyBatch.findUnique({ where: { batchCode } });
   if (!batch) return Response.json({ error: 'Batch not found' }, { status: 404 });
+  if (!session || !canManagePackaging(session, batch)) {
+    return Response.json({ error: 'Forbidden. This batch is not in your custody.' }, { status: 403 });
+  }
   if (batch.recalled) return Response.json({ error: 'Batch is recalled' }, { status: 409 });
+  if (batch.status !== 'LAB_VERIFIED' || !batch.lab_verified) return Response.json({ error: 'Confirmed laboratory approval is required before packaging.' }, { status: 409 });
 
   // Integrity check (also enforced by smart contract)
   const totalGrams = jarCount * jarSizeGrams;
@@ -54,37 +67,20 @@ export async function POST(
   }
 
   // Fetch existing metadata and add packaging details
-  let updatedMetadata: BatchMetadata;
-  try {
-    const existing = batch.metadataCID ? await fetchMetadata(batch.metadataCID) : null;
-    updatedMetadata = {
-      ...(existing ?? {
-        batchCode,
-        beekeeperPublicName: 'Unknown',
-        region: batch.region ?? 'India',
-        honeyType: batch.honey_type,
-        harvestDate: batch.harvest_timestamp?.toISOString().split('T')[0] ?? new Date().toISOString().split('T')[0],
-        quantityGrams: batch.quantity_grams,
-        version: '1.0',
-      }),
+  const existing = batch.metadataCID && batch.metadataHash
+    ? await verifyMetadataIntegrity(batch.metadataCID, batch.metadataHash) : null;
+  if (!existing?.valid || !existing.metadata || existing.metadata.batchCode !== batchCode || existing.metadata.quantityGrams !== batch.quantity_grams) {
+    return Response.json({ error: 'Original batch evidence is unavailable or does not match. Packaging cannot replace it with reconstructed data.' }, { status: 409 });
+  }
+  const updatedMetadata: BatchMetadata = {
+      ...existing.metadata,
+      version: '2.0',
       packagingDetails: {
         jarCount,
         jarSizeGrams,
         packagedAt: new Date().toISOString(),
       },
-    };
-  } catch {
-    updatedMetadata = {
-      batchCode,
-      beekeeperPublicName: 'Unknown',
-      region: batch.region ?? 'India',
-      honeyType: batch.honey_type,
-      harvestDate: new Date().toISOString().split('T')[0],
-      quantityGrams: batch.quantity_grams,
-      packagingDetails: { jarCount, jarSizeGrams, packagedAt: new Date().toISOString() },
-      version: '1.0',
-    };
-  }
+  };
 
   // Upload updated metadata to IPFS
   let newCID: string;
@@ -98,29 +94,8 @@ export async function POST(
     return Response.json({ error: 'IPFS upload failed' }, { status: 503 });
   }
 
-  // Commit on-chain
-  let txHash: string | null = null;
-  try {
-    txHash = await packageBatchOnChain({
-      batchCode,
-      jarCount,
-      jarSizeGrams,
-      newMetadataCID: newCID,
-      newMetadataHash: newHash,
-    });
-  } catch (err) {
-    console.error('[api/batch/package] Blockchain tx failed:', err);
-  }
-
-  await prisma.honeyBatch.update({
-    where: { batchCode },
-    data: {
-      status: 'PACKAGED',
-      metadataCID: newCID,
-      metadataHash: newHash,
-      current_custodian: processorWallet ?? batch.current_custodian,
-    },
-  });
-
-  return Response.json({ batchCode, jarCount, jarSizeGrams, newCID, txHash, polygonscanUrl: getExplorerTxUrl(txHash) });
+  const operation = await operationService.enqueue({ initiatedBy: session.accountId, key, requestHash, actorAddress: processorWallet,
+    batchId: batch.id, expectedVersion: batch.version, payload: { kind: 'PACKAGE_BATCH', batchCode, jarCount, jarSizeGrams, metadataCID: newCID, metadataHash: newHash } });
+  return operationResponse(operation);
+  } catch (error) { return operationFailure(error); }
 }

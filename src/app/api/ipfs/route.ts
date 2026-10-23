@@ -36,8 +36,8 @@ export async function POST(request: Request) {
 
     const result = await res.json();
     return NextResponse.json({ cid: result.IpfsHash });
-  } catch (error: any) {
+  } catch (error) {
     console.error('IPFS Upload Error:', error);
-    return new NextResponse(`Error uploading to IPFS: ${error.message}`, { status: 500 });
+    return new NextResponse('Error uploading to IPFS', { status: 500 });
   }
 }
